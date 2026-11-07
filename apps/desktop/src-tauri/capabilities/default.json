@@ -1,0 +1,9 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "影幕 YingMu 最小权限：仅主窗口 + core:default，不开通 fs / shell / http / dialog 等插件权限。自定义业务 command 通过 generate_handler 注册，不暴露任何文件系统给前端。",
+  "windows": ["main"],
+  "permissions": [
+    "core:default"
+  ]
+}

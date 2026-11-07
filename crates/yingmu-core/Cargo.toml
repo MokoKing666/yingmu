@@ -1,0 +1,20 @@
+[package]
+name = "yingmu-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+description = "影幕 YingMu 媒体核心：Provider / Scanner / Metadata / Database / Artwork / Network / Playback 抽象"
+publish = false
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
+sha2 = { workspace = true }
+roxmltree = { workspace = true }
+rusqlite = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+# 单元测试仅使用标准库与上述依赖，不引入额外测试框架以减小未验证风险。
