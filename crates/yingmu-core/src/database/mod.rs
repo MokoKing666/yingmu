@@ -910,11 +910,8 @@ impl Database {
         kind: &str,
         size: &str,
     ) -> Result<Option<ArtworkEntry>> {
-        let now = chrono::Utc::now().to_rfc3339();
-        self.conn.execute(
-            "UPDATE artwork_cache SET last_access_at = ?4 WHERE media_id=?1 AND kind=?2 AND size=?3",
-            params![media_id, kind, size, now],
-        )?;
+        // 访问时间统一由 ArtworkCache::get 用单调逻辑时钟刷新：
+        // 数据库层不写墙钟，避免同一列混入两种格式的字符串导致 LRU 排序错乱。
         Ok(self
             .conn
             .query_row(

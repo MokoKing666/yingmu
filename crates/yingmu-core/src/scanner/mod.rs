@@ -93,9 +93,17 @@ pub fn compute_fingerprint(reader: &mut dyn MediaReader, size: u64) -> Result<Fi
         let len = std::cmp::min(FINGERPRINT_CHUNK, size - offset) as usize;
         let mut buf = vec![0u8; len];
         reader.seek(SeekFrom::Start(offset))?;
-        reader.read_exact(&mut buf[..len])?;
-        hasher.update((len as u64).to_le_bytes());
-        hasher.update(&buf);
+        // 文件可能在扫描期间被截断或声明大小偏大：读到多少算多少，
+        // 绝不因 EOF 让整个扫描崩溃，也不会把未读到的字节当作有效采样。
+        let mut filled = 0usize;
+        while filled < len {
+            match reader.read(&mut buf[filled..])? {
+                0 => break,
+                n => filled += n,
+            }
+        }
+        hasher.update((filled as u64).to_le_bytes());
+        hasher.update(&buf[..filled]);
     }
 
     let digest = hasher.finalize();

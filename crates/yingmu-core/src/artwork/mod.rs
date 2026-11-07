@@ -134,7 +134,7 @@ impl ArtworkCache {
                     db.artwork_remove(&request.media_id, kind, size)?;
                     return Ok(None);
                 }
-                // 用单调逻辑时钟刷新 LRU 时间（覆盖 artwork_get 的墙钟写入）。
+                // 用单调逻辑钟刷新 LRU 时间；数据库查询本身不改访问时间。
                 let path = entry.path.clone();
                 let bytes = entry.bytes;
                 let touched = ArtworkEntry {
@@ -257,11 +257,16 @@ impl ArtworkCache {
 mod tests {
     use super::*;
 
+    // 测试并行执行时，进程 ID + 毫秒时间戳仍可能撞车，导致两个用例共用目录、
+    // 互相 remove_dir_all 删掉对方的缓存文件。用纳秒时间戳 + 原子序号保证唯一。
+    static TEST_SEQ: AtomicU64 = AtomicU64::new(0);
+
     fn temp_root() -> PathBuf {
         std::env::temp_dir().join(format!(
-            "yingmu-artwork-test-{}-{}",
+            "yingmu-artwork-test-{}-{}-{}",
             std::process::id(),
-            chrono::Utc::now().timestamp_millis()
+            chrono::Utc::now().timestamp_nanos_opt().unwrap_or_default(),
+            TEST_SEQ.fetch_add(1, Ordering::Relaxed),
         ))
     }
 
