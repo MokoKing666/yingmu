@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           # 取完整历史，便于将来按 tag 生成提交摘要 / 读取 CHANGELOG。
           fetch-depth: 0

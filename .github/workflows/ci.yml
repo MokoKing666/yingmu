@@ -25,7 +25,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: 配置 Node.js 22 (含 npm 缓存)
         uses: actions/setup-node@v4
         with:
@@ -54,7 +54,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # Tauri 桌面端在 Linux 上编译所需的系统库。本 job 不编译 Tauri 桌面端，
       # 保留安装步骤以便未来扩展核心库的 Linux 集成测试；桌面端真实编译与
       # NSIS 打包由下方 windows-latest 的 windows-installer job 完成。
@@ -100,7 +100,7 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       - name: 配置 Node.js 22 (含 npm 缓存)
         uses: actions/setup-node@v4
         with:
