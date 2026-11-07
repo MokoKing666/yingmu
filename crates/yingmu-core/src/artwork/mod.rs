@@ -6,7 +6,7 @@
 //! - 图片字节通过 [`ArtworkLoader`] 注入（在线下载 / 本地生成由平台层实现）；
 //!   默认 [`NoopArtworkLoader`] 返回明确的「未验证」错误，绝不伪造图片数据。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::database::{ArtworkEntry, Database};
 use crate::models::{ArtworkKind, ArtworkRequest, ArtworkSize};

@@ -12,7 +12,7 @@
 //! - [`SmbProvider`] / [`WebDavProvider`]：**骨架，明确标注未验证**。协议客户端尚未
 //!   接入，`list/read/stat/open_reader` 一律返回明确错误，绝不伪造成功。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::models::SourceProtocol;
 use crate::network::Connectivity;

@@ -8,7 +8,7 @@
 //! - 即使探测到 HDR 支持，也只代表「显示能力」，**不代表 HDR 原生输出已验证**；
 //! - 每个未实机验证的 Provider 都在 notes 中逐条列出。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::models::{Backend, DiagnosticsReport, DisplayCaps};
 use crate::VERSION;

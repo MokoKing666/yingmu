@@ -7,7 +7,7 @@
 //! - SRT / WebVTT 是纯文本格式，可解析为文本 cue；其余未知格式返回明确错误，不猜测。
 //! - 内封轨道与外挂轨道分别管理（`external` 标记），外挂可设置延迟。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::models::{SubtitleFormat, SubtitleStreamInfo};
 use crate::{CoreError, Result};

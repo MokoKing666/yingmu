@@ -5,7 +5,7 @@
 //! - 是否续播由 `AppSettings.resumeBehaviour` 决定（ask / always / never），
 //!   见 [`resume_action`]；Rust 侧只给结论，弹窗交互由前端负责。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::database::Database;
 use crate::models::{PlaybackProgress, ResumeBehaviour};

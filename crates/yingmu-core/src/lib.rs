@@ -5,7 +5,7 @@
 //!
 //! # 诚实性声明（最高优先级）
 //! 本模块源码**未经编译验证**，不得视为可运行实现：Rust 工具链 1.99.1 已安装
-//! （未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；源码已落地但未经编译验证。
+//! （未在 PATH）；本地已具备便携 MSVC/Windows SDK 工具链，但受构建环境限制，源码已落地而未经完整编译验证。
 //! 所有依赖版本、API 调用与平台行为均按 crates.io 稳定版文档编写，但尚未经过
 //! `cargo check` / `cargo test` / `cargo clippy` 验证。集成 libmpv、NSIS 打包、
 //! HDR/Dolby 原生输出等能力一律未验证，详见各模块 README 与注释。

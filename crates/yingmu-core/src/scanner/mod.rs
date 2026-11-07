@@ -11,7 +11,7 @@
 //!   续扫时跳过 `<=` 该路径的文件，目录仍递归以发现新增文件。
 //! - 删除/移动检测见 [`reconcile`]。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::models::{ScanProgress, ScanState};
 use crate::providers::{DirEntry, MediaProvider, MediaReader};
@@ -491,8 +491,9 @@ struct ScanContext<'a> {
 
 impl ScanContext<'_> {
     fn emit(&mut self, event: ScanEvent) {
-        // 显式对 trait object 做可变重借用，避免字段为 &mut dyn FnMut 时的借用歧义。
-        (&mut *self.sink)(event);
+        // 直接调用 &mut dyn FnMut 字段；编译器会自动完成可变借用，
+        // 无需再显式写 `&mut *self.sink`（clippy::needless_borrow）。
+        (self.sink)(event);
     }
 
     fn walk(&mut self, dir: &str) -> Result<()> {

@@ -11,6 +11,7 @@
 //!    用 D3D11 / `gpu-next` 输出，把子窗口/Surface **嵌入应用窗口**，
 //!    禁止用独立外部播放器窗口冒充嵌入式播放；
 //! 3. 前端只持有 `PlayerSurface.handle`，不接触本地绝对路径或 HWND 细节。
+//!
 //! 详见 `native/windows/README.md`（当前状态：未验证）。
 //!
 //! # 五层能力模型（任何一层都不能由上一层推定成立）
@@ -19,7 +20,7 @@
 //! `native-output`（HDR/直通等原生输出）。
 //! 识别到 HDR 标识 ≠ 解码 ≠ 正确渲染 ≠ HDR 原生输出。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 use crate::models::{
     AudioStreamInfo, Chapter, MediaId, SubtitleStreamInfo, VersionId, VideoStreamInfo,
@@ -125,7 +126,7 @@ impl Default for PlayerState {
 
 /// 实时解码统计（用于「视频信息 / 实时解码信息」面板）。
 /// 未解码时全部为缺省或 false，绝不填充推测值。
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DecodeStats {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -154,26 +155,6 @@ pub struct DecodeStats {
     pub tone_mapping_active: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub audio_output_mode: Option<String>,
-}
-
-impl Default for DecodeStats {
-    fn default() -> Self {
-        DecodeStats {
-            video_codec: None,
-            audio_codec: None,
-            hw_decoder_active: false,
-            displayed_fps: None,
-            estimated_vsync_fps: None,
-            dropped_frames: None,
-            vo_delayed_frames: None,
-            display_sync_ratio: None,
-            cache_duration_seconds: None,
-            output_pixel_format: None,
-            output_color_space: None,
-            tone_mapping_active: None,
-            audio_output_mode: None,
-        }
-    }
 }
 
 /// 播放器命令（tagged union，与 TS `PlayerCommand` 一一对应）。

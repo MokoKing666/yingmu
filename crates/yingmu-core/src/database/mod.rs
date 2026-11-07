@@ -16,7 +16,7 @@
 //! 换 NAS 地址时只需 [`Database::remap_source`] 更新 `sources.uri`，
 //! 所有版本行与元数据保持不变。一个 `media` 可对应多行 `media_versions`。
 //!
-//! 本模块源码未经编译验证：Rust 工具链 1.99.1 已安装（未在 PATH），但 MSVC / Windows SDK / link.exe 缺失；不得视为可运行实现。
+//! 本模块源码未经编译验证：本地已具备 Rust 与便携 MSVC/Windows SDK 工具链，但受构建环境限制尚未完成完整编译与测试；不得视为可运行实现。
 
 pub mod models;
 
