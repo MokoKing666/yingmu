@@ -34,7 +34,7 @@ jobs:
           # 取完整历史，便于将来按 tag 生成提交摘要 / 读取 CHANGELOG。
           fetch-depth: 0
       - name: 配置 Node.js 22 (含 npm 缓存)
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '22'
           cache: 'npm'
