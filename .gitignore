@@ -1,0 +1,128 @@
+# ---------------------------------------------------------------------------
+# 影幕 YingMu — 严格忽略规则
+# 目标：绝不把密钥、用户数据、私有路径、构建产物、媒体样本提交进仓库
+# ---------------------------------------------------------------------------
+
+# 依赖与构建产物
+node_modules/
+dist/
+build/
+out/
+target/
+*.tsbuildinfo
+.vite/
+.turbo/
+.parcel-cache/
+
+# Rust / Tauri
+**/target/
+**/gen/
+**/src-tauri/target/
+apps/desktop/src-tauri/binaries/
+apps/desktop/src-tauri/*.dll
+
+# 安装器与打包产物（构建产物不得入库）
+*.exe
+*.msi
+*.nsi.bak
+*.zip
+*.7z
+*.dmg
+*.AppImage
+*.deb
+*.rpm
+
+# 密钥、凭据、本地环境（最高优先级）
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.keystore
+*.token
+*secret*
+*credential*
+# 例外：仓库自带的凭据扫描工具与安全政策文档必须入库
+!scripts/secret-scan.mjs
+!docs/**/*secret*
+!.github/workflows/*
+id_rsa*
+id_ed25519*
+.ssh/
+.git-credentials
+gh_hosts.yml
+
+# 用户数据与运行时数据（严禁上传）
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+logs/
+cache/
+Cache/
+AppData/
+%APPDATA%/
+%LOCALAPPDATA%/
+
+# 私人媒体与测试素材（严禁上传）
+*.mkv
+*.mp4
+*.mov
+*.avi
+# 注意：MPEG-TS 视频扩展名也是 .ts，但绝不能写 `*.ts`——那会忽略全部 TypeScript 源码。
+# 仅在明确的私人媒体目录下忽略 .ts，其余 TS 源文件必须入库。
+*.m2ts
+samples/**/*.ts
+private-media/**/*.ts
+test-media/**/*.ts
+*.webm
+*.iso
+*.srt
+*.ass
+*.ssa
+*.sup
+*.sub
+*.vtt
+*.nfo
+samples/
+testdata/
+test-media/
+private-media/
+screenshots-local/
+
+# 字体二进制（授权原因，不打包系统字体；仅保留授权说明）
+*.ttf
+*.otf
+*.woff
+*.woff2
+!assets/branding/**/*.svg
+
+# 编辑器 / 操作系统
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 测试覆盖率
+coverage/
+.nyc_output/
+
+# 可搬运的离线源码包（含完整 git 历史，由 git bundle 生成，不入库）
+*.bundle
+
+# 本机绝对路径、临时脚本输出
+*.local.*
+tmp/
+temp/
+
+# WorkBuddy 会话数据（内部工作日志 / 临时脚本，含协作过程与本机路径，不入库）
+.workbuddy/
