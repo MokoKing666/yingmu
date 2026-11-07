@@ -1,0 +1,112 @@
+name: 播放兼容性实机验证 (HDR / Dolby / 音频直通)
+description: 提交 HDR、Dolby、音频直通等在真实设备上的观测结果，用于兼容性记录
+title: "[Compat] "
+labels: ["playback", "compat", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        本表单只收集**真实设备上的观测信息**，用于建立播放兼容性记录。
+
+        重要约定：
+
+        - 影幕 YingMu 处于 v0.1.0 早期阶段，**不宣称任何 Dolby 认证能力**；诊断信息只代表已探测到的显示能力，不代表 HDR 原生输出或直通已验证。
+        - 请**只描述样本规格**（编码、容器、分辨率、音轨格式等），**不要上传或粘贴私人媒体文件、样本文件、密钥、凭据、本机绝对路径或 UNC 路径**。
+        - 观测结果请区分「预期」「实际」「是否回退到 SDR / 有声音但非直通」等，便于归档。
+  - type: dropdown
+    id: category
+    attributes:
+      label: 验证类别
+      options:
+        - HDR10 / HDR10+ 呈现
+        - Dolby Vision
+        - Dolby Atmos / 对象音频
+        - 音频直通 (bitstream / WASAPI 独占)
+        - 硬件解码 / 色彩空间
+        - 其他
+    validations:
+      required: true
+  - type: input
+    id: gpu
+    attributes:
+      label: GPU 型号
+      placeholder: 例如 NVIDIA RTX 4060 / Intel Iris Xe / AMD Radeon 780M
+    validations:
+      required: true
+  - type: input
+    id: driver
+    attributes:
+      label: 显卡驱动版本
+      placeholder: 驱动版本号
+    validations:
+      required: true
+  - type: input
+    id: display
+    attributes:
+      label: 显示 / 声音设备
+      description: 电视、显示器、投影、功放或回音壁的型号
+      placeholder: 例如 LG C3 / Samsung QN90 / Denon AVR
+    validations:
+      required: true
+  - type: dropdown
+    id: interface
+    attributes:
+      label: 连接接口
+      options:
+        - HDMI 2.0
+        - HDMI 2.1
+        - DisplayPort
+        - 内置面板 / 扬声器
+        - 光纤 / 同轴
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: color-settings
+    attributes:
+      label: 系统与播放器色彩 / 音频设置
+      description: |
+        Windows HDR 开关、位深、色彩空间、刷新率；播放器中的硬件解码、
+        音频输出模式（自动 / WASAPI 共享 / WASAPI 独占 / 直通）、HDR 相关开关等。
+    validations:
+      required: true
+  - type: textarea
+    id: sample-profile
+    attributes:
+      label: 样本 Profile（仅描述规格）
+      description: |
+        容器、视频编码、分辨率、帧率、位深、色彩空间 / HDR 元数据、
+        音轨编码与声道布局等。请勿填写文件路径或上传文件。
+      placeholder: |
+        容器: MKV
+        视频: HEVC Main10, 3840x2160, 23.976fps, 10bit, BT.2020 / HDR10
+        音轨: TrueHD Atmos 7.1 / E-AC-3 JOC
+    validations:
+      required: true
+  - type: textarea
+    id: observation
+    attributes:
+      label: 观测结果
+      description: |
+        请分别写出「预期」与「实际」；并说明是否出现黑屏、偏色、掉帧、无声、
+        回退 SDR、仅有声但非直通等现象，以及是否有可复现的条件。
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 影幕版本
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 以下信息来自我在真实设备上的实际观测，而非推测或转述
+          required: true
+        - label: 我没有粘贴凭据、本机绝对路径、UNC 路径，也没有上传私人媒体样本
+          required: true
+        - label: 我理解本记录不代表影幕已获得 Dolby 认证或已正式支持该能力
+          required: true

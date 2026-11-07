@@ -1,0 +1,185 @@
+name: CI
+
+# 触发：推送到 main 与所有 Pull Request。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# 最小权限：CI 只读代码；Release 工作流单独申请 contents: write。
+permissions:
+  contents: read
+
+# 同一分支 / PR 的重复运行自动取消，避免并发浪费 Runner。
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1) 前端：Ubuntu 上真实执行 typecheck / lint / test / build，不允许空跑。
+  # ---------------------------------------------------------------------------
+  frontend:
+    name: 前端 (typecheck / lint / test / build)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - name: 配置 Node.js 22 (含 npm 缓存)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      # npm ci 与 setup-node 的 npm 缓存都要求仓库根目录存在 package-lock.json
+      # （由 npm install 生成，应随骨架一并提交）。缺失时此步骤会明确失败并提示。
+      - name: 安装依赖 (npm ci)
+        run: npm ci
+      - name: 类型检查 (typecheck)
+        run: npm run typecheck
+      - name: 静态检查 (lint)
+        run: npm run lint
+      - name: 单元测试 (test)
+        run: npm run test
+      - name: 前端构建 (build)
+        run: npm run build
+
+  # ---------------------------------------------------------------------------
+  # 2) Rust：Ubuntu 上检查格式 / clippy / 测试。
+  #    GitHub Actions 工作流仅能由 ubuntu-latest runner 执行，本机无法运行该 job。
+  # ---------------------------------------------------------------------------
+  rust:
+    name: Rust 核心库 (fmt / clippy / test)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      # Tauri 桌面端在 Linux 上编译所需的系统库。本 job 不编译 Tauri 桌面端，
+      # 保留安装步骤以便未来扩展核心库的 Linux 集成测试；桌面端真实编译与
+      # NSIS 打包由下方 windows-latest 的 windows-installer job 完成。
+      - name: 安装 Linux 系统依赖 (Tauri/Linux 编译前置)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf
+      - name: 配置 Rust stable (rustfmt + clippy)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Rust 构建缓存
+        uses: Swatinem/rust-cache@v2
+      # cargo fmt --all 覆盖整个 workspace 的格式检查，不触发编译，安全可执行。
+      - name: cargo fmt --check
+        run: cargo fmt --all -- --check
+      # 说明：本仓库 workspace 含 yingmu-core 与 yingmu-desktop 两个 crate。
+      # cargo fmt --all 覆盖两者的格式；yingmu-desktop 的真实编译（tauri build）
+      # 由下方 windows-installer job 在 windows-latest 完成。
+      # Tauri 桌面端依赖 WebView2 / Windows SDK / NSIS，且 tauri-build 在构建期
+      # 需要前端 dist 与平台相关资源；Linux 上即便装了 webkit2gtk，也不等同于
+      # 「可编译 Tauri 桌面端」。为避免假装能在 Linux 编译桌面端，编译类检查
+      # (clippy / test) 明确限定为纯 Rust 核心库 yingmu-core。根 package.json
+      # 里的 cargo:clippy / cargo:test 使用 --workspace，由具备完整工具链的
+      # Windows 发布流程覆盖；这里不伪装 --workspace 能在 Linux 通过。
+      - name: cargo clippy (yingmu-core)
+        run: cargo clippy -p yingmu-core --all-targets -- -D warnings
+      - name: cargo test (yingmu-core)
+        run: cargo test -p yingmu-core
+
+  # ---------------------------------------------------------------------------
+  # 3) Windows 安装包：真实构建 NSIS 安装包，校验后才允许上传。
+  #    Tauri 桌面端编译 / NSIS 打包依赖 windows-latest 的 MSVC / Windows SDK，
+  #    本机受构建环境限制未产出安装包，该 job 仅能在 GitHub Actions 上执行。
+  # ---------------------------------------------------------------------------
+  windows-installer:
+    name: Windows NSIS 安装包
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: 检出代码
+        uses: actions/checkout@v4
+      - name: 配置 Node.js 22 (含 npm 缓存)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - name: 配置 Rust stable (MSVC 工具链)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+      - name: Rust 构建缓存
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: '. -> target'
+      - name: 安装依赖 (npm ci)
+        run: npm ci
+      - name: 构建前端产物 (build)
+        run: npm run build
+      # tauri-action：省略 tagName / releaseName / releaseId 时（见其 README），
+      # 动作只执行 tauri build，不创建 GitHub Release、也不上传任何 Release 资产。
+      # 因此这里仅产出 NSIS 安装包，供下一步校验。
+      # 使用 @v1：与 Tauri v2 官方 GitHub Actions 工作流示例一致（team-lead 已确认）。
+      - name: 构建 NSIS 安装包 (tauri-action)
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: apps/desktop/src-tauri
+          args: --bundles nsis
+      # tauri-action 产出的 NSIS 文件名由 tauri.conf.json 的 productName + version
+      # 推导（例如「影幕 YingMu_0.1.0_x64-setup.exe」），落在 .../bundle/nsis/ 下，
+      # 永远不会叫 YingMu-Setup-*.exe。因此构建后必须显式定位真实产物并规范化命名：
+      #  - 用 */bundle/nsis/*.exe 同时兼容「项目内 target」与「工作区根 target」布局；
+      #  - version 从 tauri.conf.json 读取；
+      #  - 复制到独立暂存目录 nsis-staging/，下一步只对它做校验，校验通过后再
+      #    复制到 installer-artifact/ 供上传。暂存目录刻意不放在 installer-artifact/
+      #    或 release-assets/ 下，避免被定位 find 的排除规则过滤掉。
+      - name: 规范化安装包文件名 (定位真实 NSIS 产物并重命名)
+        shell: bash
+        run: |
+          set -euo pipefail
+          exe="$(find . -type f -path '*/bundle/nsis/*.exe' \
+            -not -path './node_modules/*' \
+            -print -quit)"
+          if [ -z "$exe" ]; then
+            echo "::error::tauri-action 未产出任何 NSIS 安装包（*/bundle/nsis/*.exe 未找到）"
+            exit 1
+          fi
+          version="$(node -p "require('./apps/desktop/src-tauri/tauri.conf.json').version")"
+          if [ -z "$version" ]; then
+            echo "::error::无法从 tauri.conf.json 读取 version，禁止上传未经验证的产物"
+            exit 1
+          fi
+          mkdir -p nsis-staging
+          cp "$exe" "nsis-staging/YingMu-Setup-${version}-x64.exe"
+          echo "规范化产物: $exe -> nsis-staging/YingMu-Setup-${version}-x64.exe"
+      # 关键闸门：对规范化后的暂存产物做真实校验（存在 / >1MB / PE(MZ) / SHA-256）。
+      # 任一步失败即以非零退出，从而阻断后续上传，绝不上传未经验证的产物。
+      - name: 定位并校验 NSIS 安装包 (找不到即失败)
+        shell: bash
+        run: |
+          set -euo pipefail
+          # 只对暂存目录做 find：暂存产物不在 installer-artifact/ / release-assets/ 下，
+          # 因此不会被排除规则过滤，也不会误命中历史遗留产物。
+          src="$(find nsis-staging -type f -name 'YingMu-Setup-*.exe' -print -quit)"
+          if [ -z "$src" ]; then
+            echo "::error::未找到 nsis-staging/YingMu-Setup-*.exe —— NSIS 安装包未生成，禁止上传未经验证的产物"
+            exit 1
+          fi
+          echo "找到安装包: $src"
+          mkdir -p installer-artifact
+          cp "$src" installer-artifact/
+          exe="installer-artifact/$(basename "$src")"
+          # verify-release.mjs：体积 >1MB、PE 头 MZ、SHA-256；并输出 SHA256SUMS.txt
+          node scripts/verify-release.mjs "$exe" --sums installer-artifact/SHA256SUMS.txt
+      - name: 上传已校验的安装包与校验和
+        uses: actions/upload-artifact@v4
+        with:
+          name: yingmu-nsis-installer
+          path: |
+            installer-artifact/YingMu-Setup-*.exe
+            installer-artifact/SHA256SUMS.txt
+          if-no-files-found: error

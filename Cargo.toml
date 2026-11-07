@@ -1,0 +1,38 @@
+# 影幕 YingMu — Rust 工作区根清单
+#
+# 说明：
+# - 仅纳入本团队所有权范围内的成员：媒体核心 crate 与 Tauri 桌面端壳。
+# - 前端（apps/desktop/src）由 Node/Vite 工作区管理，不属于 Cargo 工作区。
+# - resolver = "2" 与 edition 2021 对齐，避免特性统一（feature unification）跨目标污染。
+# - 目标三元组为 x86_64-pc-windows-msvc；Rust 工具链 1.99.1 已安装（未在 PATH），
+#   便携 MSVC 工具链与 Windows SDK 已在本地就位（需显式配置 PATH / LIB / INCLUDE），
+#   但受构建环境限制，此工作区仍未经编译验证。
+
+[workspace]
+resolver = "2"
+members = [
+    "crates/yingmu-core",
+    "apps/desktop/src-tauri",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.77.2"
+
+[workspace.dependencies]
+# 所有版本选取 crates.io 上真实存在的稳定版。
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+# UUID v5 用于「由内容指纹派生稳定 MediaId」，serde 便于跨语言序列化。
+uuid = { version = "1", features = ["v5", "serde"] }
+# SHA-256 用于部分内容指纹（fingerprint）。
+sha2 = "0.10"
+# 只读 XML 解析，用于 NFO；API 稳定、无宏展开、依赖少。
+roxmltree = "0.20"
+# 选择 rusqlite 而非 sqlx，理由见 crates/yingmu-core/src/database/mod.rs 顶部注释：
+# bundled 特性随 crate 编译 SQLite amalgamation 并启用 FTS5，同步 API，
+# 无需额外 async runtime，迁移与全文检索可自洽实现，便于 Windows MSVC 交付。
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }

@@ -1,0 +1,33 @@
+{
+  "name": "yingmu",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "影幕 YingMu — Folia 式磁贴幕墙与 Infuse 级媒体管理体验的跨平台个人媒体中心",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @yingmu/desktop",
+    "build": "npm run build -w @yingmu/desktop",
+    "preview": "npm run preview -w @yingmu/desktop",
+    "typecheck": "npm run typecheck -w @yingmu/desktop",
+    "lint": "npm run lint -w @yingmu/desktop",
+    "test": "npm run test -w @yingmu/desktop",
+    "test:watch": "npm run test:watch -w @yingmu/desktop",
+    "format": "prettier --write \"apps/desktop/src/**/*.{ts,tsx,css}\" \"packages/*/src/**/*.{ts,css}\"",
+    "format:check": "prettier --check \"apps/desktop/src/**/*.{ts,tsx,css}\" \"packages/*/src/**/*.{ts,css}\"",
+    "brand:icons": "node scripts/generate-icons.mjs",
+    "cargo:fmt": "cargo fmt --all -- --check",
+    "cargo:clippy": "cargo clippy --workspace --all-targets -- -D warnings",
+    "cargo:test": "cargo test --workspace"
+  },
+  "devDependencies": {
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2"
+  },
+  "engines": {
+    "node": ">=20.19.0"
+  }
+}

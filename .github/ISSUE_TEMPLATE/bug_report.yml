@@ -1,0 +1,76 @@
+name: 问题反馈 / Bug 报告
+description: 报告影幕 YingMu 的崩溃、异常行为或界面问题
+title: "[Bug] "
+labels: ["bug", "triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请先阅读以下说明：
+
+        - 请在提交前搜索已有 Issue，避免重复。
+        - **不要**粘贴任何密钥、令牌、账号密码、`.env` 内容、本机绝对路径、UNC 路径或私人媒体文件；日志与路径请先脱敏。
+        - 影幕 YingMu 当前为 v0.1.0 早期版本，部分功能尚未完成或未实机验证，请勿据此推断为正式支持的能力。
+  - type: input
+    id: version
+    attributes:
+      label: 影幕版本
+      description: 例如 v0.1.0；若为源码构建，请注明提交号
+      placeholder: v0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: 运行平台
+      options:
+        - Windows x64 (安装包)
+        - Windows x64 (源码构建)
+        - 浏览器 / Vite dev (WebDemo)
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: 实际发生了什么
+      description: 请把路径、用户名等私人信息脱敏后再粘贴
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望的行为
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: 复现步骤
+      description: |
+        1. 打开… 2. 点击… 3. 看到…
+        请给出稳定可复现的步骤，并注明是否偶发。
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: 诊断信息（可选）
+      description: |
+        可粘贴「设置 / 诊断」中导出的 DiagnosticsReport 摘要（后端状态、WebView2 版本、GPU 适配器、显示能力等）。
+        注意：诊断信息只代表已探测到的能力，不代表 HDR 原生输出或 Dolby 相关能力已验证。
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志（可选，需脱敏）
+      description: 仅粘贴相关片段；删除其中可能存在的令牌、路径与个人数据
+      render: shell
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: 提交前确认
+      options:
+        - label: 我已搜索已有 Issue，确认不是重复报告
+          required: true
+        - label: 我已删除报告中的密钥、凭据、本机绝对路径与私人媒体样本
+          required: true
