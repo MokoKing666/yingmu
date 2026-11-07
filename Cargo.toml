@@ -34,5 +34,5 @@ roxmltree = "0.20"
 # 选择 rusqlite 而非 sqlx，理由见 crates/yingmu-core/src/database/mod.rs 顶部注释：
 # bundled 特性随 crate 编译 SQLite amalgamation 并启用 FTS5，同步 API，
 # 无需额外 async runtime，迁移与全文检索可自洽实现，便于 Windows MSVC 交付。
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }
