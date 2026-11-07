@@ -1,0 +1,88 @@
+/* 影幕 Design Tokens — CSS 变量层。:root 为深色，[data-theme='light'] 覆盖为浅色。
+   与 tokens.ts 保持数值一致；改动需同步两处并更新 docs/design/design-system.md。 */
+
+:root {
+  --brand-amber: #d9a55b;
+  --brand-amber-soft: #e8c58c;
+  --brand-silver: #f2efe9;
+
+  --bg-base: #0b0d10;
+  --bg-elevated: #12151a;
+  --bg-overlay: #191d23;
+  --surface: #1c2128;
+  --surface-hover: #252b33;
+  --border: #2a3038;
+  --border-strong: #3a424c;
+  --text-primary: #f2efe9;
+  --text-secondary: #a8b0ba;
+  --text-tertiary: #6e7884;
+  --scrim: rgba(6, 8, 10, 0.72);
+
+  --semantic-success: #6fb28c;
+  --semantic-warning: #d9a55b;
+  --semantic-danger: #d97a6c;
+  --semantic-info: #7c9bb5;
+
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.36);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.52);
+  --shadow-glow: 0 0 0 1px rgba(217, 165, 91, 0.28), 0 16px 48px rgba(0, 0, 0, 0.56);
+
+  --font-family: 'MiSans', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
+
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+  --radius-tile: 20px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --gutter-x: 16px;
+  --gutter-y: 24px;
+  --page-x: 40px;
+  --page-y: 32px;
+  --tile-gap: 16px;
+
+  --z-bg: 0;
+  --z-content: 10;
+  --z-sticky: 30;
+  --z-overlay: 50;
+  --z-player-chrome: 70;
+  --z-modal: 90;
+  --z-toast: 110;
+
+  --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-card: 420ms;
+  --duration-page: 360ms;
+}
+
+[data-theme='light'] {
+  --bg-base: #f7f6f3;
+  --bg-elevated: #ffffff;
+  --bg-overlay: #ffffff;
+  --surface: #ffffff;
+  --surface-hover: #efede8;
+  --border: #e2dfd8;
+  --border-strong: #cfcac0;
+  --text-primary: #1a1d21;
+  --text-secondary: #5a6069;
+  --text-tertiary: #8a9099;
+  --scrim: rgba(247, 246, 243, 0.78);
+
+  --shadow-sm: 0 2px 8px rgba(26, 29, 33, 0.06);
+  --shadow-md: 0 8px 24px rgba(26, 29, 33, 0.1);
+  --shadow-lg: 0 24px 64px rgba(26, 29, 33, 0.14);
+  --shadow-glow: 0 0 0 1px rgba(217, 165, 91, 0.42), 0 16px 48px rgba(26, 29, 33, 0.12);
+}
