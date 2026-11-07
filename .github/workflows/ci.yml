@@ -176,7 +176,7 @@ jobs:
           # verify-release.mjs：体积 >1MB、PE 头 MZ、SHA-256；并输出 SHA256SUMS.txt
           node scripts/verify-release.mjs "$exe" --sums installer-artifact/SHA256SUMS.txt
       - name: 上传已校验的安装包与校验和
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: yingmu-nsis-installer
           path: |
