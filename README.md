@@ -22,14 +22,14 @@
 | 原创 SVG Logo、图标、Design Tokens | ✅ 已实现 | `assets/branding/`、`packages/design-tokens/` |
 | 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ 已实现 | `packages/media-models/`、`packages/player-api/` |
 | 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **真实通过** | 50 个 Vitest 用例、TS 严格模式、ESLint 0 警告 |
-| GitHub Actions CI / Release 工作流 | ✅ 工作流已编写 | `.github/workflows/`；**未在本机执行过**（需 GitHub 托管 runner） |
+| GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
 | Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ⚠️ **源码已落地，但未经编译验证**（受构建环境限制），编译状态见 `docs/testing/strategy.md` | `crates/yingmu-core/`、`apps/desktop/src-tauri/` |
 | libmpv 嵌入式播放 / 原生视频 Surface | ❌ **未集成、未验证** | 见 `docs/playback/windows-surface-validation.md` |
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
 | **NSIS 安装包 `YingMu-Setup-0.1.0-x64.exe`** | ❌ **本阶段未生成** | 由 CI / Release 工作流在 `windows-latest` 构建并把关，详见「已知问题」 |
-| **GitHub 源码推送 / CI 执行 / Release** | ❌ **本阶段未完成** | 凭据通道受阻：git 通道不可达、本地凭据文件已失效（401）、GitHub App 无建仓权限（403）；完整源码已打包为 git bundle，详见「已知问题」 |
+| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、`main` 分支、7 个提交，173/173 文件 blob SHA 一致；CI 结果见仓库 Actions 页面 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
 
@@ -149,7 +149,7 @@ yingmu/
 | Edge（用于真实截图） | 已安装 ✅ |
 | Rust stable | ✅ **已安装**：`cargo 1.99.1` / `rustc 1.99.1`（含 `rustfmt`、`clippy`），工具链 `stable-x86_64-pc-windows-msvc`；位于 `%USERPROFILE%\.cargo\bin`，**不在自动化 shell 的默认 PATH 中** |
 | **MSVC / Windows SDK（便携工具链）** | ✅ **已就位**：Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`） |
-| GitHub 认证通道 | ⚠️ 连接器已认证为 `MokoKing666`（App 无建仓权限）；`gh` CLI / GCM 缺失；本地凭据文件已失效（401）；git 通道不可达 |
+| GitHub 认证与推送通道 | ✅ 已打通：`api.github.com` 直连 + `Basic 用户名:token`；本机 `git push` 通道仍不可用（代理 502） |
 | C: 可用空间 | 约 15 GB |
 
 前端要求 Node ≥ 20.19。Tauri 桌面端要求 `x86_64-pc-windows-msvc`、MSVC 编译器、Windows SDK、WebView2 与 NSIS（由 Tauri 下载）。Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`）；但 `cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。
@@ -229,7 +229,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 ## 已知问题与未完成事项
 
 1. **NSIS 安装包未构建**：**本阶段未生成**，交付安装包由 CI / Release 工作流在 `windows-latest` 上构建并把关。`cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。
-2. **GitHub 未推送**：目标仓库 `MokoKing666/yingmu` 经已认证接口确认 404（账号下 8 个公开仓库中无同名或 `yingmu-player`，无覆盖风险）；GitHub 连接器已认证为 `MokoKing666`，但其 GitHub App 无「创建仓库」权限（403）；本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），仅 `api.github.com` 直连可达；用户提供的本地凭据文件为标准格式的 classic PAT，但实测 `GET /user` 返回 401（凭据已失效）——其**内容未被读取输出，也未写入任何代码、提交、remote URL 或日志**。完整源码已打包为 git bundle 并保留全部提交历史，待有效凭据就绪后可一键推送。按项目安全要求，**不会**要求用户在聊天中粘贴 Token，也不会把凭据写进代码或 remote URL。可任选一条路径完成推送：① 更新本地凭据文件为具备 `repo` 权限的有效 PAT 后，由本仓库脚本经 `api.github.com` 直连创建仓库并分模块推送；② 在具备正常 git 网络的环境克隆随附的 git bundle，配置好 GCM / `gh auth login` 后执行 `git push`。首次 CI 与 Release 只能在推送后触发，本阶段**均未实跑**。
+2. **GitHub 已推送，但本机 `git push` 通道仍不可用**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。GitHub Actions 由本次推送自动触发（`ci.yml` 的 `frontend` / `rust` / `windows-installer` 三个 job），实际结果以仓库 Actions 页面为准；`release.yml` 需推送 `v*` Tag 才触发，本阶段**未创建 Release**。`gh` CLI / GCM 仍缺失；桌面凭据文件为明文 PAT，建议用后轮换并删除。
 3. **播放器后端未集成**：libmpv DLL、D3D11 + HWND 原生视频 Surface 与 WebView2 组合、4K HEVC / HDR 输出均**未完成实机验证**。播放器页面只提供控制界面预览。
 4. **Dolby / HDR 状态**：仅实现「文件标识识别」；元数据解析、解码、正确渲染、原生信号输出四层均未验证。未获得 Dolby 官方认证，未使用 Dolby 官方 Logo。详见 [`docs/dolby-compatibility/compatibility-matrix.md`](docs/dolby-compatibility/compatibility-matrix.md)。
 5. **媒体库为演示数据**：扫描、刮削、网络媒体源连接、真实播放记录均需 Tauri + Rust 核心在桌面端运行。

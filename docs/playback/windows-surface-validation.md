@@ -14,7 +14,7 @@
 | 网络 | 可达 github.com / api.github.com / static.rust-lang.org / npm registry | 可下载工具链与依赖；不代表已完成下载或构建 |
 | Rust / Cargo / rustup | **已安装**：`cargo 1.99.1` / `rustc 1.99.1`，含 `rustfmt`、`clippy`，工具链 `stable-x86_64-pc-windows-msvc`；位于 `%USERPROFILE%\.cargo\bin`，**不在自动化 shell 的默认 PATH 中** | Rust 源码已落地，可运行 `cargo fmt` 等纯前端检查；但无法完成链接 |
 | MSVC / Windows SDK（便携工具链） | **已就位**：cl.exe / link.exe / lib.exe 与 SDK 导入库、头文件、rc.exe 齐备（需显式配置 `PATH` / `LIB` / `INCLUDE`） | 单文件 Rust/C 程序已实测编译链接并运行成功；工作区级构建仍受构建环境限制 |
-| GitHub 推送通道 | **受阻** | 连接器已认证但无建仓权限；本地凭据失效（401）；git 通道不可达；与播放能力验证无直接关系 |
+| GitHub 推送通道 | ✅ 已打通（`api.github.com` + Basic） | 源码已推送 173 个文件、173/173 blob SHA 一致；与播放能力验证无直接关系 |
 | 磁盘 | C: 剩余 15.6GB | 工具链与依赖安装的容量参考 |
 | 仓库 `MokoKing666/yingmu` | 返回 404（不存在） | — |
 | Tauri / NSIS 安装包 | **本阶段未生成** | 由 CI / Release 在 `windows-latest` 构建并把关，无可安装产物，安装与实机播放测试无法启动 |

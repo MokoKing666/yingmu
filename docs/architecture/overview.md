@@ -137,7 +137,7 @@ flowchart LR
 | `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（168 文件零命中 / 6-6 通过） |
 | `npm run cargo:fmt` / `cargo:clippy` / `cargo:test` | Rust 检查与测试 | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制，见 `docs/testing/strategy.md` |
 | Tauri 桌面构建 / NSIS 安装包 | 生成 `.exe` 安装器 | **本阶段未生成**，由 CI / Release 在 `windows-latest` 构建 |
-| 推送至 `github.com/MokoKing666/yingmu` | 代码托管 | **本阶段未完成**：目标仓库 `MokoKing666/yingmu` 经已认证接口确认 404（账号下 8 个公开仓库中无同名或 `yingmu-player`，无覆盖风险）；GitHub 连接器已认证为 `MokoKing666`，但其 GitHub App 无「创建仓库」权限（403）；本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），仅 `api.github.com` 直连可达；用户提供的本地凭据文件为标准格式的 classic PAT，但实测 `GET /user` 返回 401（凭据已失效）——其**内容未被读取输出，也未写入任何代码、提交、remote URL 或日志**。完整源码已打包为 git bundle 并保留全部提交历史，待有效凭据就绪后可一键推送 |
+| 推送至 `github.com/MokoKing666/yingmu` | 代码托管 | ✅ **已完成**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志 |
 
 > 前端构建产物（`dist/`）、安装器（`*.exe`/`*.msi`）、Rust 构建产物（`target/`）、字体二进制、用户数据库、媒体样本均被 `.gitignore` 排除，不得入库。用户数据目录统一以 Rust 侧 `DataDirs::resolve()` 为准：`%APPDATA%\YingMu`（数据库与设置）、`%LOCALAPPDATA%\YingMu\Cache`（缓存 / 封面）、`%LOCALAPPDATA%\YingMu\Logs`（日志），不写入安装目录；`com.moko.yingmu` 仅为应用标识符 / Bundle ID，**不用作目录名**（见 `docs/adr/0005-data-locations.md`）。文档一律用 `%APPDATA%` / `%LOCALAPPDATA%` 占位符表达，不写任何本机绝对路径。
 

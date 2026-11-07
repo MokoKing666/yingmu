@@ -13,7 +13,7 @@
 
 ## 背景
 
-- 目标仓库 `MokoKing666/yingmu` 经已认证接口确认 404（账号下 8 个公开仓库中无同名或 `yingmu-player`，无覆盖风险）；GitHub 连接器已认证为 `MokoKing666`，但其 GitHub App 无「创建仓库」权限（403）；本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），仅 `api.github.com` 直连可达；用户提供的本地凭据文件为标准格式的 classic PAT，但实测 `GET /user` 返回 401（凭据已失效）——其**内容未被读取输出，也未写入任何代码、提交、remote URL 或日志**。完整源码已打包为 git bundle 并保留全部提交历史，待有效凭据就绪后可一键推送。许可证状态与「未授权第三方复制或分发」的声明不受推送状态影响。
+- 仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。许可证状态与「未授权第三方复制或分发」的声明不受推送状态影响。
 - 项目引入了大量第三方依赖（React、Vite、Tailwind、Motion、Zustand、PixiJS、Tauri、Rust crates、libmpv、FFmpeg、libplacebo、MiSans 字体、NSIS、WebView2 等），各自有不同许可证与分发限制。
 - 涉及 GPL / LGPL、编解码专利池、第三方商标（Dolby、DTS、HDR10+ 等）、字体授权与 Dolby 技术授权等法务问题。
 - 需求：明确「代码公开」与「授权使用」的区别，避免第三方误以为可自由复制、修改或分发。

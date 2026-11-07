@@ -46,7 +46,7 @@
 
 - **Rust 源码已落地（含 `Cargo.toml` 与 SQL 迁移），但受构建环境限制仍未经编译验证。** `cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。Tauri/NSIS 安装包本阶段未生成。
 - **libmpv 目标后端未集成、未验证**；D3D11 + 原生 HWND Surface 嵌入、4K HEVC / HDR / DV 输出、音频 bitstream 均未实机验证。
-- 目标仓库 `MokoKing666/yingmu` 经已认证接口确认 404（账号下 8 个公开仓库中无同名或 `yingmu-player`，无覆盖风险）；GitHub 连接器已认证为 `MokoKing666`，但其 GitHub App 无「创建仓库」权限（403）；本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），仅 `api.github.com` 直连可达；用户提供的本地凭据文件为标准格式的 classic PAT，但实测 `GET /user` 返回 401（凭据已失效）——其**内容未被读取输出，也未写入任何代码、提交、remote URL 或日志**。完整源码已打包为 git bundle 并保留全部提交历史，待有效凭据就绪后可一键推送；**GitHub 尚未推送**；CI 与 Release 未实跑。
+- 仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。GitHub Actions 已由推送触发；Release 未创建。
 - 所有能力声明以实机证据为准；「未验证」不等于「不支持」，但**不得据此宣称支持**（见 `docs/dolby-compatibility/*`）。
 - 第三方依赖许可证与 Dolby/DTS 商标、专利、字体授权需专项审查（见 `THIRD_PARTY_NOTICES.md`、`0006-license-status.md`）；项目自身开源许可证尚未确定。
 

@@ -14,9 +14,9 @@
 | `cargo fmt` | **可本机真实执行**（只需 Rust 工具链，不触发链接） | ubuntu-latest 的 `rust` job 执行 |
 | `cargo clippy` / `cargo test` | 受构建环境限制**未在本机成功完成**，明确跳过 | ubuntu-latest 的 `rust` job 执行 |
 | Tauri 桌面端编译 / NSIS 打包 | **本阶段未生成** | windows-latest 由 `tauri-apps/tauri-action@v1` 执行 |
-| gh CLI / GitHub 认证 | 连接器已认证为 `MokoKing666` 但 App 无建仓权限（403）；`gh` CLI 不存在；`~/.git-credentials` 不存在；本地凭据文件失效（401）；`git ls-remote` 不可达（代理 502），仅 `api.github.com` 直连可达 | 通过 GitHub Actions 的 secrets 上下文注入内置令牌 |
+| gh CLI / GitHub 认证 | GitHub 连接器已认证为 `MokoKing666`；`api.github.com` 直连 + `Basic 用户名:token` 已完成源码推送（173 文件）；`gh` CLI 不存在；本机 `git ls-remote` 仍不可达（代理 502） | 通过 GitHub Actions 的 secrets 上下文注入内置令牌 |
 
-结论：本目录脚本覆盖「Node 内置即可运行」的检查，外加只需 Rust 工具链的 `cargo fmt`（本机可真实执行并通过）。`cargo clippy` / `cargo test` 受构建环境限制在本机未成功完成，Tauri 桌面端编译与 NSIS 安装包打包本阶段未生成——这些由 `ci-local.mjs` 明确列为「跳过」并打印准确原因，绝不静默当作成功。GitHub Actions 工作流无法在本机运行；本次对 `ci.yml` / `release.yml` 的 NSIS 产物命名规范化属于静态修补，**未在 GitHub runner 实跑**。完整的 `frontend` / `rust` / `windows-installer` 三个 job 只在 GitHub Actions 上真实执行，本机结果不得被当作 CI 全部通过的证明。
+结论：本目录脚本覆盖「Node 内置即可运行」的检查，外加只需 Rust 工具链的 `cargo fmt`（本机可真实执行并通过）。`cargo clippy` / `cargo test` 受构建环境限制在本机未成功完成，Tauri 桌面端编译与 NSIS 安装包打包本阶段未生成——这些由 `ci-local.mjs` 明确列为「跳过」并打印准确原因，绝不静默当作成功。GitHub Actions 工作流**无法在本机运行**，但已随源码推送在 GitHub 托管 runner 上触发；`ci.yml` / `release.yml` 的 NSIS 产物命名规范化此前属于静态修补，实际构建结果以仓库 Actions 页面为准。完整的 `frontend` / `rust` / `windows-installer` 三个 job 只在 GitHub Actions 上真实执行，本机结果不得被当作 CI 全部通过的证明。
 
 另外，Release 工作流由 `push.tags: ['v*']` 触发，并创建 GitHub Release；本机未产出安装包，因此完整 Release 流程同样只存在于 CI。
 
