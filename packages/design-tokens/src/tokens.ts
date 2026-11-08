@@ -19,11 +19,12 @@
  * `scripts/check-contrast.mjs` 实测，不是凭感觉判断。
  */
 export const color = {
-  /** 品牌强调：Glacier Blue */
+  /** 品牌强调：Glacier Blue（深色主题值；浅色主题覆盖见 accentLight） */
   accent: '#77B8D8',
   accentSoft: '#A0D0E8',
-  accentDeep: '#3C6F8B',
-  accentWash: '#DDEFF7',
+  accentDeep: '#477F9F',
+  accentWash: '#16252F',
+  accentOn: '#08121A',
   /** 银幕白：深色主题的文字/图标基色，中性色而非品牌色 */
   silver: '#EEF3F7',
 
@@ -55,14 +56,37 @@ export const color = {
     textTertiary: '#5D6B78',
     scrim: 'rgba(244, 247, 250, 0.82)',
   },
-  /** 语义色：与品牌强调色解耦 */
+  /**
+   * 语义色：与品牌强调色解耦，且必须按主题分别给值。
+   * 白底上的 #6FB994 只有 2.0:1，深底上的 #3F7D5C 只有 3.4:1，
+   * 因此深浅各一套 —— 两套都必须过 4.5:1（由 scripts/check-contrast.mjs 实测）。
+   */
   semantic: {
-    success: '#5C9E78',
-    warning: '#C08A42',
-    danger: '#C4685C',
-    favorite: '#D06E67',
-    info: '#7BA3C0',
+    dark: {
+      success: '#6FB994',
+      warning: '#D6A25C',
+      danger: '#D98478',
+      favorite: '#DE8A82',
+      info: '#8FB4CF',
+    },
+    light: {
+      success: '#3F7D5C',
+      warning: '#8F6320',
+      danger: '#A4473C',
+      favorite: '#A84B44',
+      info: '#4A7391',
+    },
   },
+} as const;
+
+/** 浅色主题的强调色覆盖：白底需要更深的蓝才能达到 4.5:1 */
+export const accentLight = {
+  accent: '#3C6F8B',
+  accentSoft: '#77B8D8',
+  accentDeep: '#2A566E',
+  accentWash: '#DDEFF7',
+  accentOn: '#FFFFFF',
+  silver: '#F4F7FA',
 } as const;
 
 /** 字体栈：MiSans 优先但绝不打包系统字体文件，授权见 THIRD_PARTY_NOTICES.md */
@@ -212,6 +236,7 @@ export const zIndex = {
 
 export const tokens = {
   color,
+  accentLight,
   typography,
   radius,
   spacing,

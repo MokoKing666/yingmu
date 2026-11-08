@@ -62,12 +62,17 @@ function runEdge(args) {
 
 function capture(name, url, windowSize = DEFAULT_SIZE) {
   const target = resolve(OUT, `${name}.png`);
-  runEdge([
+  const args = [
     ...common(windowSize),
     `--user-data-dir=${PROFILE_BASE}-${name}`,
     `--screenshot=${target}`,
     url,
-  ]);
+  ];
+  // 每张截图都是**冷启动**（独立的 user-data-dir），首屏 15 张 SVG 封面还在解码时
+  // 截图就已经落盘，会出现「磁贴已挂载但封面空白」的假象。先跑一遍把资源写进该
+  // profile 的磁盘缓存，再跑第二遍取图；两次都是同一台机器上的真实渲染。
+  runEdge(args);
+  runEdge(args);
   const ok = existsSync(target) && statSync(target).size > 10_000;
   console.log(`${ok ? 'OK  ' : 'FAIL'} ${name}.png ${ok ? `${Math.round(statSync(target).size / 1024)} KB` : '（未生成或过小）'}`);
   return ok;

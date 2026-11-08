@@ -660,8 +660,14 @@ a {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  color: var(--silver);
+  /* 标题叠在画布留白处而不是封面上，必须跟随主题正文色；
+     浅色主题下用硬编码银白会得到白底白字（对比度 1.06:1） */
+  color: var(--text-primary);
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
+}
+[data-theme='light'] .wall-overlay-title {
+  /* 浅色画布上不需要暗色描边，阴影只会让字发脏 */
+  text-shadow: none;
 }
 .wall-overlay-title strong {
   font-size: 1.0625rem;

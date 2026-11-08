@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "影幕 YingMu",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "identifier": "com.moko.yingmu",
   "build": {
     "frontendDist": "../dist"

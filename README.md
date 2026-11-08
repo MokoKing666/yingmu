@@ -5,7 +5,7 @@
 影幕是一款面向个人媒体库的桌面媒体中心：以 Folia 式不规则磁贴幕墙组织内容，以 Infuse 式的电影 / 剧集 / 个人视频管理方式组织数据，并以专业播放器为长期目标。
 
 - **应用标识符 / Bundle ID**：`com.moko.yingmu`（所有配置一致；仅作标识符，**不是用户数据目录名**，数据目录为 `%APPDATA%\YingMu` 体系，见「构建 Windows 安装包」）
-- **版本**：`0.1.0`
+- **版本**：`0.3.0`
 - **首发平台**：Windows 10 22H2 x64 / Windows 11 x64
 - **仓库**：`https://github.com/MokoKing666/yingmu`（目标仓库，默认分支 `main`）
 - **许可证**：**尚未确定**，见下方「许可证说明」
@@ -21,7 +21,7 @@
 | React 19 前端（16 个页面、磁贴幕墙、深浅主题、动画） | ✅ **已实现并真实运行** | 本页截图来自 `vite preview` 实际运行实例；`npm run build` 成功 |
 | 原创 SVG Logo、图标、Design Tokens | ✅ 已实现 | `assets/branding/`、`packages/design-tokens/` |
 | 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ 已实现 | `packages/media-models/`、`packages/player-api/` |
-| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **真实通过** | 50 个 Vitest 用例、TS 严格模式、ESLint 0 警告 |
+| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **真实通过** | 8 个 Vitest 文件 / 71 个用例、TS 严格模式、ESLint 0 警告 |
 | GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
 | Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **云端 CI 已验证核心库**（fmt / clippy / 81 个测试）；桌面端构建见仓库 Actions | `crates/yingmu-core/`、`apps/desktop/src-tauri/` |
 | libmpv 嵌入式播放 / 原生视频 Surface | ❌ **未集成、未验证** | 见 `docs/playback/windows-surface-validation.md` |
@@ -37,7 +37,7 @@
 
 ## 界面截图
 
-以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。全部截图为 v0.2 全幅无级拼贴版本，已覆盖旧版本截图。
+以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。全部截图为 **v0.3 Cinematic Neutral** 版本（新色板 + 冷调重绘封面），已覆盖旧版本截图。
 
 ### 首页 · 深色主题（全幅无级大磁贴拼贴）
 
@@ -118,13 +118,13 @@
 
 | 层 | 技术 |
 |---|---|
-| 前端 | React 19、TypeScript（严格模式）、Vite 6、Tailwind CSS 4、Motion for React、Zustand 5、PixiJS 8、React Router 7 |
-| 桌面端 | Tauri 2、Rust、WebView2 |
-| 数据 | SQLite + FTS5，版本化迁移 |
+| 前端 | React 19.3、TypeScript 6.0（严格模式）、Vite 8（Rolldown）、Tailwind CSS 4.3、Motion 14、Zustand 5.1、PixiJS 8.22、React Router 7.18 |
+| 桌面端 | Tauri 2、Rust（MSRV 1.85）、WebView2 |
+| 数据 | SQLite + FTS5（`rusqlite` 0.41，`bundled`），版本化迁移 |
 | 播放器目标 | libmpv + 原生视频 Surface（D3D11 / WGL），**当前未集成** |
-| 测试 | Vitest 3 + Testing Library、ESLint 9、Prettier、Rust `cargo test` 源码 |
-| CI/CD | GitHub Actions（前端 / Rust / Windows NSIS / Release） |
-| 安装器 | Tauri 2 官方 NSIS Bundler（简体中文界面） |
+| 测试 | Vitest 5.1 + Testing Library、ESLint 10.14、Prettier、Rust `cargo test` |
+| CI/CD | GitHub Actions（前端 / Rust / Windows NSIS / Release），Node 26 主线 + Node 24 兼容矩阵 |
+| 安装器 | Tauri 2 官方 NSIS Bundler（简体中文界面，支持当前用户 / 所有用户两种范围） |
 
 Three.js 保留为按需扩展位，当前未引入；不为使用技术而使用技术。
 
@@ -170,7 +170,9 @@ yingmu/
 | GitHub 认证与推送通道 | ✅ 已打通：`api.github.com` 直连 + `Basic 用户名:token`；本机 `git push` 通道仍不可用（代理 502） |
 | C: 可用空间 | 约 15 GB |
 
-前端要求 Node ≥ 20.19。Tauri 桌面端要求 `x86_64-pc-windows-msvc`、MSVC 编译器、Windows SDK、WebView2 与 NSIS（由 Tauri 下载）。Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`）；但 `cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。
+前端要求 Node `^22.13 || ^24 || >=26`（`package.json` 的 `engines` 与 `.nvmrc` 一致，CI 用 Node 26 为主、Node 24 做兼容矩阵）。Tauri 桌面端要求 `x86_64-pc-windows-msvc`、MSVC 编译器、Windows SDK、WebView2 与 NSIS（由 Tauri 下载）。
+
+**Rust 侧在哪验证**：本机的 `cargo` 不在自动化 shell 的默认 PATH 内，且默认 shell 里 Git Bash 的 `/usr/bin/link.exe` 会遮蔽 MSVC 链接器，因此**本机没有完成 `cargo build`**——这一点如实记录，不当作已验证。Rust 的真实验证发生在云端 CI（`windows-latest`）：`cargo fmt --all -- --check`、`cargo clippy -p yingmu-core -- -D warnings`、`cargo test -p yingmu-core` 全部通过，`rusqlite 0.41.1`（FTS5）实际编译并由 `fts_triggers_keep_index_in_sync_and_search_paginates` 用例覆盖；`tauri build` 也已在 CI 中真实产出 NSIS 安装包。
 
 ---
 
@@ -186,7 +188,7 @@ npm run dev                # http://127.0.0.1:5173
 ```bash
 npm run typecheck          # TypeScript 严格类型检查
 npm run lint               # ESLint（0 警告）
-npm run test               # Vitest 6 个测试文件 / 50 个用例
+npm run test               # Vitest 8 个测试文件 / 71 个用例
 npm run build              # 生产构建到 apps/desktop/dist
 npm run preview            # 预览生产构建
 npm run brand:icons        # 从 SVG 源重新生成 PNG / ICO
@@ -204,20 +206,21 @@ node --test tests/repo-contract.test.mjs  # 仓库契约测试
 | --- | --- | --- |
 | 类型检查 | `npm run typecheck` | ✅ 通过（TypeScript 严格模式） |
 | Lint | `npm run lint` | ✅ 通过（ESLint 0 警告） |
-| 单元测试 | `npm run test` | ✅ 通过（6 个测试文件 / 50 个用例全部通过） |
+| 单元测试 | `npm run test` | ✅ 通过（8 个测试文件 / 71 个用例全部通过） |
 | 生产构建 | `npm run build` | ✅ 通过（Vite 产出 `apps/desktop/dist`） |
 | 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ 通过（扫描 168 个文件，未发现敏感信息） |
 | 仓库契约测试 | `node --test tests/repo-contract.test.mjs` | ✅ 通过（6/6） |
 
-Rust 侧检查**未通过**，如实记录：
+Rust 侧检查：**本机未完成、云端 CI 已完成**，两者都如实记录：
 
-| 检查 | 当前结果 |
-| --- | --- |
-| `cargo fmt --all -- --check` | ✅ **通过**（exit 0，格式已归一化） |
-| `cargo clippy --workspace --all-targets -- -D warnings` | ❌ **未成功完成**：受构建环境限制，见 `docs/testing/strategy.md` |
-| `cargo test --workspace` | ❌ **未通过**：同上，Rust 单元测试未运行 |
+| 检查 | 本机 | 云端 CI（`windows-latest`） |
+| --- | --- | --- |
+| `cargo fmt --all -- --check` | ✅ 通过（exit 0） | ✅ 通过 |
+| `cargo clippy -p yingmu-core -- -D warnings` | ❌ 未完成（链接器被 Git Bash 的 `link.exe` 遮蔽） | ✅ 通过 |
+| `cargo test -p yingmu-core` | ❌ 未完成（同上） | ✅ 通过（含 FTS5 索引同步用例） |
+| `tauri build`（NSIS 打包） | ❌ 未在本机执行 | ✅ 通过，产出安装包 Artifact |
 
-Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`）。`cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。完整状态见 [`docs/testing/strategy.md`](docs/testing/strategy.md)。界面截图均由 `vite preview` + 本机 Edge 无头浏览器截取，属真实运行实例（见上文「界面截图」章节）。
+本机的 `cargo` 位于 `%USERPROFILE%\.cargo\bin`、不在自动化 shell 的默认 PATH 内；默认 shell 里 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）会遮蔽 MSVC 链接器，报 `link: extra operand`。由于工作区依赖未做 vendor，本机也无法离线完成依赖编译。**因此本机的 Rust 结论一律以「未验证」记录，Rust 的真实结论只来自 CI 日志。** 完整状态见 [`docs/testing/strategy.md`](docs/testing/strategy.md)。界面截图均由 `vite preview` + 本机 Edge 无头浏览器截取，属真实运行实例（见上文「界面截图」章节）。
 
 ---
 

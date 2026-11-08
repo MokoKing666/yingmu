@@ -99,15 +99,14 @@
   object-fit: cover;
   transform: scale(1.001);
   /* 不做全局亮度/饱和度处理：影片的明暗层次必须来自素材本身，而不是 UI 滤镜 */
-  transition: transform 650ms var(--ease-out-expo), opacity 400ms;
+  /* 也不再用 opacity 控制「是否可见」——解码完成前 <img> 本身就是透明的，
+     骨架屏会自然透出。靠 opacity 过渡会在慢机器 / 截图时留下半透明的封面。 */
+  transition: transform 650ms var(--ease-out-expo);
   background: linear-gradient(135deg, var(--surface), var(--bg-elevated));
 }
 .tile:hover .tile-art {
   /* 轻微、细腻的推近，不产生模糊 */
   transform: scale(1.028);
-}
-.tile-art[data-loaded='false'] {
-  opacity: 0;
 }
 
 .tile-art-placeholder {
@@ -213,7 +212,7 @@
   border-radius: var(--radius-pill);
   background: rgba(10, 12, 15, 0.6);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(242, 239, 233, 0.16);
+  border: 1px solid color-mix(in srgb, var(--silver) 16%, transparent);
   color: var(--silver);
   font-size: 0.625rem;
   letter-spacing: 0.08em;
@@ -250,7 +249,7 @@
   border-radius: var(--radius-pill);
   background: rgba(10, 12, 15, 0.7);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(242, 239, 233, 0.2);
+  border: 1px solid color-mix(in srgb, var(--silver) 20%, transparent);
   color: var(--silver);
 }
 .tile-action:hover {
@@ -268,7 +267,7 @@
   bottom: 12px;
   height: 3px;
   border-radius: 999px;
-  background: rgba(242, 239, 233, 0.28);
+  background: color-mix(in srgb, var(--silver) 28%, transparent);
   overflow: hidden;
 }
 .tile-progress > span {
@@ -345,7 +344,7 @@
   border-radius: var(--radius-md);
   object-fit: cover;
   box-shadow: var(--shadow-lg);
-  border: 1px solid rgba(242, 239, 233, 0.14);
+  border: 1px solid color-mix(in srgb, var(--silver) 14%, transparent);
 }
 .detail-title {
   margin: 0 0 4px;

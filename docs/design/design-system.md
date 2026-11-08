@@ -36,54 +36,111 @@ flowchart LR
 
 ## 2. 色彩
 
-### 2.1 品牌色（不随主题变化）
+v0.3 起品牌色系为 **Cinematic Neutral**（冷调电影感）：深色 Cinematic Graphite、浅色 Silver Screen、
+强调色 Glacier Blue。v0.2 的琥珀金 `#D9A55B` 与米黄底 `#F7F6F3` 已**全部移除**，仓库里不再有
+`cinemaAmber` 这个 token，也没有任何 `--brand-amber` 残留。
+
+### 2.1 品牌强调色（Glacier Blue）
+
+| Token | 深色（`--accent`） | 浅色覆盖 | 用途 |
+| --- | --- | --- | --- |
+| `accent` | `#77B8D8` | `#3C6F8B` | 主强调：选中态、焦点环、关键数字 |
+| `accentSoft` | `#A0D0E8` | `#77B8D8` | 柔和变体（大字号、图标底色） |
+| `accentDeep` | `#477F9F` | `#2A566E` | 按下态 / 深一层的描边 |
+| `accentWash` | `#16252F` | `#DDEFF7` | 极浅底纹（选中行背景） |
+| `accentOn` | `#08121A` | `#FFFFFF` | 压在强调色上的文字/图标 |
+
+> **为什么浅色主题要换一支蓝**：`#77B8D8` 在 `#F4F7FA` 上只有 **2.2:1**，做正文或图标都不达标。
+> 浅色主题改用 `#3C6F8B`，实测 **5.09:1**（见 2.5）。这是同一支色相的可访问性映射，
+> 不是两套品牌色——组件永远只写 `var(--accent)`，由主题层决定具体值。
+
+### 2.2 中性银幕白
 
 | Token | 值 | 用途 |
 | --- | --- | --- |
-| `cinemaAmber` | `#D9A55B` | 银幕暖光，主品牌 / 强调 / 收藏，刻意避开紫粉渐变 |
-| `cinemaAmberSoft` | `#E8C58C` | 暖光柔和变体 |
-| `silverScreen` | `#F2EFE9` | 银幕白，深色主题主文本 |
+| `silver` | `#EEF3F7`（深色）/ `#F4F7FA`（浅色） | 压在封面、视频、深色玻璃上的文字基色 |
 
-### 2.2 深色主题（默认，`:root`）
+`silver` **不是品牌色**，它是「永远压在图像上的白」。凡是在封面上排版的文字（磁贴标题、徽标、
+播放器控制条）都用它；凡是排在页面背景上的文字必须用 `--text-primary`，否则浅色主题会白底白字
+——这正是 v0.3 修掉的一个真实缺陷（`docs/CHANGELOG` 0.3.0 条目）。
 
-| Token | 值 | Token | 值 |
-| --- | --- | --- | --- |
-| `bgBase` | `#0B0D10` | `bgElevated` | `#12151A` |
-| `bgOverlay` | `#191D23` | `surface` | `#1C2128` |
-| `surfaceHover` | `#252B33` | `border` | `#2A3038` |
-| `borderStrong` | `#3A424C` | `textPrimary` | `#F2EFE9` |
-| `textSecondary` | `#A8B0BA` | `textTertiary` | `#6E7884` |
-| `scrim` | `rgba(6, 8, 10, 0.72)` | | |
-
-### 2.3 浅色主题（`[data-theme='light']` 覆盖）
+### 2.3 深色主题（默认，`:root`）— Cinematic Graphite
 
 | Token | 值 | Token | 值 |
 | --- | --- | --- | --- |
-| `bgBase` | `#F7F6F3` | `bgElevated` | `#FFFFFF` |
-| `bgOverlay` | `#FFFFFF` | `surface` | `#FFFFFF` |
-| `surfaceHover` | `#EFEDE8` | `border` | `#E2DFD8` |
-| `borderStrong` | `#CFCAC0` | `textPrimary` | `#1A1D21` |
-| `textSecondary` | `#5A6069` | `textTertiary` | `#8A9099` |
-| `scrim` | `rgba(247, 246, 243, 0.78)` | | |
+| `bgBase` | `#0B0F14` | `bgElevated` | `#121922` |
+| `bgOverlay` | `#141C26` | `surface` | `#18222D` |
+| `surfaceHover` | `#202D39` | `border` | `#2B3947` |
+| `borderStrong` | `#405365` | `textPrimary` | `#EEF3F7` |
+| `textSecondary` | `#AAB7C3` | `textTertiary` | `#8294A2` |
+| `scrim` | `rgba(6, 11, 16, 0.72)` | | |
 
-### 2.4 语义色（不随主题变化）
+### 2.4 浅色主题（`[data-theme='light']` 覆盖）— Silver Screen
 
-| Token | 值 | 语义 |
-| --- | --- | --- |
-| `success` | `#6FB28C` | 成功 |
-| `warning` | `#D9A55B` | 警告 |
-| `danger` | `#D97A6C` | 危险 / 错误 |
-| `info` | `#7C9BB5` | 信息 |
-| `favorite` | `#D9A55B` | 收藏 |
+| Token | 值 | Token | 值 |
+| --- | --- | --- | --- |
+| `bgBase` | `#F4F7FA` | `bgElevated` | `#FFFFFF` |
+| `bgOverlay` | `#FFFFFF` | `surface` | `#EDF2F6` |
+| `surfaceHover` | `#E4ECF2` | `border` | `#D7E0E8` |
+| `borderStrong` | `#B6C4D0` | `textPrimary` | `#1B2732` |
+| `textSecondary` | `#5D6B78` | `textTertiary` | `#5D6B78` |
+| `scrim` | `rgba(244, 247, 250, 0.82)` | | |
 
-### 2.5 阴影
+浅色主题的次/三级文字同为 `#5D6B78`：在这一档亮度上再分三级只会掉到 4.5:1 以下，
+因此用**字重与字号**区分层级，而不是继续压暗颜色。
+
+### 2.5 语义色（按主题分别给值）
+
+| Token | 深色 | 浅色 | 语义 |
+| --- | --- | --- | --- |
+| `success` | `#6FB994` | `#3F7D5C` | 成功 |
+| `warning` | `#D6A25C` | `#8F6320` | 警告 |
+| `danger` | `#D98478` | `#A4473C` | 危险 / 错误 |
+| `favorite` | `#DE8A82` | `#A84B44` | 收藏 |
+| `info` | `#8FB4CF` | `#4A7391` | 信息 |
+
+语义色与强调色**完全解耦**：v0.2 用琥珀金同时表示"品牌"和"收藏"，导致用户无法从颜色判断
+这是品牌态还是状态。收藏用独立的珊瑚红，警告用暖褐——两者都不与 Glacier Blue 抢语义。
+
+### 2.6 阴影
 
 | 档位 | 深色 | 浅色 |
 | --- | --- | --- |
-| `sm` | `0 2px 8px rgba(0,0,0,0.28)` | `0 2px 8px rgba(26,29,33,0.06)` |
-| `md` | `0 8px 24px rgba(0,0,0,0.36)` | `0 8px 24px rgba(26,29,33,0.10)` |
-| `lg` | `0 24px 64px rgba(0,0,0,0.52)` | `0 24px 64px rgba(26,29,33,0.14)` |
-| `glow` | `0 0 0 1px rgba(217,165,91,0.28), 0 16px 48px rgba(0,0,0,0.56)` | `0 0 0 1px rgba(217,165,91,0.42), 0 16px 48px rgba(26,29,33,0.12)` |
+| `sm` | `0 1px 2px rgba(0,0,0,.36), 0 2px 8px rgba(0,0,0,.24)` | `0 1px 2px rgba(27,39,50,.06), 0 2px 8px rgba(27,39,50,.05)` |
+| `md` | `0 4px 16px rgba(0,0,0,.40), 0 12px 32px rgba(0,0,0,.28)` | `0 4px 16px rgba(27,39,50,.08), 0 12px 32px rgba(27,39,50,.06)` |
+| `lg` | `0 12px 40px rgba(0,0,0,.52), 0 32px 80px rgba(0,0,0,.36)` | `0 12px 40px rgba(27,39,50,.12), 0 32px 80px rgba(27,39,50,.08)` |
+| `glow` | `0 0 0 1px rgba(119,184,216,.32), 0 12px 32px rgba(0,0,0,.44)` | `0 0 0 1px rgba(71,127,159,.36), 0 12px 32px rgba(27,39,50,.10)` |
+
+`glow` 从 v0.2 的「金色光晕」改为 Glacier Blue 冷光：光晕只由强调色派生，不再引入第四种颜色。
+深色主题的阴影用双层（近距实影 + 远距扩散），单一 `0 8px 24px` 在 4K 全屏下会显得脏。
+
+### 2.7 对比度实测（WCAG 2.2 AA）
+
+`scripts/check-contrast.mjs` 直接解析 `tokens.css` 计算，不依赖肉眼判断，也不另抄一份色值：
+
+```bash
+node scripts/check-contrast.mjs   # 退出码非 0 表示有不达标项
+```
+
+判定阈值：正文/图标文字 **4.5:1**，焦点环与非文本指示 **3:1**，边框仅需可见（1.2 / 1.5:1）。
+
+| 主题 | 配对 | 最低值 | 结论 |
+| --- | --- | --- | --- |
+| 深色 | 19 组 | 5.14:1（辅助文字 / 普通表面） | 全部通过 |
+| 浅色 | 19 组 | 4.54:1（成功色文字 / 页面背景） | 全部通过 |
+
+关键实测值（完整输出见脚本运行结果）：
+
+| 配对 | 深色 | 浅色 |
+| --- | --- | --- |
+| 主文字 / 页面背景 | 17.20:1 | 14.12:1 |
+| 次级文字 / 普通表面 | 7.87:1 | 4.85:1 |
+| 强调色文字 / 页面背景 | 8.82:1 | 5.09:1 |
+| 按钮文字 / 强调色底 | 8.66:1 | 5.47:1 |
+| 焦点环 / 页面背景 | 8.82:1 | 5.09:1 |
+
+**当前不达标项：0。** 该脚本是唯一判定依据；任何"看起来还行"的结论都不作数。
+
 
 ## 3. 字体排印
 

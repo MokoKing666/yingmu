@@ -197,7 +197,7 @@ export function AppShell({ children }: { children: ReactNode }) {
               ))}
               <div className="sidebar-footer">
                 <div className="row" style={{ gap: 6, marginBottom: 6 }}>
-                  <Info size={12} /> 影幕 v0.2.0 · Windows x64
+                  <Info size={12} /> 影幕 v{__APP_VERSION__} · Windows x64
                 </div>
                 <div>{isDemo ? 'WebDemoBridge · 演示模式' : 'TauriBridge · 桌面模式'}</div>
                 <div>播放器后端：未集成</div>

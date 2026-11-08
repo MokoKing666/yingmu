@@ -20,16 +20,21 @@ jobs:
   # 1) 前端：Ubuntu 上真实执行 typecheck / lint / test / build，不允许空跑。
   # ---------------------------------------------------------------------------
   frontend:
-    name: 前端 (typecheck / lint / test / build)
+    name: 前端 (typecheck / lint / test / build) · Node ${{ matrix.node }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      # 正式基线 Node 26（Active LTS），同时验证 Node 24（Maintenance LTS）
+      matrix:
+        node: [24, 26]
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
-      - name: 配置 Node.js 22 (含 npm 缓存)
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v7
+      - name: 配置 Node.js ${{ matrix.node }} (含 npm 缓存)
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: ${{ matrix.node }}
           cache: 'npm'
       # npm ci 与 setup-node 的 npm 缓存都要求仓库根目录存在 package-lock.json
       # （由 npm install 生成，应随骨架一并提交）。缺失时此步骤会明确失败并提示。
@@ -54,7 +59,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
       # Tauri 桌面端在 Linux 上编译所需的系统库。本 job 不编译 Tauri 桌面端，
       # 保留安装步骤以便未来扩展核心库的 Linux 集成测试；桌面端真实编译与
       # NSIS 打包由下方 windows-latest 的 windows-installer job 完成。
@@ -100,11 +105,11 @@ jobs:
     timeout-minutes: 45
     steps:
       - name: 检出代码
-        uses: actions/checkout@v4
-      - name: 配置 Node.js 22 (含 npm 缓存)
-        uses: actions/setup-node@v4
+        uses: actions/checkout@v7
+      - name: 配置 Node.js 26 (含 npm 缓存)
+        uses: actions/setup-node@v7
         with:
-          node-version: '22'
+          node-version: '26'
           cache: 'npm'
       - name: 配置 Rust stable (MSVC 工具链)
         uses: dtolnay/rust-toolchain@stable
@@ -204,7 +209,7 @@ jobs:
           # verify-release.mjs：体积 >1MB、PE 头 MZ、SHA-256；并输出 SHA256SUMS.txt
           node scripts/verify-release.mjs "$exe" --sums installer-artifact/SHA256SUMS.txt
       - name: 上传已校验的安装包与校验和
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: yingmu-nsis-installer
           path: |

@@ -3,43 +3,43 @@
   "defaultWindow": "1600,1000",
   "ultrawideWindow": "3440,1440",
   "home": {
-    "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+    "firstMediaId": "038821b7-768f-5285-8d8d-45c3f4814e55",
     "canvasWidth": 1570,
-    "mountedTiles": 16,
-    "tileNodes": 16
+    "mountedTiles": 15,
+    "tileNodes": 15
   },
   "dpiProbe": [
     {
       "scale": "100%",
       "simulatedCssViewport": "1600x1000",
-      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "firstMediaId": "038821b7-768f-5285-8d8d-45c3f4814e55",
       "canvasWidth": 1570,
-      "mountedTiles": 16,
-      "tileNodes": 16
+      "mountedTiles": 15,
+      "tileNodes": 15
     },
     {
       "scale": "125%",
       "simulatedCssViewport": "1280x800",
-      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "firstMediaId": "038821b7-768f-5285-8d8d-45c3f4814e55",
       "canvasWidth": 1250,
-      "mountedTiles": 19,
-      "tileNodes": 19
+      "mountedTiles": 15,
+      "tileNodes": 15
     },
     {
       "scale": "150%",
       "simulatedCssViewport": "1067x667",
-      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "firstMediaId": "038821b7-768f-5285-8d8d-45c3f4814e55",
       "canvasWidth": 1037,
-      "mountedTiles": 21,
-      "tileNodes": 21
+      "mountedTiles": 17,
+      "tileNodes": 17
     },
     {
       "scale": "200%",
       "simulatedCssViewport": "800x500",
-      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "firstMediaId": "038821b7-768f-5285-8d8d-45c3f4814e55",
       "canvasWidth": 770,
-      "mountedTiles": 16,
-      "tileNodes": 16
+      "mountedTiles": 20,
+      "tileNodes": 20
     }
   ]
 }

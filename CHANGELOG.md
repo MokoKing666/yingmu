@@ -6,6 +6,102 @@
 
 ---
 
+## [0.3.0] - 2026-11-08
+
+主题：**品牌视觉重设计、技术栈现代化与工程质量升级**。这一版没有加新功能页面，
+目标是让 v0.2 的 Folia 拼贴在正确的品牌体系与正确的工具链上稳定运行。
+
+### 品牌与视觉（Breaking：旧色板全部移除）
+
+- **Cinematic Neutral 色系**：深色 Cinematic Graphite（底 `#0B0F14`、面 `#18222D`）、
+  浅色 Silver Screen（底 `#F4F7FA`、面 `#EDF2F6`）、强调色 Glacier Blue（`#77B8D8`）。
+  v0.2 的琥珀金 `#D9A55B`、暖白 `#F2EFE9`、米黄底 `#F7F6F3` **彻底删除**，
+  `cinemaAmber` / `cinemaAmberSoft` / `silverScreen` 三个 token 不再存在。
+- **浅色主题的强调色可访问性映射**：`#77B8D8` 在 `#F4F7FA` 上只有 2.2:1，
+  浅色主题改用同色相加深的 `#3C6F8B`（实测 5.09:1）。组件只写 `var(--accent)`，
+  由主题层决定实际值，因此不存在「两套品牌色」。
+- **语义色与品牌色解耦**：收藏从琥珀金改为珊瑚红（深 `#DE8A82` / 浅 `#A84B44`），
+  警告改为暖褐。深浅主题各一套，两套都必须过 4.5:1。
+- **阴影重写**：`glow` 从金色光晕改为 Glacier Blue 冷光；深色主题改为双层阴影
+  （近距实影 + 远距扩散），单层 `0 8px 24px` 在 4K 全屏下会显脏。
+- **新增 `scripts/check-contrast.mjs`**：直接解析 `tokens.css` 计算 WCAG 2.2 AA 对比度，
+  覆盖深浅两主题各 19 组配对（正文 4.5:1、焦点环与非文本 3:1）。
+  当前结果：**0 项不达标**；最低值为浅色主题「成功色文字 / 页面背景」4.54:1。
+- **修掉品牌迁移带出的新缺陷**：首页叠层标题 `.wall-overlay-title` 原本硬编码
+  `var(--silver)`，在浅色主题下变成白底白字（实测 1.06:1）。改为 `var(--text-primary)`，
+  并在浅色主题下去掉暗色描边。同类硬编码 `rgba(242,239,233,…)` 共 6 处，
+  统一改为 `color-mix(in srgb, var(--silver) N%, transparent)`，不再残留旧色值。
+- 应用图标按新品牌重绘（`npm run brand:icons`）。
+
+### 工具链与依赖（全部为真实安装并通过 CI 验证的版本）
+
+| 组件 | v0.2 | v0.3 | 说明 |
+| --- | --- | --- | --- |
+| Vite | 6.0 | **8.3.6** | Rolldown 内核；`manualChunks` 只支持函数形式；生产构建 5.5s → 1.3s |
+| React / React DOM | 19.0 | **19.3.1** | — |
+| TypeScript | 5.7 | **6.0.3** | `baseUrl` 弃用；副作用样式导入需 `vite/client` 类型 |
+| Tailwind CSS | 4.0 | **4.3.5** | 与 `@tailwindcss/vite` 同步 |
+| Motion | 12.0 | **14.10.1** | `motion/react` 入口不变 |
+| Zustand | 5.0 | **5.1.0** | — |
+| PixiJS | 8.6 | **8.22.0** | 动态背景 |
+| Vitest | 3.0 | **5.1.0** | — |
+| ESLint | 9.17 | **10.14.0** | 扁平配置；`@eslint/js` 版本号与本体不同步（`10.0.1`） |
+| typescript-eslint | 8.18 | **8.72.1** | peer 要求 `typescript <6.1.0`，故 TS 7 不能作为正式基线 |
+| eslint-plugin-react-hooks | 5.1 | **7.1.1** | 新增 `set-state-in-effect` 等规则 |
+| @types/react | 19.0 | **19.3.0** | — |
+| lucide-react | 0.468 | **1.70.0** | 大版本；图标名未变 |
+| React Router | 7.1 | **7.18.5** | — |
+| Node.js | ≥20.19 | **26 主线 / 24 兼容** | `engines: ^22.13 \|\| ^24 \|\| >=26`，`.nvmrc` = 26 |
+| Rust MSRV | 1.82 | **1.85** | — |
+| rusqlite | 0.32 | **0.41.1** | `features = ["bundled"]`；FTS5 由 CI `cargo test` 实测 |
+| thiserror / sha2 / roxmltree | 1 / 0.10 / 0.20 | **2.0 / 0.11 / 0.21** | — |
+
+升级原则：**没有使用 `--force`、`--legacy-peer-deps`，没有删除 lockfile，没有关闭 `strict`，
+没有用 `skipLibCheck` 掩盖自己代码的错误，`any` 数量保持为 0。** `Cargo.lock` 已提交。
+
+### 修复（v0.2 遗留的真实缺陷）
+
+1. **媒体库排序被 `addedAt` 覆盖**：`wall-layout.ts` 无条件按 `addedAt` 重排，
+   用户在「电影库」里选的评分 / 年份 / 名称排序在渲染层被抹掉。改为默认严格保留调用方顺序，
+   只有拖拽产生的 `customOrder` 才排序。
+2. **Hero 不是推荐第一名**：首页 hero 之前是「最早入库的那部」。新增
+   `orderByRecommendation()`（`0.38*recency + 0.24*favorite + 0.2*resume + 0.18*rating`），
+   确定性、无随机，用户一旦拖拽即完全尊重其顺序。
+3. **真实媒体比例被演示素材污染**：`demoArtworkAspect` 以前参与所有磁贴的比例计算，
+   真实影片也用演示素材的比例。新增 `media-aspect.ts`，优先级为
+   `metadata.posterAspect` → 个人视频 `width/height` → 类型回退（纪录片 4:3，其余 2:3），
+   **绝不用 Media ID 哈希编造比例**；`demoArtworkAspect` 只服务 WebDemoBridge。
+4. **搜索栏遮挡第一排磁贴**：新增 `--header-safe: 76px` 顶部安全区，
+   `max-height: 700px` 时收敛到 62px，窄高窗口不浪费画布。
+5. **键盘焦点与虚拟化竞态**：磁贴还没挂载就 `focus()`，导致焦点丢失。改为
+   `pendingFocusRef` + 在 `visible` 变化后的 effect 里消费，确保目标磁贴已挂载。
+6. **`prefers-reduced-motion` 只覆盖 CSS、不覆盖 Motion**：`MediaTile` 与页面转场现在
+   读 `useReducedMotion()`，关闭入场、悬停缩放与共享元素 `layoutId`。
+7. **封面画质**：移除全局 `filter: brightness(1.55) saturate(1.2)`（它把暗部拉灰、
+   把色相推向橙黄，与冷调品牌冲突）；悬停从 `scale(1.07)` 收敛到 `1.028`；
+   取消依赖 opacity 过渡显示封面的做法——封面不再有半透明中间态。
+
+### 安装器
+
+- 版本号统一到 `0.3.0`（`package.json` ×2、`tauri.conf.json`、`Cargo.toml`、`Cargo.lock`），
+  界面显示的版本改由构建期 `__APP_VERSION__` 注入，避免「设置里写 v0.2.0、包里写 0.1.0」。
+- NSIS 双安装模式（`installMode: both`）保持不变：同一个安装器提供「仅为我安装 / 为所有人安装」
+  与目录选择页。`docs/installation/nsis.md` 修正了「仅为我安装不需要管理员」与
+  「启动即 UAC」的矛盾表述——**两种范围启动安装器都要 UAC**（提权用于写安装目录、
+  写卸载信息与注册表），而**应用本体始终以普通用户权限运行**。
+
+### 未完成 / 未验证（不得当成已完成）
+
+- **NSIS 安装包未做交互式安装测试**：范围选择、UAC 提示、多用户数据隔离、覆盖升级、
+  卸载残留均需人工在真实 Windows 上走一遍。
+- **真实 Windows 显示缩放（125% / 150% / 200%）未人工确认观感**；
+  性能报告中的缩放档位是**逻辑视口模拟**（缩小 `--window-size`），不是 DPI 验证。
+- libmpv 播放后端仍未集成；HDR10 / Dolby Vision / Dolby Audio / 音频直通均未验证。
+- 浅色主题的封面观感（暗调素材在浅底上的对比）只做了截图目视检查，
+  没有做用户可用性测试。
+
+---
+
 ## [0.2.0] - 2026-11-08
 
 ### 变更（UI 重构）

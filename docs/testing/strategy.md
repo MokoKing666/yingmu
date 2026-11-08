@@ -27,7 +27,7 @@ flowchart TD
 
 ## 2. 前端测试栈（已真实运行并通过）
 
-前置条件（实测）：Node 22.22.2（要求 `>=20.19.0`）、npm 10.9.7、`node_modules` 已安装、npm registry 可达。**这一层不依赖 Tauri 桌面端编译产物**，因为前端走 `WebDemoBridge` 与 Vite（见 `docs/adr/0002-platform-bridge.md`）；本机工具链已就位但桌面端构建产物尚未产出，前端仍可独立运行。
+前置条件（实测）：Node 22.22.2（要求 `^22.13 \|\| ^24 \|\| >=26`，CI 主线为 Node 26）、npm 10.9.7、`node_modules` 已安装、npm registry 可达。**这一层不依赖 Tauri 桌面端编译产物**，因为前端走 `WebDemoBridge` 与 Vite（见 `docs/adr/0002-platform-bridge.md`）；本机工具链已就位但桌面端构建产物尚未产出，前端仍可独立运行。
 
 | 类型 | 命令 | 配置来源 | 说明 |
 | --- | --- | --- | --- |

@@ -9,10 +9,19 @@
 运行同一个 `YingMu-Setup-<version>-x64.exe`，安装向导会先显示
 「安装范围」页面（`MULTIUSER_PAGE_INSTALLMODE`），提供两个选项：
 
-| 选项 | 中文界面文案（NSIS/MultiUser 标准字符串） | 默认目录 | 注册表范围 | 快捷方式 | 权限 |
+| 选项 | 中文界面文案（NSIS/MultiUser 标准字符串） | 默认目录 | 注册表范围 | 快捷方式 | 安装器权限 |
 |---|---|---|---|---|---|
-| 仅为我安装 | 仅为我安装（当前用户） | `%LOCALAPPDATA%\YingMu` | `HKCU` | 当前用户开始菜单 | 不需要管理员 |
-| 为所有人安装 | 为这台电脑上的所有用户安装 | `%ProgramFiles%\YingMu`（x64 上为 64 位 Program Files） | `HKLM` | 所有用户开始菜单 | 需要管理员（UAC） |
+| 仅为我安装 | 仅为我安装（当前用户） | `%LOCALAPPDATA%\YingMu` | `HKCU` | 当前用户开始菜单 | **仍需 UAC 提权**（见下方说明） |
+| 为所有人安装 | 为这台电脑上的所有用户安装 | `%ProgramFiles%\YingMu`（x64 上为 64 位 Program Files） | `HKLM` | 所有用户开始菜单 | 需要 UAC 提权 |
+
+> **必须区分两件事，避免误读上表：**
+>
+> 1. **安装器本身**：`installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`，
+>    因此**两种范围在启动安装器时都会请求管理员权限（UAC）**。选择「仅为我安装」
+>    只是把程序装到 `%LOCALAPPDATA%` 并写 `HKCU`，**不会**取消启动时的提权请求。
+>    这是 Tauri 2 标准 MultiUser 模板的既定行为，本项目不修改执行级别去伪装「无 UAC」。
+> 2. **安装后的影幕本体**：始终以**普通用户权限**运行，读取自己的 `%APPDATA%\YingMu`
+>    与 `%LOCALAPPDATA%\YingMu`，不需要管理员权限。
 
 在 `installMode: "both"` 下，Tauri 模板会：
 
