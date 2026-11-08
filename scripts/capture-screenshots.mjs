@@ -60,10 +60,11 @@ function runEdge(args) {
   return result.stdout ?? '';
 }
 
-function capture(name, url, windowSize = DEFAULT_SIZE) {
+function capture(name, url, windowSize = DEFAULT_SIZE, extraFlags = []) {
   const target = resolve(OUT, `${name}.png`);
   const args = [
     ...common(windowSize),
+    ...extraFlags,
     `--user-data-dir=${PROFILE_BASE}-${name}`,
     `--screenshot=${target}`,
     url,
@@ -125,9 +126,17 @@ const shots = [
   ['home-light', `${BASE}/#/?theme=light`, DEFAULT_SIZE],
   ['library-movie', `${BASE}/#/library/movie`, DEFAULT_SIZE],
   ['library-tv', `${BASE}/#/library/tv`, DEFAULT_SIZE],
+  // 动画库：验证不同媒体库的排序/排列作用域互不污染
+  ['library-anime', `${BASE}/#/library/anime`, DEFAULT_SIZE],
+  // 自定义排列：?sort= 强制排序模式，验证 Segmented 的「自定义排列」态
+  ['custom-sort', `${BASE}/#/library/movie?sort=custom`, DEFAULT_SIZE],
   ['nav-collapsed', `${BASE}/#/library/anime`, DEFAULT_SIZE],
   ['nav-expanded', `${BASE}/#/?nav=open`, DEFAULT_SIZE],
   ['ultrawide', `${BASE}/#/`, ULTRAWIDE_SIZE],
+  // 小窗口：960×600 下磁贴连续尺寸与安全区收敛是否正常
+  ['small-window', `${BASE}/#/`, '960,600'],
+  // 减少动态效果：Chromium 强制 prefers-reduced-motion，验证动效关闭后的静态状态
+  ['reduced-motion', `${BASE}/#/`, DEFAULT_SIZE, ['--force-prefers-reduced-motion']],
   ['search', `${BASE}/#/search?q=${encodeURIComponent('雾港')}`, DEFAULT_SIZE],
   ['settings', `${BASE}/#/settings`, DEFAULT_SIZE],
   ['sources', `${BASE}/#/sources`, DEFAULT_SIZE],
@@ -138,8 +147,8 @@ if (home.firstMediaId) {
 }
 
 let failures = 0;
-for (const [name, url, size] of shots) {
-  if (!capture(name, url, size)) failures += 1;
+for (const [name, url, size, flags] of shots) {
+  if (!capture(name, url, size, flags ?? [])) failures += 1;
 }
 console.log(`\n截图完成：${shots.length - failures}/${shots.length} 成功，输出目录 ${OUT}`);
 if (failures > 0) process.exitCode = 1;

@@ -12,6 +12,13 @@ import type { SortMode } from './layout-preferences';
 
 export type { SortMode } from './layout-preferences';
 
+const SORT_MODES: readonly SortMode[] = ['recommended', 'recent', 'year', 'rating', 'title', 'custom'];
+
+/** 字符串是否是合法排序模式（URL 参数等外部输入必须先过这里） */
+export function isSortMode(value: string | null | undefined): value is SortMode {
+  return typeof value === 'string' && (SORT_MODES as readonly string[]).includes(value);
+}
+
 /**
  * 按排序模式产出最终交给布局引擎的顺序。
  *

@@ -748,7 +748,9 @@ impl Database {
             .conn
             .prepare("SELECT scope, ordered_media_ids FROM layout_preferences")?;
         let rows: Vec<(String, String)> = stmt
-            .query_map(params![], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+            .query_map(params![], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+            })?
             .collect::<std::result::Result<Vec<_>, _>>()?;
         let mut changed = 0usize;
         for (scope, ordered_json) in rows {
@@ -1312,7 +1314,10 @@ mod tests {
 
         let read = db.layout_get("home").unwrap().expect("home 布局应已保存");
         assert_eq!(read.sort_mode, SortMode::Custom);
-        assert_eq!(read.ordered_media_ids, vec!["m2".to_string(), "m1".to_string()]);
+        assert_eq!(
+            read.ordered_media_ids,
+            vec!["m2".to_string(), "m1".to_string()]
+        );
 
         // 电影库 / 动画库不受影响
         assert!(db.layout_get("library:movie").unwrap().is_none());
@@ -1337,7 +1342,10 @@ mod tests {
         // 删除 m1 后，布局里不应再出现它的 ID
         db.delete_media("m1").unwrap();
         let read = db.layout_get("home").unwrap().unwrap();
-        assert_eq!(read.ordered_media_ids, vec!["m3".to_string(), "m2".to_string()]);
+        assert_eq!(
+            read.ordered_media_ids,
+            vec!["m3".to_string(), "m2".to_string()]
+        );
     }
 
     #[test]
@@ -1391,7 +1399,11 @@ mod tests {
             assert_eq!(read.ordered_media_ids, vec!["m1".to_string()]);
             let rows: i64 = db
                 .conn
-                .query_row("SELECT COUNT(*) FROM layout_preferences WHERE scope = 'home'", params![], |r| r.get(0))
+                .query_row(
+                    "SELECT COUNT(*) FROM layout_preferences WHERE scope = 'home'",
+                    params![],
+                    |r| r.get(0),
+                )
                 .unwrap();
             assert_eq!(rows, 1);
         }
