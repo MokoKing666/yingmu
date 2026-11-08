@@ -6,7 +6,130 @@
 
 ---
 
-## [0.3.0] - 2026-11-08
+## [0.3.1] - 2026-11-08
+
+内部修复迭代：**不再重构视觉、不再换技术栈**，集中修复真实缺陷并统一工程一致性。
+本节只记录实际改掉的问题；未验证项集中在末尾。
+
+### 排序：作用域与优先级（此前最严重的业务逻辑缺陷）
+
+- v0.3.0 只要全局 `customOrder` 非空就覆盖**所有**页面的排序：用户在动画库拖两下，
+  电影库的「按评分」就被洗掉。现在引入 `SortMode`
+  （recommended / recent / year / rating / title / custom）与
+  `LayoutScope`（`home` / `library:<kind>` / `favorites`），
+  页面显式传入排序模式，**只有 custom 模式才读自定义序号**。
+- 部分自定义排列的合并规则修正：有序号的按序号、没序号的保持调用方原始相对顺序、
+  同序号用原始 index 稳定排序；**不再用 Media ID 兜底**（旧实现把缺失序号统一塞
+  `MAX_SAFE_INTEGER` 再按 ID 排，局部拖拽等于全局洗牌）。
+- LibraryPage 新增「自定义排列」选项；拖拽后该作用域自动切到 custom，
+  不影响其他媒体库与首页。
+- 测试：`sort-scopes.test.ts` 15 个用例，覆盖任务书 5.4 的 11 项要求
+  （最近加入/年份/评分/名称不被覆盖、自定义模式、推荐模式、作用域隔离、
+  部分排列稳定、确定性）。
+
+### 布局持久化：Tauri 桌面端不再「看起来存了其实没存」
+
+- v0.3.0 的 `getCustomOrder()` 只对 WebDemoBridge 生效（localStorage），
+  TauriBridge 返回空对象——桌面端拖完就丢，README 却写着存 SQLite。
+- `PlatformBridge` 新增 `layoutGet(scope)` / `layoutSet(scope, prefs)`；
+  WebDemoBridge 按作用域存 localStorage，含 v1 全局 customOrder → home 的
+  迁移与脏数据安全回退；**TauriBridge 走真实 Rust IPC**。
+- 迁移 003 建 `layout_preferences` 表（scope 主键、`CHECK` 约束 sort_mode、
+  updated_at 索引），参数化 SQL + 事务 UPSERT；读写时按 media 表过滤失效 ID，
+  `delete_media` 会清理所有作用域里的残留序号。
+- 测试：`layout-persistence.test.ts` 7 个用例（localStorage 路径）+
+  Rust 侧 4 个用例（SQLite 路径：往返、删除媒体清理、写入时过滤未知 ID、
+  UPSERT 单行 + 重启恢复）。
+- **明确区分**：Rust 侧实现由 CI 的 `cargo test` 验证；真实桌面端
+  「拖动 → 关闭 → 重开 → 恢复」的交互验收**尚未在 Windows 上人工执行**。
+
+### 磁贴交互：消除嵌套 button 语义
+
+- 磁贴原本是 `role="button"` 的容器里塞 `<Link>` + 收藏 button + 播放 button，
+  且容器自己处理 Enter/Space/F：收藏按钮按 Enter 会先触发详情导航，
+  播放按钮按 Space 会再播一次。
+- 改为 `article.tile` 结构：主体导航是真正的 `<Link>`（可聚焦、描述性 aria-label），
+  Enter 交给原生导航，Space = 播放，F = 收藏；收藏/播放是独立 button，
+  按键时 `stopPropagation`，**每个操作只执行一次**。
+- 测试：`media-tile-interaction.test.tsx` 13 个用例（@testing-library/user-event
+  真实键盘/指针），逐条覆盖任务书 4.2 的键盘验收表。
+
+### 媒体比例：个人视频不再被裁掉
+
+- 根因：布局引擎把所有素材送进 `aspectOf()` 的比例分档（16:9 → 1.45:1 之类），
+  再 `object-fit: cover` 裁进磁贴；21:9 视频在 1.45:1 磁贴里被裁掉左右各约 31%。
+- 个人视频现在走 `preserveAspect`：磁贴几何 = 真实画幅（只做 0.4–2.9 安全钳制），
+  图片用 `object-fit: contain` + 磁贴底色留边；16:9 / 4:3 / 21:9 / 1:1 全部原样保留。
+- `mediaArtworkAspect(item, kind)` 区分海报 / 背景图 / 缩略图三种素材的真实比例：
+  超大横幅优先 backdrop，竖版优先 poster，缺 backdrop 才回退，不再把竖版海报拉成超宽。
+- Rust 侧 `MediaMetadata` 补上 `poster_aspect` / `backdrop_aspect` / `thumbnail_aspect`
+  （TS 早已有、Rust 缺失，属跨语言模型漂移）。
+- 测试：`media-aspect` 扩到 21 个用例、`wall-layout` 新增 5 个用例。
+
+### 1000 条布局：完整不变量验证
+
+- 新增 `mosaic-invariants.test.ts`：40/200/500/1000 条 × 1280/1920/2560/3440
+  全部跑完整检查（无重复 ID、坐标非负、尺寸有限、不越界、**任意两磁贴零重叠**）。
+- 重叠检测用 Sweep Line（只比较 x 区间相交的磁贴对），并与旧的两两比较
+  `validateMosaic` 交叉验证；1000 条在 1280 与 1920 下完整执行。
+- 实测（1000 条 / 1920px / 7 轮）：布局中位数 6.80 ms、P95 9.16 ms；
+  重叠检测中位数 1.03 ms、P95 1.11 ms。**不做 FPS 宣称。**
+
+### 无障碍：减少动态效果全局生效
+
+- 新增 `useMotionPreference()` 作为唯一开关（包装 Motion 的 `useReducedMotion`，
+  订阅系统偏好变化）。页面转场、导航抽屉、遮罩、磁贴入场/悬停/拖拽、
+  共享元素 `layoutId`、Modal、Toast、播放器面板全部接入。
+- PixiJS 动态背景改为按开关启停：开启「减少动态效果」立即销毁、退回 CSS 静态渐变，
+  关闭后恢复（此前只在初始化时判断一次）。
+- 测试：`reduced-motion.test.ts` 4 个用例，含静态扫描——任何用 motion 的组件
+  必须接全局开关，不允许绕过。
+
+### 工程一致性：Token 同步、WCAG 覆盖、依赖树
+
+- 新增 `scripts/check-token-sync.mjs`（已进 CI）：逐项比对 `tokens.ts` 与
+  `tokens.css`，并校验应用 CSS 里每个 `var(--x)` 都有定义。脚本一跑就抓到
+  **22 处真实漂移**（accentDeep / accentWash / semantic.dark.* / shadow.dark.* 等），
+  已全部对齐。
+- `check-contrast.mjs` 从 19 组扩到 **32 组/主题**，覆盖真实组件配对
+  （搜索框与 placeholder、主要/次级/禁用按钮、选中与悬停、焦点环、收藏图标、
+  四类语义徽标、导航选中、进度条、磁贴文字压封面 scrim、播放器控制压玻璃遮罩）；
+  区分文字 4.5 / 大文本 3 / 非文本 3 / 装饰 1.2；透明遮罩按
+  「最不利画面 + 最强遮罩」合成后再算。当前 **0 项不达标**。
+- 新增 `--border-control`（深 `#5A6978` / 浅 `#788898`）作为功能性控件边界，
+  实测 3.41 / 3.38:1；`--border-strong` / `--border` 明确降为装饰档。
+- 依赖：`npm dedupe` 后 **ESLint 9 残留彻底消失**（整树只剩 eslint 10.14.0 +
+  @eslint/js 10.0.1）；`engines` 改为 `^22.22.2 || ^24.15.0 || >=26.0.0`
+  （与 jsdom 31 的真实 engines 取交集）；`@types/node` 22.20.5 → 24.19.2；
+  TypeScript 只在 `apps/desktop` 声明一份（全树 6.0.3 deduped）。
+- CI 新增：frontend 跑 token 同步 + WCAG 检查；rust job 新增
+  `cargo +1.85.0 check/test --locked` 的 **MSRV 真实验证**。
+
+### 文档一致性修正
+
+- `docs/design/design-system.md`：磁贴圆角从「18%」改为实际的 `20px`；
+  补三档边框（功能性 3:1 / 强调 / 装饰）与 token 同步机制；
+  对比度章节改为 32 组配对的实测数据。
+- README / 性能报告：首屏挂载量统一为实测的 23–25 个（此前 README 写 16–22、
+  报告表格写 25，自相矛盾）；性能数字一律来自测试输出。
+- 安装包哈希**不再固定记录**在多处文档：统一写「以当次 Artifact 内
+  `SHA256SUMS.txt` 为准」，并说明 NSIS 构建不可复现（同源重跑相差 1,382 字节）。
+- `docs/adr/0001-technology-stack.md` 标注「部分被 0008 取代」，保留决策过程但
+  不再让其中的版本号冒充现状。
+
+### 未完成 / 未验证
+
+- **NSIS 交互式安装测试未执行**：范围选择、UAC、多用户数据隔离、覆盖升级、卸载残留。
+- **Tauri 桌面端布局持久化的「重启恢复」未在真实 Windows 上人工执行**；
+  已验证的是 Rust 侧单元测试（含关闭数据库再打开）与 WebDemo 的 localStorage 路径。
+- **真实 Windows 显示缩放未人工确认**；性能报告里的缩放档位是逻辑视口模拟。
+- **未做逐帧 FPS 采样**、未做 DOM 数量曲线与内存曲线。
+- libmpv 播放后端未集成；HDR10 / DV / Dolby Audio / 音频直通未验证。
+- 演示数据在不同作品之间仍存在少量重复封面（48 张素材映射 52 条条目）。
+
+---
+
+
 
 主题：**品牌视觉重设计、技术栈现代化与工程质量升级**。这一版没有加新功能页面，
 目标是让 v0.2 的 Folia 拼贴在正确的品牌体系与正确的工具链上稳定运行。
@@ -85,11 +208,11 @@
 
 - 版本号统一到 `0.3.0`（`package.json` ×2、`tauri.conf.json`、`Cargo.toml`、`Cargo.lock`），
   界面显示的版本改由构建期 `__APP_VERSION__` 注入，避免「设置里写 v0.2.0、包里写 0.1.0」。
-- **CI 实际产出**：`YingMu-Setup-0.3.0-x64.exe`，4.48 MiB（4,695,391 字节），
-  SHA-256 `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`，
-  与当次 Artifact 内 `SHA256SUMS.txt` 一致；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`。
-  **NSIS 打包不可复现**：同一份源码（只改文档）重跑得到 4,694,009 字节 / `9891a7d0…`，
-  与这次相差 1,382 字节。哈希只对当次 Artifact 有效。
+- **CI 实际产出**：`YingMu-Setup-0.3.0-x64.exe`，约 4.48 MiB，
+  PE 版本资源 `FileVersion/ProductVersion = 0.3.0`。
+  **哈希以当次 Artifact 内 `SHA256SUMS.txt` 为准**：NSIS 打包含时间戳，
+  构建不可复现——同源重跑两轮相差 1,382 字节（4,694,009 vs 4,695,391）。
+  文档不固定记录某一次构建的哈希，避免后来的读者误用旧值校验新构建。
 - NSIS 双安装模式（`installMode: both`）保持不变：同一个安装器提供「仅为我安装 / 为所有人安装」
   与目录选择页。`docs/installation/nsis.md` 修正了「仅为我安装不需要管理员」与
   「启动即 UAC」的矛盾表述——**两种范围启动安装器都要 UAC**（提权用于写安装目录、

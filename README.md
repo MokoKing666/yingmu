@@ -28,7 +28,7 @@
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（4.48 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；最新一次（CI run [#32](https://github.com/MokoKing666/yingmu/actions/runs/42480458546)）SHA-256 `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`，与 Artifact 内 `SHA256SUMS.txt` 一致；同源重跑的上一次（#31）是 `9891a7d0…`，**两次哈希不同**，即 NSIS 打包不可复现的证据；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`；**本机未执行交互式安装测试** |
+| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`；**本机未执行交互式安装测试** |
 | **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发并全绿；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`（相对 `main` ahead 10 个提交），238 个文件逐文件 blob SHA 一致；CI #31 / #32 四个 job 全部通过（前端 Node 24/26 双矩阵、Rust、Windows 安装包） |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
@@ -98,7 +98,7 @@
 
 - **首页幕墙**：确定性 Skyline 二维装箱的无级全幅拼贴——连续像素尺寸（超大横幅 / 超大竖版 / 宽幅 / 方形 / 不规则比例并存）、左右零边距铺满内容区、零重叠、可复现；悬停反馈、拖拽排序、键盘方向导航（方向键 / Enter / Space / F）、共享元素 `layoutId`、页面转场。
 - **导航**：默认折叠的悬浮轨道 + 浮层抽屉（`[` / `Ctrl+B` 呼出，`Esc` 收起），不占画布宽度；右上角悬浮搜索胶囊。
-- **性能策略**：按可见区域虚拟化（1000 条时首屏仅挂载 16–22 个磁贴）、IntersectionObserver 封面懒加载、ResizeObserver 合帧、滚动区间量化、`MediaTile` memo、Artwork 内存缓存（按 `mediaId:kind:size` 键，可重建）。实测数据见 [`docs/testing/performance-report.md`](docs/testing/performance-report.md)。
+- **性能策略**：按可见区域虚拟化（1000 条时首屏仅挂载约 25 个磁贴，实测值来自 `mosaic-layout.test.ts` 输出，不手工挑选）、IntersectionObserver 封面懒加载、ResizeObserver 合帧、滚动区间量化、`MediaTile` memo、Artwork 内存缓存（按 `mediaId:kind:size` 键，可重建）。实测数据见 [`docs/testing/performance-report.md`](docs/testing/performance-report.md)。
 - **动态背景**：PixiJS 8 渲染缓慢漂移的光圈 / 光束；WebGL 不可用或「减少动态效果」时自动降级为 CSS 渐变。
 - **16 个页面**：首页、电影库、电视剧库、动画库、纪录片库、个人视频库、最近播放、收藏、播放列表、搜索、媒体详情、媒体源管理、播放器、播放历史、设置、媒体信息编辑。各页信息结构不同，不是同一卡片模板套用。
 - **深浅双主题**：完整 CSS 变量体系，跟随系统偏好，支持 `?theme=light` URL 覆盖。
@@ -257,8 +257,8 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.0-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
-> **哈希不可复现的证据**：同一份源码树只改了文档，重跑 CI 得到的安装包就变了——#31 为 4,694,009 字节 / `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`，#32 为 4,695,391 字节 / `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`（各与当次 Artifact 内 `SHA256SUMS.txt` 逐字节一致）。因此**哈希只对当次 Artifact 有效**，不要用文档里的值去校验下一次构建。
+> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出约 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.0-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
+> **哈希如何取**：**以当次 Artifact 内的 `SHA256SUMS.txt` 为准**。NSIS 打包含时间戳，**构建不可复现**——同一份源码只改文档重跑，安装包的字节数与 SHA-256 就会变（实测两轮相差 1,382 字节）。因此文档不固定记录某一次构建的哈希，避免后来的读者拿旧哈希去校验新构建而误判。
 > **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 
 ---

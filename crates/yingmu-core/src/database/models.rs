@@ -600,21 +600,16 @@ pub struct DiagnosticsReport {
 // ============================================================
 
 /// 排序模式。与 `packages/media-models/src/types.ts` 的 `SortMode` 逐值对应。
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub enum SortMode {
+    #[default]
     Recommended,
     Recent,
     Year,
     Rating,
     Title,
     Custom,
-}
-
-impl Default for SortMode {
-    fn default() -> Self {
-        SortMode::Recommended
-    }
 }
 
 impl SortMode {
