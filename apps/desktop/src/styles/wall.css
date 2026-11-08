@@ -85,10 +85,20 @@
   box-shadow: var(--shadow-glow);
 }
 
+/* ============================================================
+   磁贴内部层级（任务书 4.1）：
+   0 = 封面图 / 骨架屏 / 遮罩（纯装饰，pointer-events: none）
+   1 = 主体 Link（覆盖整块磁贴，是唯一的「点哪里都进详情」表面）
+   2 = 徽标与标题信息（装饰性，不拦截点击）
+   3 = 收藏 / 播放按钮（必须浮在 Link 之上）
+   此前 .tile-link 在 DOM 里位于 .tile-art 之前且双方都是 absolute、
+   均无 z-index——图片绘制在链接之上，点击封面区域根本到不了 Link。
+   ============================================================ */
 .tile-link {
   display: block;
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
 .tile-art {
@@ -98,6 +108,9 @@
   height: 100%;
   object-fit: cover;
   transform: scale(1.001);
+  z-index: 0;
+  /* 封面是纯展示层：绝不允许拦截主体 Link 的点击 */
+  pointer-events: none;
   /* 不做全局亮度/饱和度处理：影片的明暗层次必须来自素材本身，而不是 UI 滤镜 */
   /* 也不再用 opacity 控制「是否可见」——解码完成前 <img> 本身就是透明的，
      骨架屏会自然透出。靠 opacity 过渡会在慢机器 / 截图时留下半透明的封面。 */
@@ -122,6 +135,9 @@
 .tile-art-placeholder {
   position: absolute;
   inset: 0;
+  z-index: 0;
+  /* 骨架屏同样不得拦截主体 Link 的点击 */
+  pointer-events: none;
   background: linear-gradient(100deg, var(--surface) 20%, var(--surface-hover) 45%, var(--surface) 70%);
   background-size: 220% 100%;
   animation: tile-shimmer 1.8s linear infinite;
@@ -168,6 +184,7 @@
   inset: auto 0 0 0;
   padding: var(--space-5);
   color: var(--silver);
+  z-index: 2;
   pointer-events: none;
 }
 .tile-title {
@@ -216,6 +233,8 @@
   align-items: center;
   gap: 6px;
   z-index: 2;
+  /* 徽标只是信息展示：点击必须穿透到主体 Link（左上角也要能进详情） */
+  pointer-events: none;
 }
 .tile-badge {
   padding: 4px 9px;
