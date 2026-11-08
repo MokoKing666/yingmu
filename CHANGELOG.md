@@ -45,8 +45,10 @@
 
 ### 未完成 / 未验证
 
-- **NSIS 安装包本机未生成**，由 CI `windows-installer` job 构建；交互式安装测试
-  （范围选择、UAC、多用户数据隔离、覆盖升级、卸载）**尚未执行**。
+- **NSIS 安装包已由 CI 真实构建**：`yingmu-nsis-installer`（`YingMu-Setup-0.1.0-x64.exe`，4.42 MiB，
+  SHA-256 `9f65f56894297c403813c4b708b71a878a1d9a00000b711ebacdf6be528fa4a9`），
+  CI run [42474107703](https://github.com/MokoKing666/yingmu/actions/runs/42474107703)；
+  **交互式安装测试（范围选择、UAC、多用户数据隔离、覆盖升级、卸载）尚未执行**。
 - libmpv 仍未集成；原生视频 Surface、HDR/Dolby Vision/Dolby Audio 输出仍未验证。
 - 真实 Windows 显示缩放（125%/150%/200%）下的观感需人工在桌面端确认；
   当前报告用的是逻辑视口模拟。

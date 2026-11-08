@@ -28,7 +28,7 @@
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.1.0-x64.exe`** | ❌ **本阶段未生成** | 由 CI / Release 工作流在 `windows-latest` 构建并把关，详见「已知问题」 |
+| **NSIS 安装包 `YingMu-Setup-0.1.0-x64.exe`** | ✅ **CI 已真实构建**（4.42 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；SHA-256 `9f65f56894297c403813c4b708b71a878a1d9a00000b711ebacdf6be528fa4a9`；**本机未执行交互式安装测试** |
 | **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、`main` 分支、7 个提交，173/173 文件 blob SHA 一致；CI 结果见仓库 Actions 页面 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
@@ -254,13 +254,14 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **本阶段该安装包尚未在本机生成**：本机 `windows-installer` 构建受 MSVC/构建环境限制无法执行，安装包由 CI 的 `windows-latest` job 构建、校验并作为 Artifact 上传。**交互式安装测试（点击向导、观察 UAC、多用户隔离）尚未执行**，不以构建成功冒充安装测试成功。
+> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.42 MiB** 的 NSIS 安装器（PE32 可执行、版本资源「影幕 YingMu 0.1.0」、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传（CI run [42474107703](https://github.com/MokoKing666/yingmu/actions/runs/42474107703)）。
+> **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 
 ---
 
 ## 已知问题与未完成事项
 
-1. **NSIS 安装包未构建**：**本阶段未生成**，交付安装包由 CI / Release 工作流在 `windows-latest` 上构建并把关。`cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。
+1. **本机无法编译 Tauri/NSIS，CI 已构建成功**：本机受构建环境限制（Git Bash 的 `/usr/bin/link.exe` 遮蔽 MSVC 链接器、safe-delete 拦截 cargo 临时目录删除），`cargo check` / `cargo build` 无法完成，因此本机只能验证 `cargo fmt`；`cargo clippy` / `cargo test -p yingmu-core` 与桌面端编译、NSIS 打包均由 GitHub Actions 完成，三个 job **均已通过**（Rust 核心库、前端、Windows NSIS）。
 2. **GitHub 已推送，但本机 `git push` 通道仍不可用**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。GitHub Actions 由本次推送自动触发（`ci.yml` 的 `frontend` / `rust` / `windows-installer` 三个 job），实际结果以仓库 Actions 页面为准；`release.yml` 需推送 `v*` Tag 才触发，本阶段**未创建 Release**。`gh` CLI / GCM 仍缺失；桌面凭据文件为明文 PAT，建议用后轮换并删除。
 3. **播放器后端未集成**：libmpv DLL、D3D11 + HWND 原生视频 Surface 与 WebView2 组合、4K HEVC / HDR 输出均**未完成实机验证**。播放器页面只提供控制界面预览。
 4. **Dolby / HDR 状态**：仅实现「文件标识识别」；元数据解析、解码、正确渲染、原生信号输出四层均未验证。未获得 Dolby 官方认证，未使用 Dolby 官方 Logo。详见 [`docs/dolby-compatibility/compatibility-matrix.md`](docs/dolby-compatibility/compatibility-matrix.md)。
