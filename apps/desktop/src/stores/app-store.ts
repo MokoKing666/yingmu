@@ -101,6 +101,25 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * 布局偏好的按作用域串行化写入队列（任务书 10）。
+ *
+ * 为什么不用全局锁：不同作用域（首页 / 电影库 / 收藏）互不相关，
+ * 可以并行保存；同一作用域必须串行，否则连续拖拽会产生
+ * 「旧请求后返回覆盖新请求」的竞态。
+ * 前一个写入失败不阻塞后续写入（每个操作独立提交自己的快照）。
+ */
+const layoutWriteQueues = new Map<string, Promise<void>>();
+
+function enqueueLayoutWrite(scope: string, task: () => Promise<void>): Promise<void> {
+  const previous = layoutWriteQueues.get(scope) ?? Promise.resolve();
+  // 前一个任务无论成败都不影响本任务执行
+  const run = previous.then(task, task);
+  // 队列本身吞掉 rejection：失败由调用方（catch）处理，不能让链断裂
+  layoutWriteQueues.set(scope, run.catch(() => undefined));
+  return run;
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   items: [],
   sources: [],
@@ -241,28 +260,34 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   setLayoutSortMode: async (scope, mode) => {
     const key = normalizeScope(scope);
-    const current = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    // 保存前快照：持久化失败时回滚到这个状态（任务书 10.1/10.2）
+    const before = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
     const next: LayoutPreferences = {
-      ...current,
+      ...before,
       scope: key,
       sortMode: mode,
       updatedAt: new Date().toISOString(),
     };
     set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
     try {
-      await getBridge().layoutSet(key, next);
+      await enqueueLayoutWrite(key, () => getBridge().layoutSet(key, next));
     } catch (error) {
+      // 只有当这次写入仍是最新状态时才回滚；期间用户又操作过则保留最新值。
+      // 用对象引用同一性而不是 updatedAt：同一毫秒内两次操作的 ISO 字符串可能相同。
+      if (get().layoutPrefs[key] === next) {
+        set({ layoutPrefs: { ...get().layoutPrefs, [key]: before } });
+      }
       get().pushToast(`排序偏好保存失败：${errorMessage(error)}`, 'error');
     }
   },
 
   setWallOrder: async (scope, orderedIds) => {
     const key = normalizeScope(scope);
-    const current = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    const before = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
     // 已删除的媒体不允许残留在持久化顺序里（数据库层也会再过滤一次，双保险）
     const known = new Set(get().items.map((item) => item.id));
     const next: LayoutPreferences = {
-      ...current,
+      ...before,
       scope: key,
       // 拖拽是用户对「这一屏」的明确意图，因此该作用域切到自定义模式
       sortMode: 'custom',
@@ -271,8 +296,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     };
     set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
     try {
-      await getBridge().layoutSet(key, next);
+      await enqueueLayoutWrite(key, () => getBridge().layoutSet(key, next));
     } catch (error) {
+      // 快速连续拖拽：若期间已有更新的操作替换了状态对象（引用变了），
+      // 绝不能回滚用户的最新操作；只有本操作仍是最新状态时才回滚。
+      if (get().layoutPrefs[key] === next) {
+        set({ layoutPrefs: { ...get().layoutPrefs, [key]: before } });
+      }
       get().pushToast(`排列保存失败：${errorMessage(error)}`, 'error');
     }
   },
