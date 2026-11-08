@@ -81,7 +81,7 @@ Tauri 2 的 `installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`：
 |---|---|---|
 | `installMode: both` 配置生效 | ✅ 已写入 `tauri.conf.json` | 源码 |
 | 生成的 NSIS 脚本包含范围选择页与目录页 | ✅ **CI 实测通过** | `installer.nsi`：`MULTIUSER_PAGE_INSTALLMODE`(176)、`MUI_PAGE_DIRECTORY`(409)、`MULTIUSER_USE_PROGRAMFILES64`(113/115)、`MULTIUSER_EXECUTIONLEVEL Highest`(121)、`INSTALLMODE "both"` |
-| 安装包真实生成、>1MB、PE 头、SHA-256 | ✅ **CI 实测通过** | `YingMu-Setup-0.3.0-x64.exe`，4.48 MiB（4,694,009 字节），PE32（NSIS stub 固定为 32 位，可安装在 64 位 Windows 上），版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`，未签名；SHA-256 `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`；Artifact `yingmu-nsis-installer`（CI run 42480025570）；NSIS 打包含时间戳，**构建不可复现**，哈希以 Artifact 内 `SHA256SUMS.txt` 为准 |
+| 安装包真实生成、>1MB、PE 头、SHA-256 | ✅ **CI 实测通过** | `YingMu-Setup-0.3.0-x64.exe`，4.48 MiB（4,695,391 字节），PE32（NSIS stub 固定为 32 位，可安装在 64 位 Windows 上），版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`，未签名；SHA-256 `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`（CI run 42480458546）；Artifact `yingmu-nsis-installer`；NSIS 打包含时间戳，**构建不可复现**（同源重跑的上一版是 4,694,009 字节 / `9891a7d0…`），哈希以当次 Artifact 内 `SHA256SUMS.txt` 为准 |
 | **交互式安装：选「仅为我」→ LocalAppData** | ❌ **未执行** | 需要可交互 Windows 桌面/VM |
 | **交互式安装：选「所有人」→ Program Files + UAC** | ❌ **未执行** | 需要可交互 Windows 桌面/VM |
 | 多用户数据隔离实测 | ❌ **未执行** | 需要多用户 Windows 环境 |

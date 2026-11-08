@@ -1,5 +1,11 @@
 # ADR 0001：技术栈选型
 
+> **部分被取代**：前端工具链版本（Vite 6 / TypeScript 5.7 / ESLint 9 / Vitest 3 / Motion 12）
+> 已由 [`0008-brand-and-dependency-modernization`](0008-brand-and-dependency-modernization.md)
+> 升级为 Vite 8 / TypeScript 6 / ESLint 10 / Vitest 5 / Motion 14。
+> 本文保留**决策过程与理由**作为历史记录，其中的具体版本号不再代表现状；
+> 现状以 `apps/desktop/package.json` 与 `docs/architecture/overview.md` 为准。
+
 | 项 | 内容 |
 | --- | --- |
 | 编号 | 0001 |

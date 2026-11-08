@@ -28,8 +28,8 @@
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（4.48 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；SHA-256 `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`（与 Artifact 内 `SHA256SUMS.txt` 一致；NSIS 打包含时间戳，**重新构建哈希会变**）；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`；**本机未执行交互式安装测试** |
-| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发并全绿；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`（相对 `main` ahead 8 个提交），238 个文件逐文件 blob SHA 一致；CI #31 四个 job 全部通过（前端 Node 24/26、Rust、Windows 安装包） |
+| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（4.48 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；最新一次（CI run [#32](https://github.com/MokoKing666/yingmu/actions/runs/42480458546)）SHA-256 `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`，与 Artifact 内 `SHA256SUMS.txt` 一致；同源重跑的上一次（#31）是 `9891a7d0…`，**两次哈希不同**，即 NSIS 打包不可复现的证据；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`；**本机未执行交互式安装测试** |
+| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发并全绿；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`（相对 `main` ahead 10 个提交），238 个文件逐文件 blob SHA 一致；CI #31 / #32 四个 job 全部通过（前端 Node 24/26 双矩阵、Rust、Windows 安装包） |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
 
@@ -229,7 +229,7 @@ Rust 侧检查：**本机未完成、云端 CI 已完成**，两者都如实记�
 **预期生成路径**（在具备完整 MSVC 工具链的机器上）：
 
 ```text
-apps/desktop/src-tauri/target/release/bundle/nsis/YingMu-Setup-0.1.0-x64.exe
+apps/desktop/src-tauri/target/release/bundle/nsis/YingMu-Setup-0.3.0-x64.exe
 ```
 
 标准步骤：
@@ -257,7 +257,8 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.0-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传（CI run [#31 / 42480025570](https://github.com/MokoKing666/yingmu/actions/runs/42480025570)）。SHA-256 `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`，与 Artifact 内 `SHA256SUMS.txt` 逐字节一致。
+> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.0-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
+> **哈希不可复现的证据**：同一份源码树只改了文档，重跑 CI 得到的安装包就变了——#31 为 4,694,009 字节 / `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`，#32 为 4,695,391 字节 / `72b91a6322a5a3003f20986d1a73fc26215999b7a05b9dda9cd68c43ab94eb9c`（各与当次 Artifact 内 `SHA256SUMS.txt` 逐字节一致）。因此**哈希只对当次 Artifact 有效**，不要用文档里的值去校验下一次构建。
 > **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 
 ---
