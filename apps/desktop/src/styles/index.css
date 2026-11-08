@@ -77,22 +77,83 @@ a {
 }
 
 /* --------------------------- 应用外壳 --------------------------- */
+/* 单列画布：导航改为悬浮轨道 + 浮层抽屉，不再预留 232px 固定列 */
 .app-shell {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  position: relative;
+  display: block;
   height: 100vh;
   background: var(--bg-base);
 }
 
-.sidebar {
+.main-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 默认折叠的精简导航轨道：悬浮覆盖，绝不挤压幕墙宽度 */
+.nav-rail {
+  position: fixed;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-md);
+}
+.nav-rail-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  transition: background 180ms, color 180ms, transform 180ms;
+}
+.nav-rail-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.nav-rail-btn[data-on='true'] {
+  color: var(--brand-amber);
+}
+
+/* 展开后的完整导航：浮层覆盖在画布之上 */
+.nav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(4, 6, 9, 0.56);
+  backdrop-filter: blur(2px);
+}
+.nav-drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 288px;
+  z-index: calc(var(--z-overlay) + 1);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-6) var(--space-4);
   border-right: 1px solid var(--border);
   background: var(--bg-elevated);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
-  z-index: var(--z-sticky);
 }
 
 .sidebar-brand {
@@ -164,25 +225,21 @@ a {
   line-height: 1.7;
 }
 
-.main-area {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.topbar {
+/* 悬浮式顶栏：右上角胶囊，不占画布高度、不遮挡全幅拼贴 */
+.floating-topbar {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  height: 68px;
-  flex: none;
-  padding: 0 var(--page-x);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
   backdrop-filter: blur(18px);
-  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-md);
 }
 
 .page-scroll {
@@ -191,6 +248,10 @@ a {
   overflow-x: hidden;
   padding: var(--page-y) var(--page-x) 96px;
   scroll-behavior: smooth;
+}
+/* 幕墙页：取消左右 40px 固定留白，磁贴延伸到窗口内容区边缘 */
+.page-scroll.is-fullbleed {
+  padding: 0 0 96px;
 }
 
 .page-head {
@@ -568,20 +629,63 @@ a {
   gap: var(--space-4);
 }
 
+/* 全幅画布上的轻量叠加层：不占布局高度，避免标题/工具栏挤压磁贴 */
+.wall-inset {
+  padding-inline: var(--page-x);
+}
+.wall-overlay-title {
+  position: absolute;
+  top: 18px;
+  left: 76px;
+  z-index: calc(var(--z-content) + 1);
+  pointer-events: none;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  color: #f2efe9;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
+}
+.wall-overlay-title strong {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.wall-overlay-title span {
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  opacity: 0.72;
+  text-transform: uppercase;
+}
+.wall-note {
+  margin: var(--space-6) var(--page-x) 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.wall-note summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.wall-note .panel {
+  margin-top: var(--space-4);
+}
+.library-head,
+.favorites-head {
+  padding-top: 22px;
+}
+.library-head .page-head,
+.favorites-head .page-head {
+  margin-bottom: 16px;
+}
+.library-tools {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
 @media (max-width: 1100px) {
-  .app-shell {
-    grid-template-columns: 76px minmax(0, 1fr);
-  }
-  .sidebar-brand span,
-  .nav-item span:not(.nav-count),
-  .nav-group-label,
-  .sidebar-footer,
-  .nav-item .nav-count {
-    display: none;
-  }
-  .nav-item {
-    justify-content: center;
-  }
   .grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -595,6 +699,15 @@ a {
   .grid-2,
   .grid-3 {
     grid-template-columns: minmax(0, 1fr);
+  }
+  .nav-rail {
+    left: 8px;
+  }
+  .nav-drawer {
+    width: min(288px, 86vw);
+  }
+  .wall-overlay-title {
+    left: 62px;
   }
 }
 

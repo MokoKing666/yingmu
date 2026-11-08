@@ -100,5 +100,5 @@ Windows SDK 导入库/头文件（非系统级 Visual Studio 安装，需显式�
 MSVC 链接器，报 `link: extra operand`；② 部分执行通道存在 safe-delete 删除拦截，
 cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖
 编译阶段，未到达本模块自身源码类型检查完成。所有 `#[cfg(test)]` 单元测试未运行。
-**在拿到确切编译输出之前，本模块一律保持「未经编译验证」**，不预写通过或失败的结论。
+云端 GitHub Actions 已取得确切输出：`cargo fmt --check` / `cargo clippy -D warnings` / `cargo test`（81 个单元测试）全部通过；本机因构建环境限制仍无法复现该结果。**本模块已通过云端编译与单元测试验证，但 libmpv 集成、HDR / Dolby 输出能力依然未验证**
 需在允许正常删除临时文件的构建环境（如 GitHub Actions `windows-latest`）复跑编译与测试。

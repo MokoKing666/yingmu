@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" role="img" aria-label="田野远山">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0e140d"/><stop offset="1" stop-color="#2d4524"/></linearGradient>
+<radialGradient id="sun" cx="0.7" cy="0.2" r="0.66"><stop offset="0" stop-color="#7aa64c" stop-opacity="0.88"/><stop offset="0.34" stop-color="#7aa64c" stop-opacity="0.3"/><stop offset="1" stop-color="#7aa64c" stop-opacity="0"/></radialGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d4524"/><stop offset="1" stop-color="#030503"/></linearGradient>
+<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0.58" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.34"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.44" r="0.8"><stop offset="0.55" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.2"/></radialGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7.2"/></filter>
+<filter id="softLg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="27"/></filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.68" numOctaves="1" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="saturate" values="0"/></filter>
+</defs>
+<rect width="900" height="600" fill="url(#sky)"/>
+<rect width="900" height="600" fill="url(#sun)"/>
+<circle cx="648" cy="132" r="69.3" fill="#7aa64c" opacity="0.4" filter="url(#softLg)"/><circle cx="648" cy="132" r="33" fill="#d3c77c" opacity="0.9"/><path d="M0,600 L0,282 L0,276.2 L69.4,230.2 L150,274.8 L150,276.2 L226.1,247.2 L300,274.8 L300,276.2 L357,216.8 L450,274.8 L450,276.2 L547.9,219.7 L600,274.8 L600,276.2 L706.3,245 L750,274.8 L750,276.2 L834.6,202.7 L900,274.8 L900,282 L900,600 Z" fill="#2d4524" opacity="0.5"/><path d="M0,600 L0,324 L0,315.4 L66,273.5 L180,313.2 L180,315.4 L306.2,274 L360,313.2 L360,315.4 L451.4,195.7 L540,313.2 L540,315.4 L598.8,253.2 L720,313.2 L720,315.4 L785.5,261.9 L900,313.2 L900,324 L900,600 Z" fill="#7aa64c" opacity="0.3"/><path d="M0,600 L0,366 L0,352.1 L93.9,221.9 L180,348.6 L180,352.1 L294.9,245.2 L360,348.6 L360,352.1 L418.5,183.7 L540,348.6 L540,352.1 L664,257.1 L720,348.6 L720,352.1 L802.4,204.2 L900,348.6 L900,366 L900,600 Z" fill="#2d4524" opacity="1"/><path d="M0,600 L0,438 L0,429.8 L60.5,356.6 L128.6,427.8 L128.6,429.8 L209.1,340.4 L257.1,427.8 L257.1,429.8 L334.1,391.6 L385.7,427.8 L385.7,429.8 L472.1,327.8 L514.3,427.8 L514.3,429.8 L607.3,326.9 L642.9,427.8 L642.9,429.8 L725.7,327.9 L771.4,427.8 L771.4,429.8 L833,349.1 L900,427.8 L900,438 L900,600 Z" fill="#030503" opacity="1"/><rect x="0" y="480" width="900" height="120" fill="#030503" opacity="0.9"/><line x1="0" y1="516" x2="900" y2="504" stroke="#b7d98c" stroke-width="1.4" opacity="0.2"/><line x1="0" y1="552" x2="900" y2="540" stroke="#b7d98c" stroke-width="1.4" opacity="0.2"/><line x1="0" y1="588" x2="900" y2="576" stroke="#b7d98c" stroke-width="1.4" opacity="0.2"/><line x1="0" y1="624" x2="900" y2="612" stroke="#b7d98c" stroke-width="1.4" opacity="0.2"/>
+<rect width="900" height="600" fill="url(#scrim)"/>
+<rect width="900" height="600" fill="url(#vig)"/>
+<rect width="900" height="600" fill="#000000" opacity="0.05" filter="url(#grain)"/>
+</svg>

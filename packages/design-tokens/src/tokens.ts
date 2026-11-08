@@ -100,7 +100,11 @@ export const shadow = {
   },
 } as const;
 
-/** 不规则幕墙磁贴尺寸：以 8px 基准行高 + 16px 间距的网格跨度定义 */
+/**
+ * 旧版 12 列网格跨度：仅作为**向后兼容的视觉语义标签**保留。
+ * 自 v0.2 起，实际尺寸与位置完全由 mosaic 布局引擎连续计算，
+ * `tile.variants` 不再决定任何磁贴的宽高或位置。
+ */
 export const tile = {
   gridColumns: 12,
   rowHeight: 32,
@@ -115,6 +119,54 @@ export const tile = {
   },
   posterAspect: '2 / 3',
   minColumns: 4,
+} as const;
+
+/**
+ * Folia 式无级拼贴布局引擎参数（唯一设计真源）。
+ *
+ * 为什么自研确定性 Skyline 二维装箱，而不是 CSS Grid / 现成 Masonry 库：
+ * - CSS Grid dense 只能表达整数列跨度，尺寸天然离散；把 12 列加到 24/48 列
+ *   仍是离散档位，且 dense 回填会打乱用户自定义顺序。
+ * - 瀑布流库按列堆叠，无法产生「超大横幅 + 超大竖版 + 小方形」在同一行
+ *   互相穿插的完整构图。
+ * - Skyline（最左最低 + 宽度试探）能输出连续像素尺寸、保证零重叠、
+ *   自动用小磁贴填补大磁贴留下的凹口，且纯函数、确定性、可虚拟滚动。
+ */
+export const mosaic = {
+  /** 磁贴之间的克制分隔；页面级左右留白为 0 */
+  gap: 12,
+  /**
+   * 连续尺寸曲线：按目标宽高比分维度驱动。
+   * 横幅用「宽度」驱动、竖版用「高度」驱动，两者都是画布宽度的连续比例，
+   * 再经幂次拉开大中小反差；没有任何离散档位。
+   */
+  sizeExponent: 1.5,
+  width: { minRatio: 0.085, minPx: 96, maxClamp: 220, maxRatio: 0.78 },
+  height: { minRatio: 0.14, minPx: 140, maxClamp: 320, maxRatio: 0.42, maxLowerPx: 360, maxPx: 760 },
+  /** 连续宽高比区间：超宽 / 宽幅 / 方形 / 竖版 / 超大竖版 / 不规则 */
+  aspect: {
+    ultraWide: { min: 2.35, max: 3.3 },
+    wide: { min: 1.45, max: 2.4 },
+    square: { min: 0.92, max: 1.14 },
+    portrait: { min: 0.6, max: 0.8 },
+    ultraTall: { min: 0.46, max: 0.6 },
+    irregular: { min: 0.82, max: 1.45 },
+  },
+  /** 权重构成合计 1.0；hash 抖动保证视觉节奏不出现固定周期 */
+  weights: {
+    hash: 0.16,
+    kind: 0.14,
+    recency: 0.12,
+    rating: 0.08,
+    favorite: 0.1,
+    resume: 0.1,
+    position: 0.16,
+    rhythm: 0.14,
+  },
+  /** 放置时的宽度试探系数：让磁贴自适应凹口，减少空洞 */
+  widthProbe: [1, 0.94, 1.06, 0.88, 1.12],
+  /** 虚拟滚动上下预渲染距离（px） */
+  overscan: 700,
 } as const;
 
 export const motion = {
@@ -146,6 +198,7 @@ export const tokens = {
   spacing,
   shadow,
   tile,
+  mosaic,
   motion,
   zIndex,
 } as const;

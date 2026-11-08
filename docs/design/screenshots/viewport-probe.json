@@ -1,0 +1,45 @@
+{
+  "base": "http://127.0.0.1:4173",
+  "defaultWindow": "1600,1000",
+  "ultrawideWindow": "3440,1440",
+  "home": {
+    "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+    "canvasWidth": 1570,
+    "mountedTiles": 25,
+    "tileNodes": 25
+  },
+  "dpiProbe": [
+    {
+      "scale": "100%",
+      "simulatedCssViewport": "1600x1000",
+      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "canvasWidth": 1570,
+      "mountedTiles": 25,
+      "tileNodes": 25
+    },
+    {
+      "scale": "125%",
+      "simulatedCssViewport": "1280x800",
+      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "canvasWidth": 1250,
+      "mountedTiles": 31,
+      "tileNodes": 31
+    },
+    {
+      "scale": "150%",
+      "simulatedCssViewport": "1067x667",
+      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "canvasWidth": 1037,
+      "mountedTiles": 31,
+      "tileNodes": 31
+    },
+    {
+      "scale": "200%",
+      "simulatedCssViewport": "800x500",
+      "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
+      "canvasWidth": 770,
+      "mountedTiles": 28,
+      "tileNodes": 28
+    }
+  ]
+}

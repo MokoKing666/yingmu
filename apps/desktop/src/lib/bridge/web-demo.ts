@@ -31,7 +31,8 @@ import {
   buildDemoHistory,
   buildDemoLibrary,
 } from '@/lib/demo-data';
-import { artworkDataUri, artworkDimensions, getArtwork, rebuildArtworkCache } from '@/lib/artwork';
+import { getArtwork, rebuildArtworkCache } from '@/lib/artwork';
+import { demoArtworkUrl } from '@/lib/demo-artwork';
 import { truncate } from '@/lib/format';
 
 const STORAGE_KEY = 'yingmu:web-demo:v1';
@@ -235,19 +236,8 @@ export class WebDemoBridge implements PlatformBridge {
   }
 
   async artworkGet(req: ArtworkRequest): Promise<string> {
-    const items = mergedLibrary(this.state);
-    const item = items.find((m) => m.id === req.mediaId);
-    return getArtwork(req, (r) => {
-      const dim = artworkDimensions(r);
-      return artworkDataUri({
-        seed: r.mediaId,
-        title: item?.metadata.title ?? '影幕',
-        subtitle: item?.metadata.originalTitle?.toUpperCase() ?? 'YINGMU',
-        width: dim.width,
-        height: dim.height,
-        composition: dim.composition,
-      });
-    });
+    // 优先返回 public/artwork/ 下真实静态 SVG 素材；保留 getArtwork 的多尺寸缓存语义
+    return getArtwork(req, (r) => demoArtworkUrl(r.mediaId, r.kind));
   }
 
   async artworkRebuild(): Promise<void> {

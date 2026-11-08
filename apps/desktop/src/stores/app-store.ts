@@ -11,7 +11,8 @@ import type {
   SourceId,
   ThemeMode,
 } from '@yingmu/media-models';
-import { getBridge, getCustomOrder, setCustomOrder } from '@/lib/bridge';
+import { getBridge, getCustomOrder, setCustomOrder, getFocalOverrides, setFocalOverrides } from '@/lib/bridge';
+import type { FocalPoint } from '@/lib/bridge';
 
 export interface Toast {
   id: number;
@@ -26,6 +27,8 @@ interface AppState {
   history: PlaybackProgress[];
   settings: AppSettings;
   customOrder: Record<MediaId, number>;
+  /** 用户为媒体手动调整的图片焦点（0..100），undefined 时使用引擎默认 */
+  focalOverrides: Record<MediaId, FocalPoint>;
   isDemo: boolean;
   ready: boolean;
   error?: string;
@@ -45,6 +48,8 @@ interface AppState {
   removePlaylist: (id: PlaylistId) => Promise<void>;
   setSettings: (patch: Partial<AppSettings>) => Promise<void>;
   setWallOrder: (orderedIds: MediaId[]) => void;
+  /** undefined 表示恢复该媒体的默认焦点 */
+  setArtworkFocal: (id: MediaId, focal: FocalPoint | undefined) => void;
   pushToast: (message: string, tone?: Toast['tone']) => void;
   dismissToast: (id: number) => void;
 }
@@ -91,6 +96,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     tmdbConfigured: false,
   },
   customOrder: {},
+  focalOverrides: getFocalOverrides(),
   isDemo: true,
   ready: false,
   toasts: [],
@@ -117,6 +123,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         history,
         settings,
         customOrder: getCustomOrder(),
+        focalOverrides: getFocalOverrides(),
         isDemo: bridge.kind === 'web-demo',
         ready: true,
         error: undefined,
@@ -205,6 +212,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     const order = Object.fromEntries(orderedIds.map((id, index) => [id, index]));
     setCustomOrder(order);
     set({ customOrder: order });
+  },
+
+  setArtworkFocal: (id, focal) => {
+    const next = { ...get().focalOverrides };
+    if (focal) next[id] = focal;
+    else delete next[id];
+    setFocalOverrides(next);
+    set({ focalOverrides: next });
   },
 
   pushToast: (message, tone = 'info') => {

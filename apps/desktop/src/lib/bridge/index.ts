@@ -34,4 +34,27 @@ export function setCustomOrder(order: Record<string, number>): void {
   if (b instanceof WebDemoBridge) b.setCustomOrder(order);
 }
 
+/** 用户为单条媒体调整的图片焦点（0..100），演示桥接用 localStorage 持久化 */
+const FOCAL_KEY = 'yingmu.artworkFocal.v1';
+export type FocalPoint = { x: number; y: number };
+
+export function getFocalOverrides(): Record<string, FocalPoint> {
+  try {
+    const raw = typeof localStorage !== 'undefined' ? localStorage.getItem(FOCAL_KEY) : null;
+    if (!raw) return {};
+    const parsed: unknown = JSON.parse(raw);
+    return parsed && typeof parsed === 'object' ? (parsed as Record<string, FocalPoint>) : {};
+  } catch {
+    return {}; // 存储不可用或数据损坏时退回默认焦点
+  }
+}
+
+export function setFocalOverrides(value: Record<string, FocalPoint>): void {
+  try {
+    if (typeof localStorage !== 'undefined') localStorage.setItem(FOCAL_KEY, JSON.stringify(value));
+  } catch {
+    // 隐私模式下 localStorage 写入会抛错，焦点调整降级为本次会话有效
+  }
+}
+
 export { WebDemoBridge, TauriBridge };

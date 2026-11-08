@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" width="1280" height="720" role="img" aria-label="峡谷河流">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#221310"/><stop offset="1" stop-color="#643129"/></linearGradient>
+<radialGradient id="sun" cx="0.4" cy="0.2" r="0.66"><stop offset="0" stop-color="#c25a3d" stop-opacity="0.88"/><stop offset="0.34" stop-color="#c25a3d" stop-opacity="0.3"/><stop offset="1" stop-color="#c25a3d" stop-opacity="0"/></radialGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#643129"/><stop offset="1" stop-color="#0d0605"/></linearGradient>
+<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0.58" stop-color="#040202" stop-opacity="0"/><stop offset="1" stop-color="#040202" stop-opacity="0.34"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.44" r="0.8"><stop offset="0.55" stop-color="#040202" stop-opacity="0"/><stop offset="1" stop-color="#040202" stop-opacity="0.2"/></radialGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="10.2"/></filter>
+<filter id="softLg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="38.4"/></filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.68" numOctaves="1" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="saturate" values="0"/></filter>
+</defs>
+<rect width="1280" height="720" fill="url(#sky)"/>
+<rect width="1280" height="720" fill="url(#sun)"/>
+<circle cx="538" cy="173" r="83.2" fill="#c25a3d" opacity="0.4" filter="url(#softLg)"/><circle cx="538" cy="173" r="39.6" fill="#d98e5b" opacity="0.9"/><path d="M0,720 L0,302 L153.6,230 L307.2,374 L384,720 Z" fill="#643129" opacity="0.8"/><path d="M1280,720 L1280,273.2 L1075.2,201.2 L921.6,374 L844.8,720 Z" fill="#0d0605" opacity="0.9"/><path d="M0,720 L0,374 L0,368.2 L135.7,325.5 L256,366.8 L256,368.2 L389.6,330.4 L512,366.8 L512,368.2 L645.6,295.1 L768,366.8 L768,368.2 L935.9,321 L1024,366.8 L1024,368.2 L1193.4,304.3 L1280,366.8 L1280,374 L1280,720 Z" fill="#c25a3d" opacity="0.3"/><path d="M588.8,374 C768,518 435.2,633.2 665.6,720 L921.6,720 C716.8,662 998.4,518 742.4,374 Z" fill="#e1997e" opacity="0.4"/><rect x="301.9" y="395.6" width="303.7" height="4.3" fill="#c25a3d" opacity="0.1"/><rect x="181.9" y="438.9" width="645.8" height="4.3" fill="#c25a3d" opacity="0.2"/><rect x="387.5" y="482.1" width="281.7" height="4.3" fill="#c25a3d" opacity="0.1"/><rect x="327" y="525.4" width="238.9" height="4.3" fill="#c25a3d" opacity="0.2"/><rect x="464.5" y="568.6" width="194.8" height="4.3" fill="#c25a3d" opacity="0.2"/><rect x="463.7" y="611.9" width="111.2" height="4.3" fill="#c25a3d" opacity="0.2"/><rect x="369.2" y="655.1" width="305.4" height="4.3" fill="#c25a3d" opacity="0.1"/><rect x="242.9" y="698.4" width="424" height="4.3" fill="#c25a3d" opacity="0.2"/>
+<rect width="1280" height="720" fill="url(#scrim)"/>
+<rect width="1280" height="720" fill="url(#vig)"/>
+<rect width="1280" height="720" fill="#000000" opacity="0.05" filter="url(#grain)"/>
+</svg>

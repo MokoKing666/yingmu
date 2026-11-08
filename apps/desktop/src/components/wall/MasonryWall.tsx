@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { DragEvent, KeyboardEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { mosaic as mosaicTokens } from '@yingmu/design-tokens';
+import type { MediaId, MediaItem } from '@yingmu/media-models';
 import { MediaTile } from './MediaTile';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAppStore } from '@/stores/app-store';
-import { computeWallLayout } from '@/lib/wall-layout';
-import type { MediaId, MediaItem } from '@yingmu/media-models';
-
-const BATCH_SIZE = 24;
+import { computeMosaicLayout } from '@/lib/wall-layout';
+import type { MosaicTile } from '@/lib/wall-layout';
+import { demoArtworkAspect } from '@/lib/demo-artwork';
 
 interface MasonryWallProps {
   items: MediaItem[];
@@ -17,68 +18,125 @@ interface MasonryWallProps {
   emptyDescription?: string;
 }
 
+interface ViewRange {
+  top: number;
+  bottom: number;
+}
+
 function tileIdFromEvent(event: DragEvent<HTMLDivElement>): MediaId | undefined {
   const target = event.target as HTMLElement | null;
   return target?.closest<HTMLElement>('[data-media-id]')?.dataset.mediaId;
 }
 
 /**
- * Folia 式不规则磁贴幕墙
- * - dense 12 列网格，尺寸层次由 wall-layout 纯函数决定
- * - 分批增量渲染（每批 24）+ IntersectionObserver 封面懒加载 + 浏览器 content-visibility
- * - HTML5 拖拽排序（容器事件委托）、键盘方向导航、共享元素转场（layoutId）
+ * Folia 式全幅拼贴画布。
+ *
+ * - 布局由 `computeMosaicLayout` 输出绝对像素坐标，容器高度固定为 canvasHeight；
+ * - **真正的可见区域虚拟化**：按滚动位置 + overscan 过滤磁贴，仅挂载可见项，
+ *   不再逐批追加 DOM；1000 条数据时 DOM 数量仍与视口大小同阶；
+ * - ResizeObserver + rAF 合并宽度变化，滚动区间按 160px 台阶量化，避免频繁重渲染；
+ * - 拖拽期间只更新高亮状态，布局 memo 不会重算，落点提交时才写 customOrder。
  */
 export function MasonryWall({
   items,
   heroEnabled = true,
-  showToolbar = true,
+  showToolbar = false,
   emptyTitle = '这里还没有内容',
   emptyDescription,
 }: MasonryWallProps) {
   const navigate = useNavigate();
   const customOrder = useAppStore((s) => s.customOrder);
+  const focalOverrides = useAppStore((s) => s.focalOverrides);
   const setWallOrder = useAppStore((s) => s.setWallOrder);
   const toggleFavorite = useAppStore((s) => s.toggleFavorite);
 
-  const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
+  const [canvasWidth, setCanvasWidth] = useState(1440);
+  const [viewRange, setViewRange] = useState<ViewRange>({ top: 0, bottom: 1800 });
   const [draggingId, setDraggingId] = useState<MediaId | undefined>();
   const [dropTargetId, setDropTargetId] = useState<MediaId | undefined>();
   const [focusedId, setFocusedId] = useState<MediaId | undefined>();
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
-  const layouts = useMemo(
-    () => computeWallLayout(items, { customOrder, heroEnabled }),
-    [items, customOrder, heroEnabled],
+  const layout = useMemo(
+    () =>
+      computeMosaicLayout(items, {
+        canvasWidth,
+        customOrder,
+        heroEnabled,
+        aspectResolver: (item) => demoArtworkAspect(item.id),
+        focalResolver: (item) => focalOverrides[item.id],
+      }),
+    [items, canvasWidth, customOrder, heroEnabled, focalOverrides],
   );
 
-  const orderedIds = useMemo(() => layouts.map((l) => l.mediaId), [layouts]);
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
-  const shown = layouts.slice(0, visibleCount);
+  const orderedIds = useMemo(() => layout.tiles.map((t) => t.mediaId), [layout.tiles]);
 
-  useEffect(() => {
-    setVisibleCount(BATCH_SIZE);
-  }, [items.length]);
+  /** 只挂载与当前视口（含 overscan）相交的磁贴 */
+  const visible = useMemo(
+    () =>
+      layout.tiles.filter(
+        (tile) =>
+          tile.box.y + tile.box.height >= viewRange.top && tile.box.y <= viewRange.bottom,
+      ),
+    [layout.tiles, viewRange],
+  );
 
-  // 触底增量渲染：每次追加一批，避免一次性挂载上千张封面
+  // 画布宽度测量：ResizeObserver 回调合并到一帧，避免 resize 风暴
   useEffect(() => {
-    const element = sentinelRef.current;
-    if (!element || visibleCount >= items.length) return;
-    if (typeof IntersectionObserver === 'undefined') {
-      setVisibleCount(items.length);
-      return;
-    }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((entry) => entry.isIntersecting)) {
-          setVisibleCount((count) => Math.min(items.length, count + BATCH_SIZE));
-        }
-      },
-      { rootMargin: '700px' },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [items.length, visibleCount]);
+    const el = containerRef.current;
+    if (!el) return;
+    let frame = 0;
+    const measure = () => {
+      const width = Math.round(el.clientWidth);
+      if (width > 0) setCanvasWidth((prev) => (Math.abs(prev - width) > 2 ? width : prev));
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    });
+    observer.observe(el);
+    return () => {
+      cancelAnimationFrame(frame);
+      observer.disconnect();
+    };
+  }, []);
+
+  // 可见区间跟踪：滚动事件 passive + rAF，区间量化后只在跨台阶时 setState
+  useEffect(() => {
+    const el = containerRef.current;
+    const scrollEl = document.getElementById('page-scroll');
+    if (!el || !scrollEl) return;
+    let frame = 0;
+    let lastTop = Number.NaN;
+
+    const measure = () => {
+      const wallTop = el.getBoundingClientRect().top;
+      const scrollTop = scrollEl.getBoundingClientRect().top;
+      const offset = wallTop - scrollTop + scrollEl.scrollTop;
+      const top = scrollEl.scrollTop - offset - mosaicTokens.overscan;
+      const bottom = scrollEl.scrollTop + scrollEl.clientHeight - offset + mosaicTokens.overscan;
+      const quantised = Math.floor(top / 160) * 160;
+      if (Number.isNaN(lastTop) || Math.abs(quantised - lastTop) >= 160) {
+        lastTop = quantised;
+        setViewRange({ top: quantised, bottom: bottom + 160 });
+      }
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(measure);
+    };
+    measure();
+    scrollEl.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      scrollEl.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
+    };
+  }, [layout.canvasHeight, canvasWidth]);
 
   const handleDragStart = useCallback((event: DragEvent<HTMLDivElement>) => {
     const id = tileIdFromEvent(event);
@@ -122,25 +180,79 @@ export function MasonryWall({
     [draggingId, orderedIds, setWallOrder],
   );
 
+  /** 键盘导航：在已挂载磁贴中按几何方向寻找最近邻；目标不可见时先滚动过去 */
+  const focusTile = useCallback((tile: MosaicTile | undefined) => {
+    if (!tile) return;
+    const scrollEl = document.getElementById('page-scroll');
+    if (scrollEl && containerRef.current) {
+      const offset =
+        containerRef.current.getBoundingClientRect().top -
+        scrollEl.getBoundingClientRect().top +
+        scrollEl.scrollTop;
+      const viewTop = scrollEl.scrollTop - offset;
+      const viewBottom = viewTop + scrollEl.clientHeight;
+      if (tile.box.y < viewTop || tile.box.y > viewBottom) {
+        scrollEl.scrollTo({ top: offset + tile.box.y - 120, behavior: 'smooth' });
+      }
+    }
+    setFocusedId(tile.mediaId);
+    requestAnimationFrame(() => {
+      const node = containerRef.current?.querySelector<HTMLElement>(
+        `[data-media-id="${tile.mediaId}"] .tile`,
+      );
+      node?.focus();
+    });
+  }, []);
+
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       const key = event.key;
       if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(key)) return;
       event.preventDefault();
-      const tiles = Array.from(containerRef.current?.querySelectorAll<HTMLElement>('.tile') ?? []);
-      if (tiles.length === 0) return;
-      const current = tiles.findIndex((tile) => tile.dataset.mediaId === focusedId);
-      const step = key === 'ArrowLeft' || key === 'ArrowUp' ? -1 : 1;
-      let next = 0;
-      if (key === 'Home') next = 0;
-      else if (key === 'End') next = tiles.length - 1;
-      else if (current < 0) next = 0;
-      else next = Math.min(tiles.length - 1, Math.max(0, current + step));
-      const target = tiles[next];
-      target?.focus();
-      setFocusedId(target?.dataset.mediaId);
+      if (layout.tiles.length === 0) return;
+      if (key === 'Home') {
+        focusTile(layout.tiles[0]);
+        return;
+      }
+      if (key === 'End') {
+        focusTile(layout.tiles[layout.tiles.length - 1]);
+        return;
+      }
+
+      const current = layout.tiles.find((t) => t.mediaId === focusedId) ?? layout.tiles[0]!;
+      const cx = current.box.x + current.box.width / 2;
+      const cy = current.box.y + current.box.height / 2;
+      let best: MosaicTile | undefined;
+      let bestScore = Number.POSITIVE_INFINITY;
+
+      for (const tile of layout.tiles) {
+        if (tile.mediaId === current.mediaId) continue;
+        const dx = tile.box.x + tile.box.width / 2 - cx;
+        const dy = tile.box.y + tile.box.height / 2 - cy;
+        const horizontal = key === 'ArrowLeft' || key === 'ArrowRight';
+        const primary = horizontal ? dx : dy;
+        const secondary = horizontal ? dy : dx;
+        const forward = key === 'ArrowRight' || key === 'ArrowDown' ? 1 : -1;
+        if (primary * forward <= 0) continue;
+        const tolerance = horizontal ? 320 : 420;
+        if (Math.abs(secondary) > tolerance) continue;
+        const score = Math.abs(primary) + Math.abs(secondary) * 1.6;
+        if (score < bestScore) {
+          bestScore = score;
+          best = tile;
+        }
+      }
+      if (!best) {
+        const step = key === 'ArrowRight' || key === 'ArrowDown' ? 1 : -1;
+        const nextIndex = Math.min(
+          layout.tiles.length - 1,
+          Math.max(0, current.order + step),
+        );
+        best = layout.tiles[nextIndex];
+      }
+      focusTile(best);
     },
-    [focusedId],
+    [focusedId, layout.tiles, focusTile],
   );
 
   if (items.length === 0) {
@@ -152,17 +264,23 @@ export function MasonryWall({
       {showToolbar && (
         <div className="wall-toolbar">
           <span>
-            共 {items.length} 项 · 已渲染 {shown.length} 项 · 拖动磁贴可自定义排列
+            {items.length} 项 · 当前挂载 {visible.length} 项 · 画布 {layout.canvasWidth}×{layout.canvasHeight}
           </span>
           <span>
-            <kbd>←</kbd> <kbd>→</kbd> 导航 · <kbd>Enter</kbd> 详情 · <kbd>Space</kbd> 播放 · <kbd>F</kbd> 收藏
+            <kbd>←</kbd> <kbd>→</kbd> 导航 · <kbd>Enter</kbd> 详情 · <kbd>Space</kbd> 播放 · <kbd>F</kbd> 收藏 · 拖动排序
           </span>
         </div>
       )}
 
       <div
         ref={containerRef}
-        className="wall"
+        className="mosaic"
+        data-testid="mosaic-canvas"
+        data-canvas-width={layout.canvasWidth}
+        data-canvas-height={layout.canvasHeight}
+        data-total={items.length}
+        data-mounted={visible.length}
+        style={{ height: layout.canvasHeight }}
         onDragStart={handleDragStart}
         onDragOver={handleDragOver}
         onDrop={handleDrop}
@@ -172,26 +290,35 @@ export function MasonryWall({
         }}
         onKeyDown={handleKeyDown}
       >
-        {shown.map((layout) => {
-          const item = itemById.get(layout.mediaId);
+        {visible.map((tile) => {
+          const item = itemById.get(tile.mediaId);
           if (!item) return null;
           return (
-            <MediaTile
-              key={layout.mediaId}
-              item={item}
-              layout={layout}
-              focused={focusedId === layout.mediaId}
-              dragging={draggingId === layout.mediaId}
-              dropTarget={dropTargetId === layout.mediaId}
-              onFocus={() => setFocusedId(layout.mediaId)}
-              onToggleFavorite={(id) => void toggleFavorite(id)}
-              onPlay={(media) => navigate(`/player/${media.id}`)}
-            />
+            <div
+              key={tile.mediaId}
+              className="mosaic-slot"
+              data-media-id={tile.mediaId}
+              data-scale={tile.box.scale}
+              style={{
+                transform: `translate3d(${tile.box.x}px, ${tile.box.y}px, 0)`,
+                width: tile.box.width,
+                height: tile.box.height,
+              }}
+            >
+              <MediaTile
+                item={item}
+                layout={tile}
+                focused={focusedId === tile.mediaId}
+                dragging={draggingId === tile.mediaId}
+                dropTarget={dropTargetId === tile.mediaId}
+                onFocus={() => setFocusedId(tile.mediaId)}
+                onToggleFavorite={(id) => void toggleFavorite(id)}
+                onPlay={(media) => navigate(`/player/${media.id}`)}
+              />
+            </div>
           );
         })}
       </div>
-
-      {visibleCount < items.length && <div ref={sentinelRef} style={{ height: 1 }} aria-hidden="true" />}
     </div>
   );
 }

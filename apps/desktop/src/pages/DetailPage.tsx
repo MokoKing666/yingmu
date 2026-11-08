@@ -33,6 +33,9 @@ export function DetailPage() {
   const getItem = useAppStore((s) => s.getItem);
   const items = useAppStore((s) => s.items);
   const toggleFavorite = useAppStore((s) => s.toggleFavorite);
+  const focalOverrides = useAppStore((s) => s.focalOverrides);
+  const setArtworkFocal = useAppStore((s) => s.setArtworkFocal);
+  const focal = focalOverrides[id];
   const item = getItem(id);
   const backdrop = useArtwork(id, 'backdrop', 'xl');
   const poster = useArtwork(id, 'poster', 'lg');
@@ -147,6 +150,39 @@ export function DetailPage() {
               <div className="spread"><span className="muted tiny">元数据来源</span><span className="tag">{item.metadata.origin}</span></div>
               <div className="spread"><span className="muted tiny">Media ID</span><span className="tiny mono" style={{ fontSize: '0.65rem' }}>{item.id.slice(0, 13)}…</span></div>
               <div className="spread"><span className="muted tiny">播放次数</span><span className="tiny mono">{item.playCount}</span></div>
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2 className="panel-title">封面焦点</h2>
+            <p className="panel-desc">选择磁贴裁剪时保留的画面区域；不同宽高比的磁贴都会按此焦点裁切，不会拉伸变形。</p>
+            <div className="row" style={{ gap: 16, marginTop: 12, alignItems: 'center' }}>
+              <div className="focal-grid" role="group" aria-label="封面焦点九宫格">
+                {[20, 50, 80].flatMap((y) =>
+                  [20, 50, 80].map((x) => (
+                    <button
+                      key={`${x}-${y}`}
+                      className="focal-cell"
+                      data-on={focal?.x === x && focal?.y === y}
+                      onClick={() => setArtworkFocal(id, { x, y })}
+                      aria-label={`焦点 ${x}% ${y}%`}
+                      title={`${x}% / ${y}%`}
+                    >
+                      ·
+                    </button>
+                  )),
+                )}
+              </div>
+              <div className="stack" style={{ gap: 6 }}>
+                <span className="tiny muted">
+                  {focal ? `当前 ${focal.x}% / ${focal.y}%` : '当前：自动（由内容稳定推导）'}
+                </span>
+                {focal && (
+                  <button className="btn btn-ghost" onClick={() => setArtworkFocal(id, undefined)}>
+                    恢复默认
+                  </button>
+                )}
+              </div>
             </div>
           </section>
 

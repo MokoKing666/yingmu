@@ -1,16 +1,18 @@
+import { memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Heart, Play, GripVertical } from 'lucide-react';
-import type { CSSProperties, KeyboardEvent } from 'react';
-import type { ArtworkRequest, MediaId, MediaItem, TileLayout } from '@yingmu/media-models';
+import type { KeyboardEvent } from 'react';
+import type { ArtworkRequest, MediaId, MediaItem } from '@yingmu/media-models';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { useArtwork } from '@/hooks/use-artwork';
 import { formatClock, formatDuration, KIND_LABEL, truncate } from '@/lib/format';
 import { motion as motionTokens } from '@yingmu/design-tokens';
+import type { MosaicTile } from '@/lib/wall-layout';
 
 interface MediaTileProps {
   item: MediaItem;
-  layout: TileLayout;
+  layout: MosaicTile;
   focused?: boolean;
   dragging?: boolean;
   dropTarget?: boolean;
@@ -19,19 +21,26 @@ interface MediaTileProps {
   onToggleFavorite?: (id: MediaId) => void;
 }
 
-function artworkKind(variant: TileLayout['variant']): ArtworkRequest['kind'] {
-  return variant === 'hero' || variant === 'wide' || variant === 'resume' ? 'backdrop' : 'poster';
+/** 图片类型由磁贴实际宽高比决定（连续值），而不是六种固定枚举 */
+function artworkKind(aspect: number): ArtworkRequest['kind'] {
+  if (aspect >= 1.35) return 'backdrop';
+  if (aspect <= 0.85) return 'poster';
+  return 'thumbnail';
 }
 
-function artworkSize(variant: TileLayout['variant']): ArtworkRequest['size'] {
-  return variant === 'hero' ? 'xl' : variant === 'wide' ? 'lg' : 'md';
+/** 按渲染面积选择缓存档位：大磁贴请求大图，小磁贴只用缩略图 */
+function artworkSize(width: number): ArtworkRequest['size'] {
+  if (width > 900) return 'xl';
+  if (width > 520) return 'lg';
+  if (width > 260) return 'md';
+  return 'sm';
 }
 
 /**
- * 单个磁贴。拖拽事件由 MasonryWall 在容器上委托处理，
- * 这样 Motion 的布局动画与 HTML5 drag 不会互相干扰。
+ * 单个磁贴。外层 `.mosaic-slot` 负责绝对定位与重排过渡，
+ * 本层只负责入场 / 悬停 / 共享元素转场，避免 Motion 的 scale 与定位 transform 冲突。
  */
-export function MediaTile({
+export const MediaTile = memo(function MediaTile({
   item,
   layout,
   focused = false,
@@ -42,17 +51,15 @@ export function MediaTile({
   onToggleFavorite,
 }: MediaTileProps) {
   const navigate = useNavigate();
-  const src = useArtwork(item.id, artworkKind(layout.variant), artworkSize(layout.variant));
+  const box = layout.box;
+  const src = useArtwork(item.id, artworkKind(box.aspect), artworkSize(box.width));
   const version = item.versions[0];
   const hdr = version?.video?.hdrFormat;
   const isDv = hdr === 'dolby-vision';
   const duration = version?.durationSeconds ?? 0;
   const progress = item.resumeSeconds && duration ? (item.resumeSeconds / duration) * 100 : 0;
-
-  const style = {
-    '--col-span': layout.colSpan,
-    '--row-span': layout.rowSpan,
-  } as CSSProperties;
+  // 层次化入场延迟：同一屏内按排序位置错开，但封顶避免长列表末尾迟滞
+  const enterDelay = Math.min(0.32, (layout.order % 14) * 0.022);
 
   const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
     if (event.key === 'Enter') {
@@ -68,20 +75,18 @@ export function MediaTile({
 
   return (
     <motion.div
-      layout
       layoutId={`tile-${item.id}`}
       className="tile"
       data-variant={layout.variant}
-      data-media-id={item.id}
+      data-scale={box.scale}
       data-focused={focused}
       data-dragging={dragging}
       data-drop-target={dropTarget}
       data-testid={`tile-${item.id}`}
-      style={style}
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: motionTokens.hoverScale, y: motionTokens.hoverLift }}
-      transition={motionTokens.spring}
+      initial={{ opacity: 0, scale: 0.965 }}
+      animate={{ opacity: 1, scale: 1 }}
+      whileHover={{ scale: motionTokens.hoverScale }}
+      transition={{ ...motionTokens.spring, delay: enterDelay }}
       draggable
       tabIndex={0}
       role="button"
@@ -91,7 +96,12 @@ export function MediaTile({
     >
       <Link className="tile-link" to={`/detail/${item.id}`} tabIndex={-1} aria-hidden="true" />
       {src ? (
-        <LazyImage className="tile-art" src={src} alt={`${item.metadata.title} 封面`} />
+        <LazyImage
+          className="tile-art"
+          src={src}
+          alt={`${item.metadata.title} 封面`}
+          style={{ objectPosition: box.objectPosition }}
+        />
       ) : (
         <span className="tile-art-placeholder" aria-hidden="true" />
       )}
@@ -148,11 +158,11 @@ export function MediaTile({
       <div className="tile-content">
         <h3 className="tile-title">{item.metadata.title}</h3>
         <p className="tile-sub">
-          {layout.variant === 'hero'
-            ? truncate(item.metadata.synopsis || '', 76)
+          {box.scale === 'ultra-wide' || box.emphasis > 0.82
+            ? truncate(item.metadata.synopsis || '', 88)
             : `${item.metadata.year ?? '—'} · ${KIND_LABEL[item.kind]} · ${formatDuration(duration)}`}
         </p>
       </div>
     </motion.div>
   );
-}
+});

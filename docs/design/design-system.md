@@ -140,20 +140,50 @@ flowchart LR
 
 约束：尊重系统「减少动效」偏好，命中时回退到 `reducedMotionFallback`；缓动统一使用 `--ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1)`，CSS 侧时长 `--duration-card: 420ms`、`--duration-page: 360ms` 与 TS 侧 `0.42` / `0.36` 对应。
 
-## 7. 磁贴尺寸体系
+## 7. 全幅无级拼贴体系（v0.2）
 
-网格基准（`tile`）：`gridColumns: 12`、`rowHeight: 32`、`gap: 16`、`posterAspect: '2 / 3'`、`minColumns: 4`。磁贴跨度以「8px 基准行高 + 16px 间距」的网格定义，与 `TileLayout` 的 `colSpan` / `rowSpan` / `variant` 对应。
+自 v0.2 起，幕墙尺寸不再由 `tile.variants` 决定。`tile` 只作为**向后兼容的视觉语义标签**
+保留（决定字号与信息密度），实际宽高与位置由 `wall-layout.ts` 的 Skyline 装箱引擎连续计算。
+设计与算法决策见 `docs/adr/0007-folia-mosaic-engine.md`。
 
-| variant | colSpan | rowSpan | aspect | 用途 |
-| --- | --- | --- | --- | --- |
-| `hero` | 6 | 12 | `21 / 9` | 主视觉横幅 |
-| `portrait-lg` | 3 | 12 | `2 / 3` | 大竖版海报 |
-| `portrait-sm` | 2 | 8 | `2 / 3` | 小竖版海报 |
-| `wide` | 6 | 8 | `16 / 7` | 横版 |
-| `resume` | 4 | 6 | `16 / 9` | 续播 |
-| `dynamic` | 3 | 6 | `4 / 3` | 动态/方形 |
+### 7.1 `mosaic` 令牌（`packages/design-tokens/src/tokens.ts`）
 
-`TileLayout.order` 与 `MediaItem.wallWeight` 共同决定幕墙排序，用户拖拽排序可覆盖权重。
+| 令牌 | 值 | 含义 |
+| --- | --- | --- |
+| `gap` | `12` | 磁贴间距（px） |
+| `sizeExponent` | `1.5` | 权重 → 尺寸的幂次，用于拉开大小反差 |
+| `width.minRatio` / `minPx` / `maxClamp` / `maxRatio` | `0.085` / `96` / `220` / `0.78` | 宽度驱动型磁贴（横幅）的连续范围 |
+| `height.minRatio` / `minPx` / `maxClamp` / `maxRatio` / `maxLowerPx` / `maxPx` | `0.14` / `140` / `320` / `0.42` / `360` / `760` | 高度驱动型磁贴（竖版）的连续范围 |
+| `aspect.ultraWide` | `2.35 – 3.3` | 超大横幅 |
+| `aspect.wide` | `1.45 – 2.4` | 宽幅剧照 |
+| `aspect.square` | `0.92 – 1.14` | 方形 |
+| `aspect.portrait` | `0.6 – 0.8` | 竖版海报 |
+| `aspect.ultraTall` | `0.46 – 0.6` | 超大竖版 |
+| `aspect.irregular` | `0.82 – 1.45` | 不规则比例 |
+| `widthProbe` | `[1, 0.94, 1.06, 0.88, 1.12]` | 填洞时的宽度试探系数 |
+| `overscan` | `700` | 虚拟滚动预渲染距离（px） |
+| `weights` | hash/kind/recency/rating/favorite/resume/position/rhythm 合计 1.0 | 权重构成 |
+
+### 7.2 视觉分类（`MosaicScale`）
+
+`ultra-wide` / `ultra-tall` / `wide` / `square` / `portrait` / `compact` / `irregular`。
+**只影响字号、信息密度与遮罩方向**（见 `wall.css` 的 `[data-scale]`），
+不参与尺寸计算——尺寸已是连续值，不存在「第几档」。
+
+### 7.3 全幅与导航
+
+- 幕墙页由 `AppShell` 判定为 `is-fullbleed`，`.page-scroll` 左右 padding 为 `0`，
+  磁贴直接铺到应用内容区边缘；非幕墙页仍使用 `--page-x: 40px`。
+- 导航默认是**悬浮折叠轨道**（`.nav-rail`，`position: fixed`），不占画布宽度；
+  展开为浮层抽屉（`.nav-drawer`）叠加在画布上，`[` 或 `Ctrl+B` 呼出，`Esc` 收起。
+- 顶栏搜索为右上角悬浮胶囊（`.floating-topbar`），不占画布高度。
+
+### 7.4 兼容字段
+
+`TileLayout.colSpan` / `rowSpan` / `variant` 仍会输出，但：
+
+- `colSpan` / `rowSpan` 由实际像素尺寸反推，仅用于兼容旧测试与 CSS 变量；
+- `variant` 是视觉语义标签，不再决定尺寸。
 
 ## 8. 层级（z-index）
 

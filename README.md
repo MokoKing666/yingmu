@@ -23,7 +23,7 @@
 | 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ 已实现 | `packages/media-models/`、`packages/player-api/` |
 | 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **真实通过** | 50 个 Vitest 用例、TS 严格模式、ESLint 0 警告 |
 | GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
-| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ⚠️ **源码已落地，但未经编译验证**（受构建环境限制），编译状态见 `docs/testing/strategy.md` | `crates/yingmu-core/`、`apps/desktop/src-tauri/` |
+| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **云端 CI 已验证核心库**（fmt / clippy / 81 个测试）；桌面端构建见仓库 Actions | `crates/yingmu-core/`、`apps/desktop/src-tauri/` |
 | libmpv 嵌入式播放 / 原生视频 Surface | ❌ **未集成、未验证** | 见 `docs/playback/windows-surface-validation.md` |
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
@@ -37,9 +37,9 @@
 
 ## 界面截图
 
-以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。
+以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。全部截图为 v0.2 全幅无级拼贴版本，已覆盖旧版本截图。
 
-### 首页 · 深色主题（不规则磁贴幕墙）
+### 首页 · 深色主题（全幅无级大磁贴拼贴）
 
 ![影幕首页深色主题](docs/design/screenshots/home-dark.png)
 
@@ -51,11 +51,27 @@
 
 ![影幕电影库](docs/design/screenshots/library-movie.png)
 
+### 电视剧库
+
+![影幕电视剧库](docs/design/screenshots/library-tv.png)
+
+### 导航折叠状态（默认悬浮轨道，不挤压画布）
+
+![影幕折叠导航](docs/design/screenshots/nav-collapsed.png)
+
+### 导航展开状态（浮层抽屉，覆盖而非挤占）
+
+![影幕展开导航](docs/design/screenshots/nav-expanded.png)
+
+### 超宽屏 3440×1440（尺寸反差进一步拉开）
+
+![影幕超宽屏布局](docs/design/screenshots/ultrawide.png)
+
 ### 搜索（全文检索字段与结果片段）
 
 ![影幕搜索](docs/design/screenshots/search.png)
 
-### 媒体详情（多版本、音轨字幕、文件识别信息）
+### 媒体详情（多版本、音轨字幕、封面焦点调整）
 
 ![影幕媒体详情](docs/design/screenshots/detail.png)
 
@@ -71,7 +87,8 @@
 
 ![影幕媒体源管理](docs/design/screenshots/sources.png)
 
-> 截图生成方式可复现：`npm run build && npm run preview`，再执行 `node scripts/capture-screenshots.mjs`（调用本机 Edge 无头模式截取真实运行实例）。
+> 截图生成方式可复现：`npm run build && npm run preview`，再执行 `node scripts/capture-screenshots.mjs`（调用本机 Edge 无头模式截取真实运行实例，同时输出 `docs/design/screenshots/viewport-probe.json` 视口探测数据）。
+> 布局与性能实测数字见 [`docs/testing/performance-report.md`](docs/testing/performance-report.md)。
 
 ---
 
@@ -220,9 +237,23 @@ cd apps/desktop
 npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 ```
 
-安装包采用 Tauri 2 官方 NSIS Bundler：简体中文界面、原创安装器图标、开始菜单快捷方式、可选桌面快捷方式、自定义安装目录、覆盖升级、正常卸载、WebView2 依赖检查。用户数据固定存放于 `%APPDATA%\YingMu`（配置与数据库）、`%LOCALAPPDATA%\YingMu\Cache`（缓存）、`%LOCALAPPDATA%\YingMu\Logs`（日志），**不写入安装目录**；升级保留媒体库与播放记录，卸载默认不删除用户数据。
+安装包采用 Tauri 2 官方 NSIS Bundler，`installMode: "both"`，**同一个 exe 支持两种安装范围**：
 
-> **本阶段该安装包未生成**，原因见下节。CI 中的 Windows job 会在 GitHub 托管 runner 上执行上述构建并校验产物存在性，但本机未执行过该 job。
+| 选项 | 默认目录 | 注册表 | 快捷方式 | 权限 |
+|---|---|---|---|---|
+| 仅为我安装（当前用户） | `%LOCALAPPDATA%\YingMu` | `HKCU` | 当前用户开始菜单 | 不需要管理员 |
+| 为这台电脑上的所有用户安装 | `%ProgramFiles%\YingMu`（x64 使用 64 位 Program Files） | `HKLM` | 所有用户开始菜单 | 需要管理员（UAC） |
+
+安装向导包含**安装范围页**与**安装目录页**（`MULTIUSER_PAGE_INSTALLMODE` + `MUI_PAGE_DIRECTORY`），用户可以查看并修改最终安装路径；切换范围时默认路径随之调整。
+
+> **UAC 行为如实告知**：Tauri 2 的 `installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`，安装器**启动即请求管理员权限**，即使最终选择「仅为我安装」。这是官方标准模板的既定行为，本项目不通过修改执行级别去伪装「无需管理员」。
+> 应用安装完成后以**普通用户权限**运行。
+
+用户数据固定存放于 `%APPDATA%\YingMu`（配置与数据库）、`%LOCALAPPDATA%\YingMu\Cache`（缓存）、`%LOCALAPPDATA%\YingMu\Logs`（日志），**不写入安装目录**；因此即使选择「所有人安装」，每个 Windows 用户也有各自的收藏、历史与配置。升级保留媒体库与播放记录，卸载默认不删除用户数据，只清理对应范围的程序与快捷方式。
+
+完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
+
+> **本阶段该安装包尚未在本机生成**：本机 `windows-installer` 构建受 MSVC/构建环境限制无法执行，安装包由 CI 的 `windows-latest` job 构建、校验并作为 Artifact 上传。**交互式安装测试（点击向导、观察 UAC、多用户隔离）尚未执行**，不以构建成功冒充安装测试成功。
 
 ---
 
@@ -233,7 +264,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 3. **播放器后端未集成**：libmpv DLL、D3D11 + HWND 原生视频 Surface 与 WebView2 组合、4K HEVC / HDR 输出均**未完成实机验证**。播放器页面只提供控制界面预览。
 4. **Dolby / HDR 状态**：仅实现「文件标识识别」；元数据解析、解码、正确渲染、原生信号输出四层均未验证。未获得 Dolby 官方认证，未使用 Dolby 官方 Logo。详见 [`docs/dolby-compatibility/compatibility-matrix.md`](docs/dolby-compatibility/compatibility-matrix.md)。
 5. **媒体库为演示数据**：扫描、刮削、网络媒体源连接、真实播放记录均需 Tauri + Rust 核心在桌面端运行。
-6. **Rust 源码的编译状态**：源码已落地（`crates/yingmu-core/**`、`apps/desktop/src-tauri/**`），但**未经编译验证**——`cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成。以 `docs/testing/strategy.md` 与仓库 CI 实际结果为准，README 不预设「通过」结论。
+6. **Rust 源码的编译状态**：云端 GitHub Actions 的 `rust` job 已真实通过 `cargo fmt --check`、`cargo clippy -D warnings` 与 `cargo test -p yingmu-core`（81 个单元测试全部通过）；本机仍受构建环境限制（GNU `link.exe` 遮蔽、临时文件删除拦截）无法完成 cargo 构建。桌面端 `yingmu-desktop` 的编译与 NSIS 打包由 `windows-installer` job 在 `windows-latest` 上验证。**播放器后端 libmpv 仍未集成**，因此即使编译通过也不代表具备播放、HDR 或 Dolby 输出能力。以仓库 Actions 页面与 `docs/testing/strategy.md` 为准。
 
 ---
 

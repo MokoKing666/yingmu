@@ -54,6 +54,9 @@
   --page-x: 40px;
   --page-y: 32px;
   --tile-gap: 16px;
+  /* 幕墙页使用 0 左右留白（见 .page-scroll.is-fullbleed），此处仅服务传统页面 */
+  --page-x-fullbleed: 0px;
+  --mosaic-gap: 12px;
 
   --z-bg: 0;
   --z-content: 10;

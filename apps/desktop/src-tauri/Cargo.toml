@@ -19,5 +19,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 serde = { workspace = true }
 serde_json = { workspace = true }
+# scan.rs 在写入 MediaVersion.modified_at 时使用 chrono::Utc；
+# workspace 根清单虽已声明，但每个 crate 仍须各自显式引用。
+chrono = { workspace = true }
 tokio = { version = "1", features = ["sync", "rt-multi-thread", "macros", "time"] }
 yingmu-core = { path = "../../../crates/yingmu-core" }

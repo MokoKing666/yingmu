@@ -82,56 +82,57 @@ export function LibraryPage() {
 
   return (
     <>
-      <PageHeader
-        eyebrow="LIBRARY · 媒体库"
-        title={`${KIND_LABEL[mediaKind]}库`}
-        subtitle={`${KIND_INTRO[mediaKind]} 当前 ${filtered.length} 部作品`}
-        actions={
-          <div className="row">
-            <Segmented
-              value={view}
-              ariaLabel="视图切换"
-              options={[
-                { value: 'wall', label: '幕墙' },
-                { value: 'list', label: '列表' },
-              ]}
-              onChange={setView}
-            />
-          </div>
-        }
-      />
-
-      <div className="panel" style={{ padding: '14px 20px', marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span className="row tiny"><SlidersHorizontal size={14} /> 筛选</span>
-        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-          <button className={`tag ${genre === 'all' ? 'tag-accent' : ''}`} onClick={() => setGenre('all')}>全部</button>
-          {genres.map((g) => (
-            <button key={g} className={`tag ${genre === g ? 'tag-accent' : ''}`} onClick={() => setGenre(g)}>{g}</button>
-          ))}
-        </div>
-        <div style={{ flex: 1 }} />
-        <Segmented
-          value={sort}
-          ariaLabel="排序"
-          options={[
-            { value: 'recent', label: '最近加入' },
-            { value: 'year', label: '年份' },
-            { value: 'rating', label: '评分' },
-            { value: 'title', label: '名称' },
-          ]}
-          onChange={setSort}
+      {/* 头部与筛选工具内缩；下方幕墙本身保持左右全幅延展 */}
+      <div className="wall-inset library-head">
+        <PageHeader
+          eyebrow="LIBRARY · 媒体库"
+          title={`${KIND_LABEL[mediaKind]}库`}
+          subtitle={`${KIND_INTRO[mediaKind]} 当前 ${filtered.length} 部作品`}
         />
-        <span className="tiny mono" style={{ whiteSpace: 'nowrap' }}>{filtered.length} 项</span>
+
+        <div className="panel library-tools">
+          <span className="row tiny"><SlidersHorizontal size={14} /> 筛选</span>
+          <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            <button className={`tag ${genre === 'all' ? 'tag-accent' : ''}`} onClick={() => setGenre('all')}>全部</button>
+            {genres.map((g) => (
+              <button key={g} className={`tag ${genre === g ? 'tag-accent' : ''}`} onClick={() => setGenre(g)}>{g}</button>
+            ))}
+          </div>
+          <div style={{ flex: 1 }} />
+          <Segmented
+            value={sort}
+            ariaLabel="排序"
+            options={[
+              { value: 'recent', label: '最近加入' },
+              { value: 'year', label: '年份' },
+              { value: 'rating', label: '评分' },
+              { value: 'title', label: '名称' },
+            ]}
+            onChange={setSort}
+          />
+          <Segmented
+            value={view}
+            ariaLabel="视图切换"
+            options={[
+              { value: 'wall', label: '幕墙' },
+              { value: 'list', label: '列表' },
+            ]}
+            onChange={setView}
+          />
+          <span className="tiny mono" style={{ whiteSpace: 'nowrap' }}>{filtered.length} 项</span>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
+        <div className="wall-inset">
+          <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
+        </div>
       ) : view === 'wall' ? (
         <MasonryWall items={filtered} heroEnabled={false} showToolbar emptyTitle="没有匹配的作品" />
       ) : (
-        <div className="panel" style={{ padding: 8 }}>
+        <div className="wall-inset"><div className="panel" style={{ padding: 8 }}>
           {filtered.map((item) => <ListRow key={item.id} item={item} />)}
-        </div>
+        </div></div>
       )}
     </>
   );

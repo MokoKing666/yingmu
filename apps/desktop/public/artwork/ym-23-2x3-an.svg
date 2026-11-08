@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 900" width="600" height="900" role="img" aria-label="动画色块人物">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1518"/><stop offset="1" stop-color="#1c4446"/></linearGradient>
+<radialGradient id="sun" cx="0.7" cy="0.3" r="0.66"><stop offset="0" stop-color="#37a09b" stop-opacity="0.88"/><stop offset="0.34" stop-color="#37a09b" stop-opacity="0.3"/><stop offset="1" stop-color="#37a09b" stop-opacity="0"/></radialGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c4446"/><stop offset="1" stop-color="#040b0d"/></linearGradient>
+<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0.58" stop-color="#030b0a" stop-opacity="0"/><stop offset="1" stop-color="#030b0a" stop-opacity="0.34"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.44" r="0.8"><stop offset="0.55" stop-color="#030b0a" stop-opacity="0"/><stop offset="1" stop-color="#030b0a" stop-opacity="0.2"/></radialGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="4.8"/></filter>
+<filter id="softLg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="18"/></filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.68" numOctaves="1" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="saturate" values="0"/></filter>
+</defs>
+<rect width="600" height="900" fill="url(#sky)"/>
+<rect width="600" height="900" fill="url(#sun)"/>
+<circle cx="420" cy="234" r="132" fill="#37a09b" opacity="0.9"/><path d="M0,900 L0,558 L210,450 L390,558 L600,486 L600,900 Z" fill="#1c4446" opacity="0.9"/><path d="M0,900 L0,648 L300,576 L600,684 L600,900 Z" fill="#040b0d" opacity="0.9"/><circle cx="300" cy="585" r="30" fill="#a2dfd9" opacity="1"/><rect x="273" y="630" width="54" height="162" fill="#d7c184" opacity="1"/><rect x="255" y="648" width="18" height="126" fill="#a2dfd9" opacity="0.9"/><rect x="327" y="648" width="18" height="126" fill="#a2dfd9" opacity="0.9"/><ellipse cx="564" cy="186.3" rx="54" ry="18" fill="#a2dfd9" opacity="0.5"/><ellipse cx="558.5" cy="203.2" rx="54" ry="18" fill="#a2dfd9" opacity="0.5"/><ellipse cx="268.1" cy="162.6" rx="54" ry="18" fill="#a2dfd9" opacity="0.5"/><ellipse cx="475" cy="234.6" rx="54" ry="18" fill="#a2dfd9" opacity="0.5"/>
+<rect width="600" height="900" fill="url(#scrim)"/>
+<rect width="600" height="900" fill="url(#vig)"/>
+<rect width="600" height="900" fill="#000000" opacity="0.05" filter="url(#grain)"/>
+</svg>

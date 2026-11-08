@@ -129,6 +129,29 @@ jobs:
         with:
           projectPath: apps/desktop/src-tauri
           args: --bundles nsis
+      # 校验真实生成的 NSIS 脚本，而不是只检查 tauri.conf.json：
+      # installMode: "both" 必须落到 MULTIUSER 范围选择页与 MUI_PAGE_DIRECTORY 目录页，
+      # 且 x64 使用 64 位 Program Files。tauri-bundler 会把渲染后的 installer.nsi
+      # 保留在 bundle 输出目录，这里对它做静态断言并打印证据行。
+      - name: 校验 NSIS 脚本包含范围选择页与目录选择页 (真实构建产物)
+        shell: bash
+        run: |
+          set -euo pipefail
+          nsi="$(find . -type f -name 'installer.nsi' -not -path './node_modules/*' -print -quit)"
+          if [ -z "$nsi" ]; then
+            echo "::error::未找到 tauri-bundler 生成的 installer.nsi，无法证明安装器含范围页/目录页"
+            exit 1
+          fi
+          echo "检查 NSIS 脚本: $nsi"
+          grep -n 'MULTIUSER_PAGE_INSTALLMODE' "$nsi" || { echo "::error::安装器缺少安装范围选择页"; exit 1; }
+          grep -n 'MUI_PAGE_DIRECTORY' "$nsi" || { echo "::error::安装器缺少安装目录选择页"; exit 1; }
+          grep -n 'MULTIUSER_USE_PROGRAMFILES64' "$nsi" || { echo "::error::x64 未使用 64 位 Program Files"; exit 1; }
+          grep -n 'MULTIUSER_EXECUTIONLEVEL Highest' "$nsi" || { echo "::error::双模式安装器未使用 Highest 执行级别"; exit 1; }
+          if grep -q 'RequestExecutionLevel user' "$nsi"; then
+            echo "::error::检测到 RequestExecutionLevel user，与 installMode=both 的 UAC 行为不符"
+            exit 1
+          fi
+          echo "NSIS 脚本校验通过：范围页 + 目录页 + 64 位 Program Files + Highest 执行级别"
       # tauri-action 产出的 NSIS 文件名由 tauri.conf.json 的 productName + version
       # 推导（例如「影幕 YingMu_0.1.0_x64-setup.exe」），落在 .../bundle/nsis/ 下，
       # 永远不会叫 YingMu-Setup-*.exe。因此构建后必须显式定位真实产物并规范化命名：

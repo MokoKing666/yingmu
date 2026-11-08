@@ -6,6 +6,53 @@
 
 ---
 
+## [0.2.0] - 2026-11-08
+
+### 变更（UI 重构）
+
+- **重写布局引擎**：`wall-layout.ts` 从「12 列 CSS Grid + 六种固定跨度」改为
+  **确定性 Skyline 二维装箱**，输出连续像素尺寸与绝对坐标。尺寸由权重连续计算，
+  同时存在超大横幅、超大竖版、宽幅、方形与不规则比例；零重叠、可复现、
+  支持自定义排序与窗口缩放重排。决策记录见 `docs/adr/0007-folia-mosaic-engine.md`。
+- **全幅延展**：幕墙页取消左右 40px 固定留白（`.page-scroll.is-fullbleed`），
+  磁贴延伸到应用内容区边缘；页面背景与画布自然融合，无水平滚动条。
+- **导航重构**：取消 232px 固定侧栏，改为默认折叠的悬浮轨道（`.nav-rail`）+
+  浮层抽屉（`.nav-drawer`）；`[` / `Ctrl+B` 呼出，`Esc` 收起，不挤压画布。
+- **顶栏悬浮化**：搜索与工具改为右上角悬浮胶囊，不占画布高度；首页标题改为轻量叠加。
+- **可见区域虚拟化**：`MasonryWall` 按滚动区间 + overscan 只挂载可见磁贴，
+  1000 条数据时首屏仅挂载 18 个（旧实现按批追加，最终会挂满 DOM）。
+- **48 张原创演示封面**：`scripts/generate-demo-artwork.mjs` 程序化生成 48 张
+  不同题材/比例/调色的场景插画（2:3、16:9、4:3、1:1、5:4、4:5、3:2），
+  替换旧的重复圆环/横线占位图；演示数据从 28 条扩展到 52 条。
+- **封面焦点可调**：媒体详情页新增九宫格焦点控件，`object-position` 按焦点裁剪，
+  不同宽高比磁贴不拉伸变形；焦点持久化到本地存储。
+- **动画重做**：层次化入场延迟、悬停放大、共享元素 `layoutId`、页面转场；
+  用内层 Motion + 外层 CSS transform 分层，避免与定位冲突；尊重减少动效设置。
+
+### 修复
+
+- `apps/desktop/src-tauri/Cargo.toml` 补上 `chrono = { workspace = true }`，
+  修复 Windows CI 的 `error[E0433]: cannot find module or crate 'chrono'`。
+- `tauri.conf.json` 的 `installMode` 从 `currentUser` 改为 `both`，
+  同一个 NSIS 安装器支持「仅为我安装」与「为所有人安装」，含范围页与目录页。
+- 布局引擎补齐「凹口适配宽度」候选，消除超大横幅右侧的大面积空洞。
+
+### 新增文档
+
+- `docs/adr/0007-folia-mosaic-engine.md`（布局引擎选型与备选方案）
+- `docs/installation/nsis.md`（双安装范围、UAC、注册表、用户数据分离、验证状态）
+- `docs/testing/performance-report.md`（40/200/500/1000 条与四种分辨率的实测数据）
+
+### 未完成 / 未验证
+
+- **NSIS 安装包本机未生成**，由 CI `windows-installer` job 构建；交互式安装测试
+  （范围选择、UAC、多用户数据隔离、覆盖升级、卸载）**尚未执行**。
+- libmpv 仍未集成；原生视频 Surface、HDR/Dolby Vision/Dolby Audio 输出仍未验证。
+- 真实 Windows 显示缩放（125%/150%/200%）下的观感需人工在桌面端确认；
+  当前报告用的是逻辑视口模拟。
+
+---
+
 ## [0.1.0] - 2026-11-06
 
 首个工程基线版本。目标是建立可持续审查、可构建、可迭代的正式工程结构与可真实运行的前端，而不是交付一个已完成的商业媒体中心。
@@ -76,7 +123,7 @@ Rust 侧检查**未全部通过**，如实记录：Rust 1.99.1 已安装；本�
 - libmpv 集成、D3D11 + 原生 HWND Surface 嵌入 WebView2、4K HEVC / HDR 输出实机验证 **均未完成**。
 - Dolby Vision Profile 5 / 7 / 8.1、RPU、Enhancement Layer、HDR10 回退、SDR 色调映射 **未实机验证**；Dolby Audio / Atmos / bitstream 直通 **未验证**；未获得 Dolby 官方认证。
 - TMDB / NFO 刮削、SMB / WebDAV 实际连接、真实文件扫描 **未在本机验证**。
-- GitHub 源码推送 **已完成**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。GitHub Actions 已由推送触发（结果见仓库 Actions 页面）；GitHub Release **未创建**（需推送 `v*` Tag）。
+- GitHub 源码推送 **已完成**；GitHub Actions 首次实跑：前端 `typecheck / lint / test / build` 通过，Rust `fmt / clippy / cargo test`（81 用例）通过，Windows NSIS 构建结果见仓库 Actions 页面。云端 CI 发现并修复的问题：clippy 三项告警、`@types/node` 缺失、并行测试临时目录冲突、LRU 时间基准混用、截断文件指纹 EOF。
 - 全新安装 / 覆盖升级 / 卸载 / 数据保留的安装测试 **未执行**。
 
 ### 已知问题

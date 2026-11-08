@@ -12,7 +12,9 @@ interface LazyImageProps {
 
 /** 懒加载 + 加载淡入；未进入视口前不请求图片资源 */
 export function LazyImage({ src, alt, className, style }: LazyImageProps) {
-  const { ref, inView } = useInView<HTMLImageElement>();
+  // 幕墙已按可见区域虚拟化，这里给一圈更宽的预加载距离，
+  // 保证滚动到时封面已经解码完成，不会出现「已挂载但空白」的磁贴。
+  const { ref, inView } = useInView<HTMLImageElement>('700px');
   const [loaded, setLoaded] = useState(false);
 
   return (

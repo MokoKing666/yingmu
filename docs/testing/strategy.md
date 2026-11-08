@@ -120,7 +120,7 @@ flowchart TD
 | --- | --- |
 | Vitest / 类型检查 / 构建 / Lint（前端） | ✅ **2026-11-06 本机实测通过**（50 用例 / 0 警告 / `dist/` 产出） |
 | 凭据扫描 / 仓库契约测试 | ✅ **本机实测通过**（168 文件零命中 / 6-6） |
-| Rust `cargo:fmt` / `cargo:clippy` / `cargo:test` | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制（GNU `link.exe` 遮蔽、safe-delete 拦截临时目录删除），单元测试未运行 |
+| Rust `cargo:fmt` / `cargo:clippy` / `cargo:test` | **云端 CI 全部通过**（`fmt --check` ✓、`clippy -D warnings` ✓、`test` 81/81 ✓）；本机未成功完成，受构建环境限制（GNU `link.exe` 遮蔽、safe-delete 拦截临时目录删除） |
 | 全新 / 覆盖 / 卸载 / 升级 / 数据保留安装测试 | **未执行**（安装包本阶段未生成） |
 | 播放 / HDR / 音频 / 字幕实机验证 | **未验证、未实测** |
 | 任何 Dolby / DTS 认证与官方 Logo | **未获得 / 未使用** |
