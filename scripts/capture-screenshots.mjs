@@ -128,11 +128,18 @@ const shots = [
   ['library-tv', `${BASE}/#/library/tv`, DEFAULT_SIZE],
   // 动画库：验证不同媒体库的排序/排列作用域互不污染
   ['library-anime', `${BASE}/#/library/anime`, DEFAULT_SIZE],
+  // Genre 筛选状态（?genre= 为演示参数，不写入用户偏好）
+  ['genre-filter', `${BASE}/#/library/movie?genre=${encodeURIComponent('科幻')}`, DEFAULT_SIZE],
+  // 筛选 + 自定义排列并存
+  ['filtered-custom-sort', `${BASE}/#/library/movie?genre=${encodeURIComponent('科幻')}&sort=custom`, DEFAULT_SIZE],
   // 自定义排列：?sort= 强制排序模式，验证 Segmented 的「自定义排列」态
   ['custom-sort', `${BASE}/#/library/movie?sort=custom`, DEFAULT_SIZE],
   ['nav-collapsed', `${BASE}/#/library/anime`, DEFAULT_SIZE],
   ['nav-expanded', `${BASE}/#/?nav=open`, DEFAULT_SIZE],
   ['ultrawide', `${BASE}/#/`, ULTRAWIDE_SIZE],
+  // 标准分辨率档位
+  ['fullhd', `${BASE}/#/`, '1920,1080'],
+  ['screen-1280', `${BASE}/#/`, '1280,800'],
   // 小窗口：960×600 下磁贴连续尺寸与安全区收敛是否正常
   ['small-window', `${BASE}/#/`, '960,600'],
   // 减少动态效果：Chromium 强制 prefers-reduced-motion，验证动效关闭后的静态状态
@@ -149,6 +156,35 @@ if (home.firstMediaId) {
 let failures = 0;
 for (const [name, url, size, flags] of shots) {
   if (!capture(name, url, size, flags ?? [])) failures += 1;
+}
+
+/**
+ * reduced-motion 截图改用 Playwright 真实等待补拍：
+ * Edge --screenshot 依赖 --virtual-time-budget，虚拟时间耗尽时封面可能尚未
+ * 解码（本次实测 reduced-motion 档 20 张里只有它丢图）。Playwright 用真实
+ * 等待 + emulateMedia({ reducedMotion: 'reduce' })，结果确定。
+ */
+{
+  const { chromium } = await import('playwright-core');
+  const browser = await chromium.launch({ channel: 'msedge', headless: true });
+  const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  try {
+    await page.goto(`${BASE}/#/`, { waitUntil: 'load' });
+    await page.waitForSelector('.tile[data-testid]', { timeout: 20000 });
+    await page.waitForTimeout(2500); // 等封面解码完成
+    await page.screenshot({ path: resolve(OUT, 'reduced-motion.png') });
+    const imgs = await page.evaluate(() => {
+      const list = Array.from(document.querySelectorAll('img.tile-art'));
+      return { total: list.length, loaded: list.filter((i) => i.dataset.loaded === 'true').length };
+    });
+    console.log(`OK   reduced-motion.png (Playwright 补拍，封面 ${imgs.loaded}/${imgs.total} 已解码)`);
+  } catch (error) {
+    failures += 1;
+    console.error('FAIL reduced-motion.png (Playwright 补拍):', error.message);
+  } finally {
+    await browser.close();
+  }
 }
 console.log(`\n截图完成：${shots.length - failures}/${shots.length} 成功，输出目录 ${OUT}`);
 if (failures > 0) process.exitCode = 1;

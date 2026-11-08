@@ -5,8 +5,8 @@
   "home": {
     "firstMediaId": "d7f7587e-5cfa-5874-85fc-82d646fec300",
     "canvasWidth": 1570,
-    "mountedTiles": 15,
-    "tileNodes": 15
+    "mountedTiles": 17,
+    "tileNodes": 17
   },
   "dpiProbe": [
     {
@@ -14,8 +14,8 @@
       "simulatedCssViewport": "1600x1000",
       "firstMediaId": "d7f7587e-5cfa-5874-85fc-82d646fec300",
       "canvasWidth": 1570,
-      "mountedTiles": 15,
-      "tileNodes": 15
+      "mountedTiles": 17,
+      "tileNodes": 17
     },
     {
       "scale": "125%",

@@ -57,15 +57,18 @@ export function LibraryPage() {
   const layoutPref = useAppStore((s) => s.layoutPrefs[libraryScope(mediaKind)]);
   const setLayoutSortMode = useAppStore((s) => s.setLayoutSortMode);
   const [view, setView] = useState<ViewMode>('wall');
-  const [genre, setGenre] = useState<string | 'all'>('all');
 
   const scope = libraryScope(mediaKind);
   // 排序模式持久化在该作用域：切换媒体库互不影响；用户拖拽后会切到 custom。
   // 默认值走 defaultSortFor（媒体库一律 recent），与 SQLite / Store 一致。
   // 支持 ?sort= 强制指定（演示 / 截图用），不写入用户偏好。
   const hashQuery = typeof window !== 'undefined' ? window.location.hash.split('?')[1] ?? '' : '';
-  const forcedSort = new URLSearchParams(hashQuery).get('sort');
+  const params = new URLSearchParams(hashQuery);
+  const forcedSort = params.get('sort');
   const sort: SortMode = isSortMode(forcedSort) ? forcedSort : (layoutPref?.sortMode ?? defaultSortFor(scope));
+  // ?genre= 强制筛选（演示 / 截图用）；不合法的值自然退化为 all
+  const forcedGenre = params.get('genre');
+  const [genre, setGenre] = useState<string | 'all'>(forcedGenre ?? 'all');
   const onSortChange = (mode: SortMode) => {
     void setLayoutSortMode(scope, mode);
   };

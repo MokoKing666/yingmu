@@ -182,6 +182,61 @@ async function main() {
       const stayed = !url.includes('#/detail/') && !url.includes('#/player/');
       record('键盘 F 收藏且不导航', stayed, `URL：${url}`);
     }
+
+    // —— 自定义排序「重启恢复」端到端（任务书 10：跨重启的布局偏好） ——
+    // 从首页 DOM 收集真实媒体 ID → 写入 localStorage（模拟上次会话保存的
+    // 自定义排列）→ 重新加载电影库（?sort=custom）→ 读取真实 DOM 顺序验证恢复。
+    {
+      await openHome(page);
+      const allIds = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('.tile[data-testid]')).map((el) =>
+          el.getAttribute('data-testid').replace(/^tile-/, ''),
+        ),
+      );
+      // 前 5 个反转，其余保持原序 —— 一个确定性的「用户自定义排列」
+      const customOrder = [...allIds.slice(0, 5).reverse(), ...allIds.slice(5)];
+      await page.evaluate((order) => {
+        localStorage.setItem(
+          'yingmu:layout-prefs:v2',
+          JSON.stringify({
+            'library:movie': {
+              scope: 'library:movie',
+              sortMode: 'custom',
+              orderedMediaIds: order,
+              updatedAt: '2026-11-08T00:00:00Z',
+            },
+          }),
+        );
+      }, customOrder);
+      await page.goto(`${BASE}/#/library/movie?sort=custom`, { waitUntil: 'load' });
+      // 关键：同源 hash 导航不会重新加载文档，Store 仍是种子写入前的旧状态。
+      // 必须强制一次真实重启，才能验证「重启恢复」。
+      await page.reload({ waitUntil: 'load' });
+      await page.waitForSelector('.tile[data-testid]', { timeout: 20000 });
+      await page.waitForTimeout(500);
+      const domOrder = await page.evaluate(() =>
+        Array.from(document.querySelectorAll('.tile[data-testid]')).map((el) =>
+          el.getAttribute('data-testid').replace(/^tile-/, ''),
+        ),
+      );
+      // 电影库只渲染 movie 类条目。首页是虚拟化的（只能收集到首屏挂载的 ID），
+      // 所以预期顺序 = 「存储里有序号的条目按存储顺序」+「未收纳条目按
+      // applyCustomOrder 规则排在后面（保持原始相对顺序）」。
+      const domSet = new Set(domOrder);
+      const customSet = new Set(customOrder);
+      const expected = [
+        ...customOrder.filter((id) => domSet.has(id)),
+        ...domOrder.filter((id) => !customSet.has(id)),
+      ];
+      const restored = expected.length > 0 && JSON.stringify(domOrder) === JSON.stringify(expected);
+      record(
+        '自定义排序重启恢复（localStorage → 真实 DOM 顺序）',
+        restored,
+        restored
+          ? `${domOrder.length} 条按存储顺序渲染`
+          : `DOM 顺序与存储不一致：DOM 前 3=${domOrder.slice(0, 3).join(',')} / 预期前 3=${expected.slice(0, 3).join(',')}`,
+      );
+    }
   } finally {
     await browser.close();
     if (server) server.kill();
