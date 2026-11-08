@@ -24,7 +24,7 @@
 | 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **本机已运行** | 13 个 Vitest 文件 / 139 个用例、TS 严格模式、ESLint 0 警告 |
 | WCAG 对比度 / Token 同步 | ✅ **本机已运行 + CI 强制** | `check-contrast.mjs` 32 组/主题 0 不达标；`check-token-sync.mjs` 0 漂移 |
 | GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
-| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **CI 已构建并测试**（fmt / clippy / test / MSRV 1.85）；**本机未编译** | `crates/yingmu-core/`、`apps/desktop/src-tauri/`；本机 cargo 不在 PATH 且链接器被遮蔽，结论只来自 CI 日志 |
+| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **CI 已构建并测试**（fmt / clippy / test / MSRV 1.89）；**本机未编译** | `crates/yingmu-core/`、`apps/desktop/src-tauri/`；本机 cargo 不在 PATH 且链接器被遮蔽，结论只来自 CI 日志 |
 | Tauri 桌面端布局持久化（SQLite） | ✅ **已编写 + CI 单测覆盖**；**真实桌面端重启恢复未人工执行** | 迁移 003 + `layout_get/set`；Rust 4 个用例、TS 7 个用例 |
 | libmpv 嵌入式播放 / 原生视频 Surface | ❌ **未集成、未验证** | 见 `docs/playback/windows-surface-validation.md` |
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
@@ -137,7 +137,7 @@
 | 层 | 技术 |
 |---|---|
 | 前端 | React 19.3、TypeScript 6.0（严格模式）、Vite 8（Rolldown）、Tailwind CSS 4.3、Motion 14、Zustand 5.1、PixiJS 8.22、React Router 7.18 |
-| 桌面端 | Tauri 2、Rust（MSRV 1.85）、WebView2 |
+| 桌面端 | Tauri 2、Rust（MSRV 1.89）、WebView2 |
 | 数据 | SQLite + FTS5（`rusqlite` 0.41，`bundled`），版本化迁移 |
 | 播放器目标 | libmpv + 原生视频 Surface（D3D11 / WGL），**当前未集成** |
 | 测试 | Vitest 5.1 + Testing Library、ESLint 10.14、Prettier、Rust `cargo test` |

@@ -18,7 +18,7 @@ members = [
 [workspace.package]
 version = "0.3.0"
 edition = "2021"
-rust-version = "1.85"
+rust-version = "1.89"
 
 [workspace.dependencies]
 # 所有版本选取 crates.io 上真实存在的稳定版。

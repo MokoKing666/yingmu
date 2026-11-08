@@ -102,7 +102,7 @@ Rust 侧 `rusqlite 0.32` 落后于当前稳定线，且 `rust-version = "1.77.2"
 
 | crate | 升级前 | 升级后 | 说明 |
 |---|---|---|---|
-| MSRV | 1.77.2 | **1.85** | 与 Tokio 1.54 的真实要求一致；CI stable 工具链满足 |
+| MSRV | 1.77.2 | **1.85 → 1.89（v0.3.1 修正）** | 1.85 是当时按 Tokio 要求拍的**错误值**：`cargo +1.85.0 check --locked` 实测被拒（rusqlite 0.41.1 要求 1.89.0、libsqlite3-sys 0.39.1 要求 1.88.0、sha2 0.11 要求 1.88、uuid 1.29 要求 1.89.0），真实 MSRV 取最大值 **1.89**，已同步 Cargo.toml / CI / 文档 |
 | rusqlite | 0.32.1 | **0.41.1** | 对应 libsqlite3-sys 0.39.1；`bundled` 编译 amalgamation |
 | thiserror | 1.0.69 | **2.0.21** | core 使用 2.x；Tauri 依赖链仍保留 1.x，两者共存互不影响 |
 | sha2 | 0.10.9 | **0.11.1** | 内容指纹 SHA-256 |

@@ -13,7 +13,7 @@
 | 层次 | 技术 |
 | --- | --- |
 | 前端 | React 19.3、TypeScript 6.0、Vite 8（Rolldown）、Tailwind CSS 4.3、Motion 14、Zustand 5.1、PixiJS 8.22、react-router 7.18、lucide-react 1.70 |
-| 桌面外壳 | Tauri 2、Rust（MSRV 1.85）、WebView2（Windows） |
+| 桌面外壳 | Tauri 2、Rust（MSRV 1.89）、WebView2（Windows） |
 | 数据 | SQLite + FTS5（`rusqlite` 0.41，bundled）、版本化迁移 |
 | 播放器目标后端 | libmpv（**本阶段未集成、未验证**） |
 | 包管理 | npm workspaces（`apps/*`、`packages/*`），Node `^22.13 \|\| ^24 \|\| >=26` |

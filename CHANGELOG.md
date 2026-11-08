@@ -103,7 +103,11 @@
   （与 jsdom 31 的真实 engines 取交集）；`@types/node` 22.20.5 → 24.19.2；
   TypeScript 只在 `apps/desktop` 声明一份（全树 6.0.3 deduped）。
 - CI 新增：frontend 跑 token 同步 + WCAG 检查；rust job 新增
-  `cargo +1.85.0 check/test --locked` 的 **MSRV 真实验证**。
+  `cargo +1.89.0 check/test --locked` 的 **MSRV 真实验证**。
+  该检查第一次跑就证明 `rust-version = "1.85"` 是假声明：
+  rusqlite 0.41.1 要求 rustc 1.89.0、libsqlite3-sys 0.39.1 要求 1.88.0、
+  sha2 0.11 要求 1.88、uuid 1.29 要求 1.89.0。**已按实测把 MSRV 修正为 1.89**
+  （Cargo.toml ×2 / CI / README / 架构文档同步），不再只改声明不做验证。
 
 ### 文档一致性修正
 
@@ -175,7 +179,7 @@
 | lucide-react | 0.468 | **1.70.0** | 大版本；图标名未变 |
 | React Router | 7.1 | **7.18.5** | — |
 | Node.js | ≥20.19 | **26 主线 / 24 兼容** | `engines: ^22.13 \|\| ^24 \|\| >=26`，`.nvmrc` = 26 |
-| Rust MSRV | 1.82 | **1.85** | — |
+| Rust MSRV | 1.82 | **1.85**（v0.3.1 修正为 **1.89**） | 1.85 经 CI MSRV 检查证明是假声明，依赖实际要求 1.89 |
 | rusqlite | 0.32 | **0.41.1** | `features = ["bundled"]`；FTS5 由 CI `cargo test` 实测 |
 | thiserror / sha2 / roxmltree | 1 / 0.10 / 0.20 | **2.0 / 0.11 / 0.21** | — |
 
