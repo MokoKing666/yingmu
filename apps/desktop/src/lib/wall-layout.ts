@@ -340,7 +340,7 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
     // 对 skyline 凹口生成「刚好填满」的候选以回收空隙，但用确定性 hash 门控：
     // 只有部分磁贴参与填洞，其余保持自由尺寸，避免所有卡片收敛到同一宽度。
     // 候选宽度再乘一个连续扰动系数，保证尺寸始终无级而非离散档位。
-    if (r2 > 0.4) {
+    if (r2 > 0.35 || index <= 2) {
       for (const segment of sky) {
         let opening = 0;
         for (const s of sky) {
@@ -348,7 +348,7 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
           if (s.y > segment.y + 0.5) break;
           opening += s.width;
         }
-        const candidate = (opening - gap) * (0.92 + r3 * 0.1);
+        const candidate = (opening - gap) * (0.96 + r3 * 0.05);
         if (candidate >= minW && candidate <= maxW && !probes.some((p) => Math.abs(p - candidate) < 8)) {
           probes.push(candidate);
         }
@@ -363,7 +363,7 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
       const ph = h + gap;
       const pos = findPosition(sky, pw, canvasWidth);
       // 轻微惩罚偏离目标宽度，但填满凹口带来的 y 收益远大于该惩罚
-      const score = pos.y + ph + Math.abs(w - baseW) * 0.35;
+      const score = pos.y + ph + Math.abs(w - baseW) * 0.25;
       if (!chosen || score < chosen.score) chosen = { x: pos.x, y: pos.y, w, h, ph, score };
     }
     const placed = chosen!;

@@ -5,8 +5,8 @@
   "home": {
     "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
     "canvasWidth": 1570,
-    "mountedTiles": 25,
-    "tileNodes": 25
+    "mountedTiles": 16,
+    "tileNodes": 16
   },
   "dpiProbe": [
     {
@@ -14,32 +14,32 @@
       "simulatedCssViewport": "1600x1000",
       "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
       "canvasWidth": 1570,
-      "mountedTiles": 25,
-      "tileNodes": 25
+      "mountedTiles": 16,
+      "tileNodes": 16
     },
     {
       "scale": "125%",
       "simulatedCssViewport": "1280x800",
       "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
       "canvasWidth": 1250,
-      "mountedTiles": 31,
-      "tileNodes": 31
+      "mountedTiles": 19,
+      "tileNodes": 19
     },
     {
       "scale": "150%",
       "simulatedCssViewport": "1067x667",
       "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
       "canvasWidth": 1037,
-      "mountedTiles": 31,
-      "tileNodes": 31
+      "mountedTiles": 21,
+      "tileNodes": 21
     },
     {
       "scale": "200%",
       "simulatedCssViewport": "800x500",
       "firstMediaId": "abe9b5aa-90eb-59c0-89ee-e00212dd8bdc",
       "canvasWidth": 770,
-      "mountedTiles": 28,
-      "tileNodes": 28
+      "mountedTiles": 16,
+      "tileNodes": 16
     }
   ]
 }
