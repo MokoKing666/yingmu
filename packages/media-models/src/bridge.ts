@@ -25,6 +25,7 @@ import type {
   ArtworkRequest,
   ThemeMode,
   MediaMetadata,
+  LayoutPreferences,
 } from './types';
 
 /** IPC 命令名常量：TypeScript 与 Rust 两侧必须完全一致 */
@@ -55,6 +56,8 @@ export const IPC = {
   playerAttachSurface: 'yingmu_player_attach_surface',
   settingsGet: 'yingmu_settings_get',
   settingsSet: 'yingmu_settings_set',
+  layoutGet: 'yingmu_layout_get',
+  layoutSet: 'yingmu_layout_set',
   diagnosticsReport: 'yingmu_diagnostics_report',
 } as const;
 
@@ -140,6 +143,14 @@ export interface PlatformBridge {
 
   settingsGet(): Promise<AppSettings>;
   settingsSet(patch: Partial<AppSettings>): Promise<AppSettings>;
+
+  /**
+   * 读取某个作用域的布局偏好（排序模式 + 自定义排列）。
+   * 两个运行模式都必须真实实现：WebDemo 用 localStorage，Tauri 用 SQLite。
+   */
+  layoutGet(scope: string): Promise<LayoutPreferences>;
+  /** 写入某个作用域的布局偏好；实现方负责按作用域隔离与失效 ID 清理 */
+  layoutSet(scope: string, preferences: LayoutPreferences): Promise<void>;
 
   diagnosticsReport(): Promise<DiagnosticsReport>;
 }

@@ -52,6 +52,11 @@ pub const MIGRATIONS: &[Migration] = &[
         name: "002_fts5",
         sql: include_str!("migrations/002_fts5.sql"),
     },
+    Migration {
+        version: 3,
+        name: "003_layout_preferences",
+        sql: include_str!("migrations/003_layout_preferences.sql"),
+    },
 ];
 
 /// media 表查询列（顺序与 [`row_to_media_row`] 索引一致）。
@@ -668,7 +673,117 @@ impl Database {
     pub fn delete_media(&self, id: &str) -> Result<()> {
         self.conn
             .execute("DELETE FROM media WHERE id = ?1", params![id])?;
+        // 顺手清理所有作用域布局偏好里指向该媒体的序号，避免残留 ID 让排列出现空洞
+        self.prune_layout_ids()?;
         Ok(())
+    }
+
+    // ============================================================
+    // 布局偏好（layout_preferences，迁移 003）
+    // ============================================================
+
+    /// 读取某个作用域的布局偏好。不存在返回 `None`，由调用方给默认值。
+    ///
+    /// 读到的 `ordered_media_ids` 会先按当前媒体库过滤：媒体被删除后其 ID 不应
+    /// 继续占位，否则重启后排列会「凭空留洞」。
+    pub fn layout_get(&self, scope: &str) -> Result<Option<LayoutPreferences>> {
+        let row = self
+            .conn
+            .query_row(
+                "SELECT scope, sort_mode, ordered_media_ids, updated_at FROM layout_preferences WHERE scope = ?1",
+                params![scope],
+                |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, String>(2)?,
+                        r.get::<_, String>(3)?,
+                    ))
+                },
+            )
+            .optional()?;
+        let Some((scope, sort_mode, ordered_json, updated_at)) = row else {
+            return Ok(None);
+        };
+        let ids = Self::parse_ordered_ids(&ordered_json);
+        let ids = self.filter_existing_ids(ids)?;
+        Ok(Some(LayoutPreferences {
+            scope,
+            sort_mode: SortMode::parse(&sort_mode),
+            ordered_media_ids: ids,
+            updated_at,
+        }))
+    }
+
+    /// 写入某个作用域的布局偏好（UPSERT）。
+    ///
+    /// - 作用域是主键，同一视图只有一行，天然隔离不同媒体库；
+    /// - `ordered_media_ids` 写入前过滤掉已不存在的媒体 ID；
+    /// - 全程参数化 SQL + 显式事务。
+    pub fn layout_set(&self, prefs: &LayoutPreferences) -> Result<()> {
+        let ids = self.filter_existing_ids(prefs.ordered_media_ids.clone())?;
+        let ordered_json = serde_json::to_string(&ids).unwrap_or_else(|_| "[]".to_string());
+        let tx = self.conn.unchecked_transaction()?;
+        tx.execute(
+            "INSERT INTO layout_preferences (scope, sort_mode, ordered_media_ids, updated_at)
+             VALUES (?1, ?2, ?3, ?4)
+             ON CONFLICT(scope) DO UPDATE SET
+               sort_mode = excluded.sort_mode,
+               ordered_media_ids = excluded.ordered_media_ids,
+               updated_at = excluded.updated_at",
+            params![
+                prefs.scope,
+                prefs.sort_mode.as_str(),
+                ordered_json,
+                prefs.updated_at
+            ],
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    /// 清理所有布局偏好里指向已删除媒体的 ID（删除媒体 / 扫描清理后调用）。
+    pub fn prune_layout_ids(&self) -> Result<usize> {
+        let mut stmt = self
+            .conn
+            .prepare("SELECT scope, ordered_media_ids FROM layout_preferences")?;
+        let rows: Vec<(String, String)> = stmt
+            .query_map(params![], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+        let mut changed = 0usize;
+        for (scope, ordered_json) in rows {
+            let ids = Self::parse_ordered_ids(&ordered_json);
+            let kept = self.filter_existing_ids(ids.clone())?;
+            if kept.len() != ids.len() {
+                let json = serde_json::to_string(&kept).unwrap_or_else(|_| "[]".to_string());
+                self.conn.execute(
+                    "UPDATE layout_preferences SET ordered_media_ids = ?1 WHERE scope = ?2",
+                    params![json, scope],
+                )?;
+                changed += 1;
+            }
+        }
+        Ok(changed)
+    }
+
+    fn parse_ordered_ids(json: &str) -> Vec<String> {
+        serde_json::from_str::<Vec<String>>(json).unwrap_or_default()
+    }
+
+    /// 只保留仍然存在于 media 表的 ID，保持原有顺序。
+    fn filter_existing_ids(&self, ids: Vec<String>) -> Result<Vec<String>> {
+        if ids.is_empty() {
+            return Ok(ids);
+        }
+        let mut stmt = self.conn.prepare("SELECT id FROM media WHERE id = ?1")?;
+        let mut out = Vec::with_capacity(ids.len());
+        for id in ids {
+            let exists: Option<String> = stmt.query_row(params![id], |r| r.get(0)).optional()?;
+            if exists.is_some() {
+                out.push(id);
+            }
+        }
+        Ok(out)
     }
 
     /// 按指纹查找已有 MediaId（路径变更时据此复用同一 ID）。
@@ -987,6 +1102,9 @@ mod tests {
             rating: Some(8.6),
             poster_path: None,
             backdrop_path: None,
+            poster_aspect: None,
+            backdrop_aspect: None,
+            thumbnail_aspect: None,
             season_count: None,
             episode_count: None,
             origin: MetadataOrigin::Local,
@@ -1122,15 +1240,17 @@ mod tests {
     #[test]
     fn in_memory_db_runs_all_migrations() {
         let db = Database::open_in_memory().unwrap();
-        assert_eq!(db.db_version().unwrap(), 2);
+        assert_eq!(db.db_version().unwrap(), 3);
         let applied = db.applied_migrations().unwrap();
-        assert_eq!(applied.len(), 2);
+        assert_eq!(applied.len(), 3);
         assert_eq!(applied[0].0, 1);
         assert_eq!(applied[1].0, 2);
+        assert_eq!(applied[2].0, 3);
         assert_eq!(applied[0].1, "001_initial");
         assert_eq!(applied[1].1, "002_fts5");
+        assert_eq!(applied[2].1, "003_layout_preferences");
         // 重复打开（迁移幂等）不应报错或重复插入。
-        assert_eq!(db.applied_migrations().unwrap().len(), 2);
+        assert_eq!(db.applied_migrations().unwrap().len(), 3);
     }
 
     #[test]
@@ -1170,6 +1290,112 @@ mod tests {
         // 删除后索引同步移除（DELETE 触发器生效）。
         db.delete_media("m2").unwrap();
         assert_eq!(db.search(&query("星际")).unwrap().total, 0);
+    }
+
+    // ============================================================
+    // 布局偏好（layout_preferences，迁移 003）
+    // ============================================================
+
+    #[test]
+    fn layout_preferences_roundtrip_per_scope() {
+        let db = Database::open_in_memory().unwrap();
+        db.save_media(&sample_item("m1", "甲")).unwrap();
+        db.save_media(&sample_item("m2", "乙")).unwrap();
+
+        let home = LayoutPreferences {
+            scope: "home".to_string(),
+            sort_mode: SortMode::Custom,
+            ordered_media_ids: vec!["m2".to_string(), "m1".to_string()],
+            updated_at: "2026-11-08T00:00:00Z".to_string(),
+        };
+        db.layout_set(&home).unwrap();
+
+        let read = db.layout_get("home").unwrap().expect("home 布局应已保存");
+        assert_eq!(read.sort_mode, SortMode::Custom);
+        assert_eq!(read.ordered_media_ids, vec!["m2".to_string(), "m1".to_string()]);
+
+        // 电影库 / 动画库不受影响
+        assert!(db.layout_get("library:movie").unwrap().is_none());
+        assert!(db.layout_get("library:anime").unwrap().is_none());
+    }
+
+    #[test]
+    fn layout_set_prunes_deleted_media_ids() {
+        let db = Database::open_in_memory().unwrap();
+        db.save_media(&sample_item("m1", "甲")).unwrap();
+        db.save_media(&sample_item("m2", "乙")).unwrap();
+        db.save_media(&sample_item("m3", "丙")).unwrap();
+
+        db.layout_set(&LayoutPreferences {
+            scope: "home".to_string(),
+            sort_mode: SortMode::Custom,
+            ordered_media_ids: vec!["m3".to_string(), "m1".to_string(), "m2".to_string()],
+            updated_at: "2026-11-08T00:00:00Z".to_string(),
+        })
+        .unwrap();
+
+        // 删除 m1 后，布局里不应再出现它的 ID
+        db.delete_media("m1").unwrap();
+        let read = db.layout_get("home").unwrap().unwrap();
+        assert_eq!(read.ordered_media_ids, vec!["m3".to_string(), "m2".to_string()]);
+    }
+
+    #[test]
+    fn layout_set_filters_unknown_ids_on_write() {
+        let db = Database::open_in_memory().unwrap();
+        db.save_media(&sample_item("m1", "甲")).unwrap();
+        db.layout_set(&LayoutPreferences {
+            scope: "library:tv".to_string(),
+            sort_mode: SortMode::Custom,
+            ordered_media_ids: vec!["ghost".to_string(), "m1".to_string()],
+            updated_at: "2026-11-08T00:00:00Z".to_string(),
+        })
+        .unwrap();
+        let read = db.layout_get("library:tv").unwrap().unwrap();
+        assert_eq!(read.ordered_media_ids, vec!["m1".to_string()]);
+    }
+
+    #[test]
+    fn layout_upsert_keeps_one_row_per_scope_and_survives_reopen() {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let dir = std::env::temp_dir().join(format!("yingmu-layout-test-{nanos}"));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("test.db");
+        {
+            let db = Database::open(&path).unwrap();
+            db.save_media(&sample_item("m1", "甲")).unwrap();
+            db.layout_set(&LayoutPreferences {
+                scope: "home".to_string(),
+                sort_mode: SortMode::Title,
+                ordered_media_ids: vec!["m1".to_string()],
+                updated_at: "2026-11-08T00:00:00Z".to_string(),
+            })
+            .unwrap();
+            // 同一作用域再次写入是 UPSERT，不是新增一行
+            db.layout_set(&LayoutPreferences {
+                scope: "home".to_string(),
+                sort_mode: SortMode::Rating,
+                ordered_media_ids: vec!["m1".to_string()],
+                updated_at: "2026-11-08T01:00:00Z".to_string(),
+            })
+            .unwrap();
+        }
+        // 关闭再打开（模拟应用重启）布局仍在
+        {
+            let db = Database::open(&path).unwrap();
+            let read = db.layout_get("home").unwrap().unwrap();
+            assert_eq!(read.sort_mode, SortMode::Rating);
+            assert_eq!(read.ordered_media_ids, vec!["m1".to_string()]);
+            let rows: i64 = db
+                .conn
+                .query_row("SELECT COUNT(*) FROM layout_preferences WHERE scope = 'home'", params![], |r| r.get(0))
+                .unwrap();
+            assert_eq!(rows, 1);
+        }
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

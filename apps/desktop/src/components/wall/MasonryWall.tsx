@@ -10,9 +10,20 @@ import { computeMosaicLayout } from '@/lib/wall-layout';
 import type { MosaicTile } from '@/lib/wall-layout';
 import { demoArtworkAspect } from '@/lib/demo-artwork';
 import { mediaAspect } from '@/lib/media-aspect';
+import { SCOPE_HOME, toOrderMap } from '@/lib/layout-preferences';
 
 interface MasonryWallProps {
   items: MediaItem[];
+  /**
+   * 布局作用域（home / library:movie / …）。拖拽结果只写入这个作用域，
+   * 不同页面的自定义排列互不影响。
+   */
+  scope?: string;
+  /**
+   * 当前排序模式。只有 `custom` 才应用自定义排列；
+   * 其余模式一律尊重 `items` 的给定顺序，绝不被全局 customOrder 覆盖。
+   */
+  sortMode?: 'recommended' | 'recent' | 'year' | 'rating' | 'title' | 'custom';
   heroEnabled?: boolean;
   showToolbar?: boolean;
   emptyTitle?: string;
@@ -40,17 +51,26 @@ function tileIdFromEvent(event: DragEvent<HTMLDivElement>): MediaId | undefined 
  */
 export function MasonryWall({
   items,
+  scope = SCOPE_HOME,
+  sortMode = 'recommended',
   heroEnabled = true,
   showToolbar = false,
   emptyTitle = '这里还没有内容',
   emptyDescription,
 }: MasonryWallProps) {
   const navigate = useNavigate();
-  const customOrder = useAppStore((s) => s.customOrder);
+  const layoutPref = useAppStore((s) => s.layoutPrefs[scope]);
   const focalOverrides = useAppStore((s) => s.focalOverrides);
   const setWallOrder = useAppStore((s) => s.setWallOrder);
   const toggleFavorite = useAppStore((s) => s.toggleFavorite);
   const isDemo = useAppStore((s) => s.isDemo);
+
+  // 只有自定义模式才应用自定义序号；其余模式完全尊重调用方给的顺序。
+  // 这是「页面排序不被全局 customOrder 覆盖」的关键。
+  const customOrder = useMemo(
+    () => (sortMode === 'custom' ? toOrderMap(layoutPref?.orderedMediaIds ?? []) : undefined),
+    [sortMode, layoutPref],
+  );
 
   const [canvasWidth, setCanvasWidth] = useState(1440);
   const [viewRange, setViewRange] = useState<ViewRange>({ top: 0, bottom: 1800 });
@@ -176,12 +196,13 @@ export function MasonryWall({
         const reordered = [...orderedIds];
         reordered.splice(from, 1);
         reordered.splice(to, 0, sourceId);
-        setWallOrder(reordered);
+        // 只写入当前作用域，并把该作用域切到「自定义排列」模式
+        void setWallOrder(scope, reordered);
       }
       setDraggingId(undefined);
       setDropTargetId(undefined);
     },
-    [draggingId, orderedIds, setWallOrder],
+    [draggingId, orderedIds, scope, setWallOrder],
   );
 
   /**

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { MasonryWall } from '@/components/wall/MasonryWall';
-import { orderByRecommendation } from '@/lib/wall-layout';
+import { applySortMode } from '@/lib/sort-modes';
+import { SCOPE_HOME, toOrderMap } from '@/lib/layout-preferences';
 import { DynamicBackdrop } from '@/components/wall/DynamicBackdrop';
 import { StatusNotice } from '@/components/ui/StatusNotice';
 import { useAppStore } from '@/stores/app-store';
@@ -10,18 +11,20 @@ import { DEMO_DATA_DISCLAIMER } from '@/lib/demo-data';
  * 首页 = 一整面连续延展的媒体艺术画布。
  * 标题轻量叠加、搜索悬浮在右上角；续播 / 收藏 / 最近加入全部由布局引擎的权重
  * 融入拼贴本身，不再拆成互不相关的卡片区域。
+ *
+ * 排序：默认「推荐」；用户拖拽后该作用域切到「自定义排列」，且只影响 home。
  */
 export function HomePage() {
   const items = useAppStore((s) => s.items);
-  const customOrder = useAppStore((s) => s.customOrder);
+  const layoutPref = useAppStore((s) => s.layoutPrefs[SCOPE_HOME]);
   const isDemo = useAppStore((s) => s.isDemo);
 
-  // 用户一旦拖拽排序，就完全尊重其顺序；否则用确定性的推荐权重决定「先看到谁」，
-  // hero 因此是推荐第一名，而不是最早入库的那部片。
-  const hasCustomOrder = Object.keys(customOrder).length > 0;
+  // 排序模式由作用域偏好显式决定：recommended 走推荐权重，
+  // custom 走该作用域的自定义排列（部分自定义时未摆过的条目保持原始顺序）。
+  const sortMode = layoutPref?.sortMode ?? 'recommended';
   const wallItems = useMemo(
-    () => (hasCustomOrder ? items : orderByRecommendation(items)),
-    [items, hasCustomOrder],
+    () => applySortMode(items, sortMode, toOrderMap(layoutPref?.orderedMediaIds ?? [])),
+    [items, sortMode, layoutPref],
   );
 
   return (
@@ -35,6 +38,8 @@ export function HomePage() {
 
       <MasonryWall
         items={wallItems}
+        scope={SCOPE_HOME}
+        sortMode={sortMode}
         heroEnabled
         emptyTitle="媒体库为空"
         emptyDescription="在「媒体源管理」中添加一个来源后，扫描结果会出现在这里。"

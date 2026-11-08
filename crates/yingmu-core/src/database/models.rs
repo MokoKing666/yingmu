@@ -249,6 +249,15 @@ pub struct MediaMetadata {
     pub poster_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub backdrop_path: Option<String>,
+    /// 真实海报宽高比（width / height）。只代表素材尺寸，不代表播放能力。
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub poster_aspect: Option<f64>,
+    /// 真实背景图 / 剧照宽高比；超大横幅应优先使用它
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub backdrop_aspect: Option<f64>,
+    /// 真实缩略图 / 视频截帧宽高比；个人视频应优先用它还原真实画幅
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub thumbnail_aspect: Option<f64>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub season_count: Option<i64>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -587,6 +596,65 @@ pub struct DiagnosticsReport {
 }
 
 // ============================================================
+// bridge.ts: SortMode / LayoutPreferences（按作用域的布局偏好）
+// ============================================================
+
+/// 排序模式。与 `packages/media-models/src/types.ts` 的 `SortMode` 逐值对应。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SortMode {
+    Recommended,
+    Recent,
+    Year,
+    Rating,
+    Title,
+    Custom,
+}
+
+impl Default for SortMode {
+    fn default() -> Self {
+        SortMode::Recommended
+    }
+}
+
+impl SortMode {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            SortMode::Recommended => "recommended",
+            SortMode::Recent => "recent",
+            SortMode::Year => "year",
+            SortMode::Rating => "rating",
+            SortMode::Title => "title",
+            SortMode::Custom => "custom",
+        }
+    }
+
+    /// 未知值安全回退到 recommended，不让一条脏数据把界面卡死。
+    pub fn parse(s: &str) -> Self {
+        match s {
+            "recent" => SortMode::Recent,
+            "year" => SortMode::Year,
+            "rating" => SortMode::Rating,
+            "title" => SortMode::Title,
+            "custom" => SortMode::Custom,
+            _ => SortMode::Recommended,
+        }
+    }
+}
+
+/// 某个作用域（首页 / 某个媒体库 / 收藏）的排序模式与自定义排列。
+/// 与 bridge.ts 的 `LayoutPreferences` 字段一一对应（camelCase 序列化）。
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct LayoutPreferences {
+    pub scope: String,
+    pub sort_mode: SortMode,
+    /// 有序 Media ID 列表；只存用户真正摆放过的条目，允许部分覆盖
+    pub ordered_media_ids: Vec<String>,
+    pub updated_at: String,
+}
+
+// ============================================================
 // 单元测试：验证跨语言序列化契约（纯逻辑，可编译）
 // ============================================================
 
@@ -644,6 +712,9 @@ mod tests {
             rating: Some(8.5),
             poster_path: None,
             backdrop_path: None,
+            poster_aspect: None,
+            backdrop_aspect: None,
+            thumbnail_aspect: None,
             season_count: None,
             episode_count: None,
             origin: MetadataOrigin::Nfo,

@@ -11,8 +11,27 @@ import type {
   SourceId,
   ThemeMode,
 } from '@yingmu/media-models';
-import { getBridge, getCustomOrder, setCustomOrder, getFocalOverrides, setFocalOverrides } from '@/lib/bridge';
+import { getBridge, getFocalOverrides, setFocalOverrides } from '@/lib/bridge';
 import type { FocalPoint } from '@/lib/bridge';
+import {
+  SCOPE_FAVORITES,
+  SCOPE_HOME,
+  emptyLayoutPreferences,
+  libraryScope,
+  normalizeScope,
+} from '@/lib/layout-preferences';
+import type { LayoutPreferences, SortMode } from '@yingmu/media-models';
+
+/** 首次进入应用时预加载布局偏好的作用域集合（页面再按需补齐） */
+const PREFETCH_SCOPES: string[] = [
+  SCOPE_HOME,
+  SCOPE_FAVORITES,
+  libraryScope('movie'),
+  libraryScope('tv'),
+  libraryScope('anime'),
+  libraryScope('documentary'),
+  libraryScope('personal'),
+];
 
 export interface Toast {
   id: number;
@@ -26,7 +45,8 @@ interface AppState {
   playlists: Playlist[];
   history: PlaybackProgress[];
   settings: AppSettings;
-  customOrder: Record<MediaId, number>;
+  /** 按作用域保存的布局偏好（排序模式 + 自定义排列），互不污染 */
+  layoutPrefs: Record<string, LayoutPreferences>;
   /** 用户为媒体手动调整的图片焦点（0..100），undefined 时使用引擎默认 */
   focalOverrides: Record<MediaId, FocalPoint>;
   isDemo: boolean;
@@ -47,7 +67,12 @@ interface AppState {
   savePlaylist: (playlist: Playlist) => Promise<void>;
   removePlaylist: (id: PlaylistId) => Promise<void>;
   setSettings: (patch: Partial<AppSettings>) => Promise<void>;
-  setWallOrder: (orderedIds: MediaId[]) => void;
+  /** 把某个作用域的排序模式写入偏好（并持久化） */
+  setLayoutSortMode: (scope: string, mode: SortMode) => Promise<void>;
+  /** 拖拽结束后把当前顺序写入该作用域；会把该作用域切到 custom 模式 */
+  setWallOrder: (scope: string, orderedIds: MediaId[]) => Promise<void>;
+  /** 读取某个作用域的布局偏好（无记录时给默认值） */
+  getLayoutPref: (scope: string) => LayoutPreferences;
   /** undefined 表示恢复该媒体的默认焦点 */
   setArtworkFocal: (id: MediaId, focal: FocalPoint | undefined) => void;
   pushToast: (message: string, tone?: Toast['tone']) => void;
@@ -95,7 +120,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     resumeBehaviour: 'ask',
     tmdbConfigured: false,
   },
-  customOrder: {},
+  layoutPrefs: {},
   focalOverrides: getFocalOverrides(),
   isDemo: true,
   ready: false,
@@ -105,13 +130,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     const bridge = getBridge();
     applyTheme('dark');
     try {
-      const [items, sources, playlists, history, settings] = await Promise.all([
+      const [items, sources, playlists, history, settings, ...layoutResults] = await Promise.all([
         bridge.libraryList(),
         bridge.sourceList(),
         bridge.playlistList(),
         bridge.historyList(),
         bridge.settingsGet(),
+        ...PREFETCH_SCOPES.map((scope) => bridge.layoutGet(scope)),
       ]);
+      const layoutPrefs: Record<string, LayoutPreferences> = {};
+      PREFETCH_SCOPES.forEach((scope, i) => {
+        const pref = layoutResults[i] as LayoutPreferences | undefined;
+        if (pref) layoutPrefs[scope] = pref;
+      });
       // 支持通过 URL 参数强制指定主题，便于演示、截图与分享（不写入用户偏好）
       const hashQuery = typeof window !== 'undefined' ? window.location.hash.split('?')[1] ?? '' : '';
       const forcedTheme = new URLSearchParams(hashQuery).get('theme');
@@ -122,7 +153,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         playlists,
         history,
         settings,
-        customOrder: getCustomOrder(),
+        layoutPrefs,
         focalOverrides: getFocalOverrides(),
         isDemo: bridge.kind === 'web-demo',
         ready: true,
@@ -208,10 +239,45 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ settings });
   },
 
-  setWallOrder: (orderedIds) => {
-    const order = Object.fromEntries(orderedIds.map((id, index) => [id, index]));
-    setCustomOrder(order);
-    set({ customOrder: order });
+  setLayoutSortMode: async (scope, mode) => {
+    const key = normalizeScope(scope);
+    const current = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    const next: LayoutPreferences = {
+      ...current,
+      scope: key,
+      sortMode: mode,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
+    try {
+      await getBridge().layoutSet(key, next);
+    } catch (error) {
+      get().pushToast(`排序偏好保存失败：${errorMessage(error)}`, 'error');
+    }
+  },
+
+  setWallOrder: async (scope, orderedIds) => {
+    const key = normalizeScope(scope);
+    const current = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    const next: LayoutPreferences = {
+      ...current,
+      scope: key,
+      // 拖拽是用户对「这一屏」的明确意图，因此该作用域切到自定义模式
+      sortMode: 'custom',
+      orderedMediaIds: orderedIds,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
+    try {
+      await getBridge().layoutSet(key, next);
+    } catch (error) {
+      get().pushToast(`排列保存失败：${errorMessage(error)}`, 'error');
+    }
+  },
+
+  getLayoutPref: (scope) => {
+    const key = normalizeScope(scope);
+    return get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
   },
 
   setArtworkFocal: (id, focal) => {

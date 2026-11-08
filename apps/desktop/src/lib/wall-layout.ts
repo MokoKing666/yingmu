@@ -20,6 +20,7 @@
 import { mosaic as M, tile as tileTokens } from '@yingmu/design-tokens';
 import type { MediaId, MediaItem, TileLayout } from '@yingmu/media-models';
 import { hashString } from './format';
+import { applyCustomOrder } from './layout-preferences';
 
 export type WallVariant = TileLayout['variant'];
 
@@ -291,14 +292,10 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
 
   // 默认严格保留调用方传入的顺序：LibraryPage 可能已经按评分 / 年份 / 名称排好，
   // 这里再按 addedAt 排序会覆盖用户选择的排序（v0.2 的真实缺陷）。
-  // 只有显式 customOrder 才重排；同序号时用 id 兜底保证确定性。
+  // customOrder 是**部分**自定义排列：有序号的按序号，没序号的保持原始相对顺序，
+  // 同序号用原始 index；绝不退回 Media ID 排序（那会让局部拖拽变成全局洗牌）。
   const ordered = options.customOrder
-    ? [...items].sort((a, b) => {
-        const oa = options.customOrder?.[a.id] ?? Number.MAX_SAFE_INTEGER;
-        const ob = options.customOrder?.[b.id] ?? Number.MAX_SAFE_INTEGER;
-        if (oa !== ob) return oa - ob;
-        return a.id.localeCompare(b.id);
-      })
+    ? applyCustomOrder(items, options.customOrder)
     : [...items];
 
   const refTime = referenceTime(ordered);

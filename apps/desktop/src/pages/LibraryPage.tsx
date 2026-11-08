@@ -9,9 +9,11 @@ import { LazyImage } from '@/components/ui/LazyImage';
 import { useAppStore } from '@/stores/app-store';
 import { useArtwork } from '@/hooks/use-artwork';
 import { KIND_LABEL, formatDuration, formatRating } from '@/lib/format';
+import { applySortMode } from '@/lib/sort-modes';
+import { libraryScope, toOrderMap } from '@/lib/layout-preferences';
+import type { SortMode } from '@/lib/layout-preferences';
 import type { MediaItem, MediaKind } from '@yingmu/media-models';
 
-type SortKey = 'recent' | 'year' | 'rating' | 'title';
 type ViewMode = 'wall' | 'list';
 
 const KIND_INTRO: Record<MediaKind, string> = {
@@ -52,9 +54,17 @@ export function LibraryPage() {
   const { kind = 'movie' } = useParams<{ kind: string }>();
   const mediaKind = (Object.keys(KIND_INTRO).includes(kind) ? kind : 'movie') as MediaKind;
   const items = useAppStore((s) => s.items);
-  const [sort, setSort] = useState<SortKey>('recent');
+  const layoutPref = useAppStore((s) => s.layoutPrefs[libraryScope(mediaKind)]);
+  const setLayoutSortMode = useAppStore((s) => s.setLayoutSortMode);
   const [view, setView] = useState<ViewMode>('wall');
   const [genre, setGenre] = useState<string | 'all'>('all');
+
+  const scope = libraryScope(mediaKind);
+  // 排序模式持久化在该作用域：切换媒体库互不影响；用户拖拽后会切到 custom
+  const sort = layoutPref?.sortMode ?? 'recent';
+  const onSortChange = (mode: SortMode) => {
+    void setLayoutSortMode(scope, mode);
+  };
 
   const genres = useMemo(
     () => Array.from(new Set(items.filter((i) => i.kind === mediaKind).flatMap((i) => i.metadata.genres))).sort(),
@@ -63,22 +73,10 @@ export function LibraryPage() {
 
   const filtered = useMemo(() => {
     const list = items.filter((i) => i.kind === mediaKind && (genre === 'all' || i.metadata.genres.includes(genre)));
-    const sorted = [...list];
-    switch (sort) {
-      case 'year':
-        sorted.sort((a, b) => (b.metadata.year ?? 0) - (a.metadata.year ?? 0));
-        break;
-      case 'rating':
-        sorted.sort((a, b) => (b.metadata.rating ?? 0) - (a.metadata.rating ?? 0));
-        break;
-      case 'title':
-        sorted.sort((a, b) => a.metadata.title.localeCompare(b.metadata.title, 'zh-CN'));
-        break;
-      default:
-        sorted.sort((a, b) => b.addedAt.localeCompare(a.addedAt));
-    }
-    return sorted;
-  }, [items, mediaKind, genre, sort]);
+    // 排序只由 sortMode 决定：recent/year/rating/title 各自的结果不会被全局
+    // customOrder 覆盖；只有用户显式选 custom 才应用该作用域的自定义排列。
+    return applySortMode(list, sort, toOrderMap(layoutPref?.orderedMediaIds ?? []));
+  }, [items, mediaKind, genre, sort, layoutPref]);
 
   return (
     <>
@@ -107,8 +105,9 @@ export function LibraryPage() {
               { value: 'year', label: '年份' },
               { value: 'rating', label: '评分' },
               { value: 'title', label: '名称' },
+              { value: 'custom', label: '自定义排列' },
             ]}
-            onChange={setSort}
+            onChange={(v) => onSortChange(v as SortMode)}
           />
           <Segmented
             value={view}
@@ -128,7 +127,7 @@ export function LibraryPage() {
           <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
         </div>
       ) : view === 'wall' ? (
-        <MasonryWall items={filtered} heroEnabled={false} showToolbar emptyTitle="没有匹配的作品" />
+        <MasonryWall items={filtered} scope={scope} sortMode={sort} heroEnabled={false} showToolbar emptyTitle="没有匹配的作品" />
       ) : (
         <div className="wall-inset"><div className="panel" style={{ padding: 8 }}>
           {filtered.map((item) => <ListRow key={item.id} item={item} />)}

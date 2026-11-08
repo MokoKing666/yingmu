@@ -9,6 +9,7 @@
 pub mod artwork;
 pub mod diagnostics;
 pub mod history;
+pub mod layout;
 pub mod library;
 pub mod player;
 pub mod playlists;

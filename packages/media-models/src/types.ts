@@ -22,6 +22,25 @@ export type MediaKind = 'movie' | 'tv' | 'anime' | 'documentary' | 'personal';
 
 export type ThemeMode = 'dark' | 'light' | 'system';
 
+/**
+ * 排序模式。页面必须显式声明，而不是靠「customOrder 非空就全局生效」。
+ * TS 与 Rust 两侧共用这套取值（serde 用字符串序列化）。
+ */
+export type SortMode = 'recommended' | 'recent' | 'year' | 'rating' | 'title' | 'custom';
+
+/**
+ * 布局偏好：某个作用域（首页 / 某个媒体库 / 收藏）的排序模式与自定义排列。
+ * scope 是视图标识，例如 `home`、`library:movie`、`favorites`；
+ * 不同 scope 的排列互不影响。
+ */
+export interface LayoutPreferences {
+  scope: string;
+  sortMode: SortMode;
+  /** 有序的 Media ID 列表，只存用户真正摆放过的条目，允许部分覆盖 */
+  orderedMediaIds: MediaId[];
+  updatedAt: string;
+}
+
 export type MetadataOrigin = 'tmdb' | 'nfo' | 'local' | 'manual' | 'none';
 
 export type SourceProtocol = 'local' | 'unc' | 'smb' | 'webdav';
@@ -50,6 +69,10 @@ export interface MediaMetadata {
    * 仅代表素材尺寸，不代表 HDR/Dolby 等播放能力。缺失时 UI 按媒体类型回退。
    */
   posterAspect?: number;
+  /** 真实背景图 / 剧照的宽高比（width / height），超大横幅应优先使用它 */
+  backdropAspect?: number;
+  /** 真实缩略图 / 视频截帧的宽高比；个人视频应优先用它还原真实画幅 */
+  thumbnailAspect?: number;
   seasonCount?: number;
   episodeCount?: number;
   origin: MetadataOrigin;

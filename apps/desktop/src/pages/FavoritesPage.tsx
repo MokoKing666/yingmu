@@ -6,10 +6,17 @@ import { PageHeader } from '@/components/ui/PageHeader';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useAppStore } from '@/stores/app-store';
 import { KIND_LABEL, KIND_ORDER } from '@/lib/format';
+import { applySortMode } from '@/lib/sort-modes';
+import { SCOPE_FAVORITES, toOrderMap } from '@/lib/layout-preferences';
 
 export function FavoritesPage() {
   const items = useAppStore((s) => s.items);
-  const favorites = useMemo(() => items.filter((item) => item.favorite), [items]);
+  const layoutPref = useAppStore((s) => s.layoutPrefs[SCOPE_FAVORITES]);
+  const sortMode = layoutPref?.sortMode ?? 'recent';
+  const favorites = useMemo(
+    () => applySortMode(items.filter((item) => item.favorite), sortMode, toOrderMap(layoutPref?.orderedMediaIds ?? [])),
+    [items, sortMode, layoutPref],
+  );
   const distribution = KIND_ORDER.map((kind) => ({
     kind,
     count: favorites.filter((item) => item.kind === kind).length,
@@ -45,7 +52,7 @@ export function FavoritesPage() {
           />
         </div>
       ) : (
-        <MasonryWall items={favorites} heroEnabled={false} showToolbar={false} emptyTitle="还没有收藏" />
+        <MasonryWall items={favorites} scope={SCOPE_FAVORITES} sortMode={sortMode} heroEnabled={false} showToolbar={false} emptyTitle="还没有收藏" />
       )}
     </>
   );

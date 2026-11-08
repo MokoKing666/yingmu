@@ -23,6 +23,7 @@ import type {
   ArtworkRequest,
   DiagnosticsReport,
   MediaMetadata,
+  LayoutPreferences,
 } from '@yingmu/media-models';
 import { DEFAULT_SETTINGS } from '@yingmu/media-models';
 import {
@@ -36,10 +37,12 @@ import { demoArtworkUrl } from '@/lib/demo-artwork';
 import { truncate } from '@/lib/format';
 
 const STORAGE_KEY = 'yingmu:web-demo:v1';
+const LAYOUT_KEY = 'yingmu:layout-prefs:v2';
 
 interface PersistedState {
   favorites: Record<MediaId, boolean>;
   settings: AppSettings;
+  /** v1 的全局自定义序号；仅用于迁移，新代码一律走 layoutPrefs */
   customOrder: Record<MediaId, number>;
   metadataPatches: Record<MediaId, Partial<MediaMetadata>>;
   playlists: Playlist[];
@@ -84,6 +87,71 @@ function writeState(state: PersistedState): void {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* 布局偏好（按作用域持久化）                                          */
+/* ------------------------------------------------------------------ */
+
+/**
+ * 读取全部作用域的布局偏好。
+ *
+ * - 数据损坏时整体回退到空表（不让一条坏记录破坏整个媒体库排序）；
+ * - v1 的全局 `customOrder` 会迁移到 `home` 作用域，老用户的拖拽结果不丢；
+ * - 迁移完成后写回 v2 并清空 v1，避免下次再迁移一遍。
+ */
+function readLayoutPrefs(state: PersistedState): Record<string, LayoutPreferences> {
+  let raw: string | null;
+  try {
+    raw = localStorage.getItem(LAYOUT_KEY);
+  } catch {
+    raw = null;
+  }
+  if (raw) {
+    try {
+      const parsed = JSON.parse(raw) as Record<string, Partial<LayoutPreferences>>;
+      const out: Record<string, LayoutPreferences> = {};
+      for (const [scope, pref] of Object.entries(parsed ?? {})) {
+        if (!pref || typeof pref !== 'object') continue;
+        out[scope] = {
+          scope,
+          sortMode: pref.sortMode ?? 'custom',
+          orderedMediaIds: Array.isArray(pref.orderedMediaIds) ? pref.orderedMediaIds.filter((x) => typeof x === 'string') : [],
+          updatedAt: typeof pref.updatedAt === 'string' ? pref.updatedAt : new Date(0).toISOString(),
+        };
+      }
+      return out;
+    } catch {
+      return {}; // 损坏数据安全回退
+    }
+  }
+
+  // v1 → v2 迁移：旧的全局 customOrder 语义上就是 home 作用域的自定义排列
+  const legacy = state.customOrder ?? {};
+  const ids = Object.entries(legacy)
+    .sort((a, b) => a[1] - b[1])
+    .map(([id]) => id);
+  if (ids.length === 0) return {};
+  const migrated: Record<string, LayoutPreferences> = {
+    home: {
+      scope: 'home',
+      sortMode: 'custom',
+      orderedMediaIds: ids,
+      updatedAt: new Date().toISOString(),
+    },
+  };
+  writeLayoutPrefs(migrated);
+  state.customOrder = {};
+  writeState(state);
+  return migrated;
+}
+
+function writeLayoutPrefs(prefs: Record<string, LayoutPreferences>): void {
+  try {
+    localStorage.setItem(LAYOUT_KEY, JSON.stringify(prefs));
+  } catch {
+    // 隐私模式下写入失败：本次会话内仍然可用，不中断交互
+  }
+}
+
 /** 把持久化补丁合并进演示数据，得到当前 UI 应展示的媒体库 */
 function mergedLibrary(state: PersistedState): MediaItem[] {
   const items = buildDemoLibrary();
@@ -122,18 +190,53 @@ export class WebDemoBridge implements PlatformBridge {
   readonly kind = 'web-demo' as const;
 
   private state: PersistedState = readState();
+  /** 按作用域保存的布局偏好；首次读取时完成 v1→v2 迁移 */
+  private layoutPrefs: Record<string, LayoutPreferences> = readLayoutPrefs(this.state);
 
   private save(): void {
     writeState(this.state);
   }
 
   getCustomOrder(): Record<MediaId, number> {
-    return { ...this.state.customOrder };
+    // 兼容入口：只反映 home 作用域的自定义排列（v1 语义）
+    const home = this.layoutPrefs.home;
+    const map: Record<MediaId, number> = {};
+    home?.orderedMediaIds.forEach((id, index) => {
+      map[id] = index;
+    });
+    return map;
   }
 
   setCustomOrder(order: Record<MediaId, number>): void {
-    this.state.customOrder = order;
-    this.save();
+    const ids = Object.entries(order)
+      .sort((a, b) => a[1] - b[1])
+      .map(([id]) => id);
+    this.layoutSet('home', {
+      scope: 'home',
+      sortMode: 'custom',
+      orderedMediaIds: ids,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
+  async layoutGet(scope: string): Promise<LayoutPreferences> {
+    const found = this.layoutPrefs[scope];
+    return found ? { ...found, orderedMediaIds: [...found.orderedMediaIds] } : {
+      scope,
+      sortMode: 'recommended',
+      orderedMediaIds: [],
+      updatedAt: new Date(0).toISOString(),
+    };
+  }
+
+  async layoutSet(scope: string, preferences: LayoutPreferences): Promise<void> {
+    this.layoutPrefs[scope] = {
+      scope,
+      sortMode: preferences.sortMode,
+      orderedMediaIds: [...preferences.orderedMediaIds],
+      updatedAt: preferences.updatedAt || new Date().toISOString(),
+    };
+    writeLayoutPrefs(this.layoutPrefs);
   }
 
   async libraryList(kind?: string): Promise<MediaItem[]> {

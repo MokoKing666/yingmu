@@ -23,18 +23,13 @@ export function getBridge(): PlatformBridge {
   return bridge;
 }
 
-/** 仅演示桥接提供拖拽排序持久化；Tauri 侧由数据库保存布局 */
-export function getCustomOrder(): Record<string, number> {
-  const b = getBridge();
-  return b instanceof WebDemoBridge ? b.getCustomOrder() : {};
-}
-
-export function setCustomOrder(order: Record<string, number>): void {
-  const b = getBridge();
-  if (b instanceof WebDemoBridge) b.setCustomOrder(order);
-}
-
-/** 用户为单条媒体调整的图片焦点（0..100），演示桥接用 localStorage 持久化 */
+/**
+ * 用户为单条媒体调整的图片焦点（0..100），演示桥接用 localStorage 持久化。
+ *
+ * 布局偏好（排序模式 + 自定义排列）**不在这里**：它属于 PlatformBridge 的
+ * `layoutGet` / `layoutSet`，WebDemo 用 localStorage、Tauri 用 SQLite，
+ * 两侧各自真实实现，避免「桌面端看起来保存了其实没保存」。
+ */
 const FOCAL_KEY = 'yingmu.artworkFocal.v1';
 export type FocalPoint = { x: number; y: number };
 

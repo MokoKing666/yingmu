@@ -23,6 +23,7 @@ import {
   type ArtworkRequest,
   type DiagnosticsReport,
   type MediaMetadata,
+  type LayoutPreferences,
 } from '@yingmu/media-models';
 
 type Invoke = <T>(cmd: string, args?: Record<string, unknown>) => Promise<T>;
@@ -109,6 +110,13 @@ export class TauriBridge implements PlatformBridge {
   }
   settingsSet(patch: Partial<AppSettings>): Promise<AppSettings> {
     return call(IPC.settingsSet, { patch });
+  }
+  /** 布局偏好走 SQLite（`layout_preferences` 表），不使用 localStorage */
+  layoutGet(scope: string): Promise<LayoutPreferences> {
+    return call(IPC.layoutGet, { scope });
+  }
+  layoutSet(scope: string, preferences: LayoutPreferences): Promise<void> {
+    return call(IPC.layoutSet, { scope, preferences });
   }
   diagnosticsReport(): Promise<DiagnosticsReport> {
     return call(IPC.diagnosticsReport);
