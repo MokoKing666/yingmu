@@ -85,6 +85,10 @@
 
 - 版本号统一到 `0.3.0`（`package.json` ×2、`tauri.conf.json`、`Cargo.toml`、`Cargo.lock`），
   界面显示的版本改由构建期 `__APP_VERSION__` 注入，避免「设置里写 v0.2.0、包里写 0.1.0」。
+- **CI 实际产出**：`YingMu-Setup-0.3.0-x64.exe`，4.48 MiB（4,694,009 字节），
+  SHA-256 `9891a7d0b9ccd1822de25550cb1af007460487f64174afbfaa760afb9d7de250`，
+  与 Artifact 内 `SHA256SUMS.txt` 一致；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`。
+  NSIS 打包含时间戳，**重新构建哈希会变**，哈希以当次 Artifact 为准。
 - NSIS 双安装模式（`installMode: both`）保持不变：同一个安装器提供「仅为我安装 / 为所有人安装」
   与目录选择页。`docs/installation/nsis.md` 修正了「仅为我安装不需要管理员」与
   「启动即 UAC」的矛盾表述——**两种范围启动安装器都要 UAC**（提权用于写安装目录、

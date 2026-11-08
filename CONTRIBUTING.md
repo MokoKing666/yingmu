@@ -18,7 +18,7 @@
 
 | 用途 | 要求 |
 |---|---|
-| 前端 | Node ≥ 20.19、npm ≥ 10 |
+| 前端 | Node `^22.13 \|\| ^24 \|\| >=26`（`.nvmrc` = 26）、npm ≥ 10 |
 | Rust / Tauri | stable `x86_64-pc-windows-msvc`、MSVC Build Tools、Windows 10/11 SDK、WebView2 |
 | 安装包 | Tauri 2 NSIS Bundler（会自动下载 NSIS） |
 | 截图复现 | 本机 Edge（Chromium 内核） |
@@ -97,5 +97,5 @@ docs(dolby): clarify profile 8.1 verification status
 ## 8. 分支与发布
 
 - 默认分支 `main`；功能分支从 `main` 切出，PR 需通过 CI 后合并。
-- 版本 Tag 格式 `v0.1.0`，由 `.github/workflows/release.yml` 触发 Release 构建。
+- 版本 Tag 格式 `v0.3.0`，由 `.github/workflows/release.yml` 触发 Release 构建。
 - Release 只允许上传当次工作流内刚构建并通过校验的产物；**不得把未完成功能标记为正式支持**。
