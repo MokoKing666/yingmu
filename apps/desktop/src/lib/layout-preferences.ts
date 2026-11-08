@@ -88,3 +88,45 @@ export function applyCustomOrder<T extends { id: MediaId }>(
 export function snapshotOrder(items: readonly { id: MediaId }[]): MediaId[] {
   return items.map((item) => item.id);
 }
+
+/**
+ * 筛选子集拖拽后的完整作用域顺序合并（任务书 5.2）。
+ *
+ * 为什么需要它：LibraryPage 把「按 Genre 筛选后的子集」交给幕墙，幕墙只能看到
+ * 子集。如果拖拽后直接用子集覆盖持久化顺序，子集之外的媒体（例如 100 部电影里
+ * 未被筛出的 85 部）的自定义位置会被整体丢弃。
+ *
+ * 算法：
+ *  1. `fullOrder` 是拖拽前完整作用域的顺序（包含全部有效媒体，含未入镜的新媒体）；
+ *  2. 从完整顺序里抽走本次可见子集的成员，剩余成员保持原有相对顺序；
+ *  3. 以「可见子集在完整顺序中的第一个位置」为锚点，把拖拽后的子集整体插回锚点处；
+ *  4. 去重兜底（防御调用方传入重叠集合）。
+ *
+ * 不变量：
+ *  - 结果包含 fullOrder 的全部成员（不丢弃未显示的媒体）；
+ *  - 子集外成员的相对顺序与拖拽前完全一致；
+ *  - 子集内部的相对顺序 = `visibleAfter`；
+ *  - fullOrder 里不存在、也不在 visibleAfter 里的 ID 不会凭空出现。
+ */
+export function mergeVisibleOrder(
+  fullOrder: readonly MediaId[],
+  visibleBefore: readonly MediaId[],
+  visibleAfter: readonly MediaId[],
+): MediaId[] {
+  const visibleSet = new Set<MediaId>(visibleBefore);
+  const rest = fullOrder.filter((id) => !visibleSet.has(id));
+  const anchor = fullOrder.findIndex((id) => visibleSet.has(id));
+  // 锚点换成 rest 坐标系：可见集之前有多少个「非可见」成员
+  const beforeCount =
+    anchor < 0
+      ? rest.length
+      : fullOrder.slice(0, anchor).filter((id) => !visibleSet.has(id)).length;
+
+  const merged = [...rest.slice(0, beforeCount), ...visibleAfter, ...rest.slice(beforeCount)];
+  const seen = new Set<MediaId>();
+  return merged.filter((id) => {
+    if (seen.has(id)) return false;
+    seen.add(id);
+    return true;
+  });
+}

@@ -40,6 +40,7 @@ export function HomePage() {
         items={wallItems}
         scope={SCOPE_HOME}
         sortMode={sortMode}
+        fullScopeIds={wallItems.map((item) => item.id)}
         heroEnabled
         emptyTitle="媒体库为空"
         emptyDescription="在「媒体源管理」中添加一个来源后，扫描结果会出现在这里。"

@@ -52,7 +52,15 @@ export function FavoritesPage() {
           />
         </div>
       ) : (
-        <MasonryWall items={favorites} scope={SCOPE_FAVORITES} sortMode={sortMode} heroEnabled={false} showToolbar={false} emptyTitle="还没有收藏" />
+        <MasonryWall
+          items={favorites}
+          scope={SCOPE_FAVORITES}
+          sortMode={sortMode}
+          fullScopeIds={favorites.map((item) => item.id)}
+          heroEnabled={false}
+          showToolbar={false}
+          emptyTitle="还没有收藏"
+        />
       )}
     </>
   );

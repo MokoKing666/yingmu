@@ -10,7 +10,7 @@ import { computeMosaicLayout } from '@/lib/wall-layout';
 import type { MosaicTile } from '@/lib/wall-layout';
 import { demoArtworkAspect } from '@/lib/demo-artwork';
 import { mediaAspect } from '@/lib/media-aspect';
-import { SCOPE_HOME, toOrderMap } from '@/lib/layout-preferences';
+import { SCOPE_HOME, mergeVisibleOrder, toOrderMap } from '@/lib/layout-preferences';
 
 interface MasonryWallProps {
   items: MediaItem[];
@@ -24,6 +24,14 @@ interface MasonryWallProps {
    * 其余模式一律尊重 `items` 的给定顺序，绝不被全局 customOrder 覆盖。
    */
   sortMode?: 'recommended' | 'recent' | 'year' | 'rating' | 'title' | 'custom';
+  /**
+   * **完整作用域**的媒体 ID（当前顺序，含未进入本次渲染的媒体）。
+   *
+   * 页面做 Genre 筛选时必须传它：`items` 只是可见子集，若用子集覆盖持久化
+   * 顺序，子集之外的媒体位置会整体丢失。缺省时视为「items 即完整集合」
+   * （首页 / 收藏页本来就是全集）。
+   */
+  fullScopeIds?: MediaId[];
   heroEnabled?: boolean;
   showToolbar?: boolean;
   emptyTitle?: string;
@@ -53,6 +61,7 @@ export function MasonryWall({
   items,
   scope = SCOPE_HOME,
   sortMode = 'recommended',
+  fullScopeIds,
   heroEnabled = true,
   showToolbar = false,
   emptyTitle = '这里还没有内容',
@@ -198,13 +207,16 @@ export function MasonryWall({
         const reordered = [...orderedIds];
         reordered.splice(from, 1);
         reordered.splice(to, 0, sourceId);
+        // 关键：可见子集只是作用域的一部分。必须把它合并回完整作用域顺序，
+        // 否则筛选外的媒体（100 部电影里未筛出的 85 部）自定义位置会被整体丢弃。
+        const merged = mergeVisibleOrder(fullScopeIds ?? orderedIds, orderedIds, reordered);
         // 只写入当前作用域，并把该作用域切到「自定义排列」模式
-        void setWallOrder(scope, reordered);
+        void setWallOrder(scope, merged);
       }
       setDraggingId(undefined);
       setDropTargetId(undefined);
     },
-    [draggingId, orderedIds, scope, setWallOrder],
+    [draggingId, fullScopeIds, orderedIds, scope, setWallOrder],
   );
 
   /**

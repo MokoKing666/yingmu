@@ -81,6 +81,13 @@ export function LibraryPage() {
     return applySortMode(list, sort, toOrderMap(layoutPref?.orderedMediaIds ?? []));
   }, [items, mediaKind, genre, sort, layoutPref]);
 
+  // 完整作用域顺序（未按 Genre 筛选）：拖拽可见子集时必须以它为底合并，
+  // 否则保存的顺序只包含筛选出的媒体，其余媒体的自定义位置会整体丢失。
+  const fullScopeIds = useMemo(() => {
+    const kindItems = items.filter((i) => i.kind === mediaKind);
+    return applySortMode(kindItems, sort, toOrderMap(layoutPref?.orderedMediaIds ?? [])).map((i) => i.id);
+  }, [items, mediaKind, sort, layoutPref]);
+
   return (
     <>
       {/* 头部与筛选工具内缩；下方幕墙本身保持左右全幅延展 */}
@@ -130,7 +137,15 @@ export function LibraryPage() {
           <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
         </div>
       ) : view === 'wall' ? (
-        <MasonryWall items={filtered} scope={scope} sortMode={sort} heroEnabled={false} showToolbar emptyTitle="没有匹配的作品" />
+        <MasonryWall
+          items={filtered}
+          scope={scope}
+          sortMode={sort}
+          fullScopeIds={fullScopeIds}
+          heroEnabled={false}
+          showToolbar
+          emptyTitle="没有匹配的作品"
+        />
       ) : (
         <div className="wall-inset"><div className="panel" style={{ padding: 8 }}>
           {filtered.map((item) => <ListRow key={item.id} item={item} />)}

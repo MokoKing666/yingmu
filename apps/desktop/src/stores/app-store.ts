@@ -259,12 +259,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   setWallOrder: async (scope, orderedIds) => {
     const key = normalizeScope(scope);
     const current = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    // 已删除的媒体不允许残留在持久化顺序里（数据库层也会再过滤一次，双保险）
+    const known = new Set(get().items.map((item) => item.id));
     const next: LayoutPreferences = {
       ...current,
       scope: key,
       // 拖拽是用户对「这一屏」的明确意图，因此该作用域切到自定义模式
       sortMode: 'custom',
-      orderedMediaIds: orderedIds,
+      orderedMediaIds: orderedIds.filter((id) => known.has(id)),
       updatedAt: new Date().toISOString(),
     };
     set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
