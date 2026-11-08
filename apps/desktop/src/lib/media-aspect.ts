@@ -12,9 +12,18 @@ import type { ArtworkRequest, MediaItem } from '@yingmu/media-models';
  * 返回值是连续数字，交给 Skyline 引擎直接使用，不做档位量化。
  */
 export function mediaAspect(item: MediaItem): number {
-  // 个人视频：真实画幅优先，绝不被海报比例劫持
+  // 个人视频：真实画幅优先，绝不被海报比例劫持。
+  // 接受任意有限正比例——极端画幅（如 1:3.4）由布局层统一钳制到 [0.4, 2.9]、
+  // 显示层用 contain 留边；在输入层就改成 16:9 才是静默篡改画面。
   if (item.kind === 'personal') {
-    return validRatio(item.metadata.thumbnailAspect) ?? videoRatio(item) ?? 16 / 9;
+    const thumb = item.metadata.thumbnailAspect;
+    if (typeof thumb === 'number' && Number.isFinite(thumb) && thumb > 0) return thumb;
+    const video = item.versions[0]?.video;
+    if (video?.width && video.height) {
+      const ratio = video.width / video.height;
+      if (Number.isFinite(ratio) && ratio > 0) return ratio;
+    }
+    return 16 / 9;
   }
 
   return validRatio(item.metadata.posterAspect) ?? (item.kind === 'documentary' ? 4 / 3 : 2 / 3);

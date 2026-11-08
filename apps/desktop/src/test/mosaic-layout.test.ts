@@ -8,6 +8,7 @@ import {
   orderByRecommendation,
 } from '@/lib/wall-layout';
 import { buildDemoLibrary } from '@/lib/demo-data';
+import { demoArtworkAspect } from '@/lib/demo-artwork';
 import type { MediaItem } from '@yingmu/media-models';
 
 const items = buildDemoLibrary();
@@ -45,7 +46,16 @@ describe('无级拼贴布局引擎', () => {
   });
 
   it('同时存在超大横幅、超大竖版、宽幅、方形与不规则磁贴', () => {
-    const result = computeMosaicLayout(items, { canvasWidth: 2560 });
+    // 用真实素材比例驱动（与 MasonryWall 的实际调用一致）。
+    // 说明：修复「独立钳制破坏比例」之前，'wide' 档位部分来自高度钳制把
+    // 1.2 源比例推到 1.4+ 的副作用；现在比例保真后，多样性由真实素材
+    // （海报 0.667 / 横幅 1.5+ / 个人视频真实画幅）自然产生。
+    const result = computeMosaicLayout(items, {
+      canvasWidth: 2560,
+      heroEnabled: true,
+      aspectResolver: demoArtworkAspect,
+      preserveAspect: (it) => it.kind === 'personal',
+    });
     const scales = new Set(result.tiles.map((t) => t.box.scale));
     expect(scales.has('ultra-wide')).toBe(true);
     expect(scales.size).toBeGreaterThanOrEqual(5);

@@ -184,6 +184,28 @@ function emphasisOf(
   );
 }
 
+/**
+ * 求一个**统一缩放因子** k，使 w*k、h*k 同时满足全部边界（任务书 7.2）。
+ *
+ * 与「分别 clamp 宽和高」的本质区别：任何时刻宽高比都保持 w/h 不变；
+ * 边界冲突（极端比例下 minW/minH 与 maxH 不可兼得）时优先满足最小可见
+ * 尺寸，最后用画布宽度兜底，保证不水平溢出。
+ */
+function uniformScaleFactor(
+  w: number,
+  h: number,
+  bounds: { minW: number; maxW: number; minH: number; maxH: number; canvasWidth: number },
+): number {
+  const maxW = Math.min(bounds.maxW, bounds.canvasWidth);
+  let k = 1;
+  if (w * k > maxW) k = maxW / w; // 超宽：整体等比缩小
+  if (h * k > bounds.maxH) k = bounds.maxH / h; // 超高：继续整体缩小
+  if (w * k < bounds.minW) k = bounds.minW / w; // 太窄：整体等比放大（可见性优先）
+  if (h * k < bounds.minH) k = bounds.minH / h; // 太矮：整体等比放大
+  if (w * k > bounds.canvasWidth) k = bounds.canvasWidth / w; // 绝不水平溢出
+  return k;
+}
+
 /** 连续目标宽高比：超宽 / 宽幅 / 方形 / 竖版 / 超大竖版 / 不规则 */
 function aspectOf(
   sourceAspect: number,
@@ -337,7 +359,14 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
     const drive = Math.pow(emphasis, M.sizeExponent);
     let baseW: number;
     let baseH: number;
-    if (targetAspect >= 1) {
+    if (preserveSource) {
+      // 个人视频（任务书 7.2）：宽高必须由**同一个缩放因子**导出，
+      // 绝不允许独立钳制某一轴把 16:9 压成 1.45:1。
+      const driveW = targetAspect >= 1 ? lerp(minW, maxW, drive) : lerp(minH, maxH, drive) * targetAspect;
+      const k = uniformScaleFactor(driveW, driveW / targetAspect, { minW, maxW, minH, maxH, canvasWidth });
+      baseW = driveW * k;
+      baseH = baseW / targetAspect;
+    } else if (targetAspect >= 1) {
       baseW = clamp(lerp(minW, maxW, drive), minW, Math.min(maxW, canvasWidth));
       baseH = clamp(baseW / targetAspect, minH, maxH);
     } else {
@@ -368,9 +397,23 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
     }
 
     let chosen: { x: number; y: number; w: number; h: number; ph: number; score: number } | null = null;
+    // preserveSource 的等比缩放边界：同一个因子同时作用于宽与高
+    const uniformMin = preserveSource ? Math.max(minW / baseW, minH / baseH) : 0;
+    const uniformMax = preserveSource
+      ? Math.min(Math.min(maxW, canvasWidth) / baseW, maxH / baseH)
+      : Infinity;
     for (const probe of probes) {
-      const w = clamp(probe, minW, Math.min(maxW, canvasWidth));
-      const h = clamp(baseH * (w / baseW), minH, maxH);
+      let w: number;
+      let h: number;
+      if (preserveSource) {
+        // 宽度试探也必须保持同一比例：把候选宽度换算成统一缩放因子
+        const factor = clamp(probe / baseW, Math.min(uniformMin, uniformMax), Math.max(uniformMin, uniformMax));
+        w = baseW * factor;
+        h = baseH * factor;
+      } else {
+        w = clamp(probe, minW, Math.min(maxW, canvasWidth));
+        h = clamp(baseH * (w / baseW), minH, maxH);
+      }
       const pw = w + gap;
       const ph = h + gap;
       const pos = findPosition(sky, pw, canvasWidth);
