@@ -45,17 +45,18 @@ describe('布局偏好持久化（WebDemoBridge / localStorage）', () => {
 
     const movie = await bridge.layoutGet(libraryScope('movie'));
     expect(movie.orderedMediaIds).toEqual([]);
-    expect(movie.sortMode).toBe('recommended');
+    // 媒体库作用域的正式默认值是 recent（defaultSortFor）
+    expect(movie.sortMode).toBe('recent');
 
     // 动画库自身仍然保留
     const anime = await bridge.layoutGet(libraryScope('anime'));
     expect(anime.orderedMediaIds).toEqual(['x1', 'x2']);
   });
 
-  it('不存在的作用域返回默认偏好而不是抛错', async () => {
+  it('不存在的作用域返回默认偏好而不是抛错（媒体库默认 recent）', async () => {
     const bridge = new WebDemoBridge();
     const pref = await bridge.layoutGet('library:不存在');
-    expect(pref.sortMode).toBe('recommended');
+    expect(pref.sortMode).toBe('recent');
     expect(pref.orderedMediaIds).toEqual([]);
     expect(pref.scope).toBe('library:不存在');
     expect(pref).toEqual(emptyLayoutPreferences('library:不存在'));

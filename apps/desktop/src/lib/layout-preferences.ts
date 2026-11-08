@@ -22,8 +22,24 @@ export const SORT_MODE_LABEL: Record<SortMode, string> = {
   custom: '自定义排列',
 };
 
+/**
+ * 正式默认排序规则（任务书 6，全链路唯一真源）：
+ *  - 首页：recommended（推荐权重才有意义）；
+ *  - 其余所有作用域（各媒体库 / 收藏）：recent（最近加入）。
+ * 用户明确选择 custom 才进入自定义模式。SQLite 迁移默认值、Rust command、
+ * WebDemoBridge、Zustand 回退、Segmented 初始选中都必须与这里一致。
+ */
+export function defaultSortFor(scope: string): SortMode {
+  return normalizeScope(scope) === SCOPE_HOME ? 'recommended' : 'recent';
+}
+
 export function emptyLayoutPreferences(scope: string): LayoutPreferences {
-  return { scope, sortMode: 'recommended', orderedMediaIds: [], updatedAt: new Date(0).toISOString() };
+  return {
+    scope,
+    sortMode: defaultSortFor(scope),
+    orderedMediaIds: [],
+    updatedAt: new Date(0).toISOString(),
+  };
 }
 
 /* ------------------------------------------------------------------ */

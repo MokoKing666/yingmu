@@ -649,6 +649,25 @@ pub struct LayoutPreferences {
     pub updated_at: String,
 }
 
+impl LayoutPreferences {
+    /// 正式默认规则（任务书 6，与前端 `defaultSortFor` 逐字对齐）：
+    /// 首页 recommended，其余一律 recent。SQLite 迁移默认值、
+    /// command 默认响应都必须与这里一致。
+    pub fn default_for(scope: &str) -> Self {
+        let sort_mode = if scope == "home" {
+            SortMode::Recommended
+        } else {
+            SortMode::Recent
+        };
+        LayoutPreferences {
+            scope: scope.to_string(),
+            sort_mode,
+            ordered_media_ids: Vec::new(),
+            updated_at: "1970-01-01T00:00:00Z".to_string(),
+        }
+    }
+}
+
 // ============================================================
 // 单元测试：验证跨语言序列化契约（纯逻辑，可编译）
 // ============================================================
@@ -739,6 +758,25 @@ mod tests {
         let v = serde_json::to_value(&s).unwrap();
         assert!(v.get("preferHdrPassthrough").is_some());
         assert!(v.get("resumeBehaviour").is_some());
+    }
+
+    #[test]
+    fn layout_preferences_default_matches_frontend_contract() {
+        // 与前端 defaultSortFor 逐字对齐：home=recommended，其余=recent
+        let home = LayoutPreferences::default_for("home");
+        assert_eq!(home.sort_mode, SortMode::Recommended);
+        assert_eq!(home.ordered_media_ids, Vec::<String>::new());
+
+        for scope in ["library:movie", "library:anime", "favorites", "library:tv"] {
+            let pref = LayoutPreferences::default_for(scope);
+            assert_eq!(pref.sort_mode, SortMode::Recent, "scope={scope}");
+            assert_eq!(pref.scope, scope);
+        }
+
+        // 序列化必须是 camelCase（与 bridge.ts 契约一致）
+        let v = serde_json::to_value(&home).unwrap();
+        assert_eq!(v.get("sortMode").unwrap(), &json!("recommended"));
+        assert_eq!(v.get("orderedMediaIds").unwrap(), &json!([]));
     }
 
     #[test]

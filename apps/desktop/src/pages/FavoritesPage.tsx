@@ -7,12 +7,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useAppStore } from '@/stores/app-store';
 import { KIND_LABEL, KIND_ORDER } from '@/lib/format';
 import { applySortMode } from '@/lib/sort-modes';
-import { SCOPE_FAVORITES, toOrderMap } from '@/lib/layout-preferences';
+import { defaultSortFor, SCOPE_FAVORITES, toOrderMap } from '@/lib/layout-preferences';
 
 export function FavoritesPage() {
   const items = useAppStore((s) => s.items);
   const layoutPref = useAppStore((s) => s.layoutPrefs[SCOPE_FAVORITES]);
-  const sortMode = layoutPref?.sortMode ?? 'recent';
+  // 默认 recent：与 defaultSortFor / SQLite 迁移默认值一致
+  const sortMode = layoutPref?.sortMode ?? defaultSortFor(SCOPE_FAVORITES);
   const favorites = useMemo(
     () => applySortMode(items.filter((item) => item.favorite), sortMode, toOrderMap(layoutPref?.orderedMediaIds ?? [])),
     [items, sortMode, layoutPref],

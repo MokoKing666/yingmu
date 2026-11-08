@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { MasonryWall } from '@/components/wall/MasonryWall';
 import { applySortMode } from '@/lib/sort-modes';
-import { SCOPE_HOME, toOrderMap } from '@/lib/layout-preferences';
+import { defaultSortFor, SCOPE_HOME, toOrderMap } from '@/lib/layout-preferences';
 import { DynamicBackdrop } from '@/components/wall/DynamicBackdrop';
 import { StatusNotice } from '@/components/ui/StatusNotice';
 import { useAppStore } from '@/stores/app-store';
@@ -19,9 +19,9 @@ export function HomePage() {
   const layoutPref = useAppStore((s) => s.layoutPrefs[SCOPE_HOME]);
   const isDemo = useAppStore((s) => s.isDemo);
 
-  // 排序模式由作用域偏好显式决定：recommended 走推荐权重，
+  // 排序模式由作用域偏好显式决定：默认走 defaultSortFor（home=recommended），
   // custom 走该作用域的自定义排列（部分自定义时未摆过的条目保持原始顺序）。
-  const sortMode = layoutPref?.sortMode ?? 'recommended';
+  const sortMode = layoutPref?.sortMode ?? defaultSortFor(SCOPE_HOME);
   const wallItems = useMemo(
     () => applySortMode(items, sortMode, toOrderMap(layoutPref?.orderedMediaIds ?? [])),
     [items, sortMode, layoutPref],

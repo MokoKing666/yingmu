@@ -10,7 +10,7 @@ import { useAppStore } from '@/stores/app-store';
 import { useArtwork } from '@/hooks/use-artwork';
 import { KIND_LABEL, formatDuration, formatRating } from '@/lib/format';
 import { applySortMode, isSortMode } from '@/lib/sort-modes';
-import { libraryScope, toOrderMap } from '@/lib/layout-preferences';
+import { defaultSortFor, libraryScope, toOrderMap } from '@/lib/layout-preferences';
 import type { SortMode } from '@/lib/layout-preferences';
 import type { MediaItem, MediaKind } from '@yingmu/media-models';
 
@@ -61,10 +61,11 @@ export function LibraryPage() {
 
   const scope = libraryScope(mediaKind);
   // 排序模式持久化在该作用域：切换媒体库互不影响；用户拖拽后会切到 custom。
+  // 默认值走 defaultSortFor（媒体库一律 recent），与 SQLite / Store 一致。
   // 支持 ?sort= 强制指定（演示 / 截图用），不写入用户偏好。
   const hashQuery = typeof window !== 'undefined' ? window.location.hash.split('?')[1] ?? '' : '';
   const forcedSort = new URLSearchParams(hashQuery).get('sort');
-  const sort: SortMode = isSortMode(forcedSort) ? forcedSort : (layoutPref?.sortMode ?? 'recent');
+  const sort: SortMode = isSortMode(forcedSort) ? forcedSort : (layoutPref?.sortMode ?? defaultSortFor(scope));
   const onSortChange = (mode: SortMode) => {
     void setLayoutSortMode(scope, mode);
   };

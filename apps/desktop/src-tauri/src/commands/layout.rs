@@ -7,7 +7,8 @@ use crate::AppState;
 use tauri::State;
 use yingmu_core::models::LayoutPreferences;
 
-/// 读取某个作用域的布局偏好；没有记录时返回默认（recommended + 空排列）。
+/// 读取某个作用域的布局偏好；没有记录时返回该作用域的正式默认值
+/// （home=recommended，其余=recent，与前端 defaultSortFor 一致）。
 #[tauri::command(rename_all = "camelCase")]
 pub fn yingmu_layout_get(
     scope: String,
@@ -15,12 +16,7 @@ pub fn yingmu_layout_get(
 ) -> Result<LayoutPreferences, String> {
     let db = state.db()?;
     let existing = db.layout_get(&scope).map_err(|e| e.to_string())?;
-    Ok(existing.unwrap_or_else(|| LayoutPreferences {
-        scope,
-        sort_mode: Default::default(),
-        ordered_media_ids: Vec::new(),
-        updated_at: "1970-01-01T00:00:00Z".to_string(),
-    }))
+    Ok(existing.unwrap_or_else(|| LayoutPreferences::default_for(&scope)))
 }
 
 /// 写入某个作用域的布局偏好。实现方负责过滤失效 Media ID 与事务写入。

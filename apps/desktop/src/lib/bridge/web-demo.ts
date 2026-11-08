@@ -35,6 +35,7 @@ import {
 import { getArtwork, rebuildArtworkCache } from '@/lib/artwork';
 import { demoArtworkUrl } from '@/lib/demo-artwork';
 import { truncate } from '@/lib/format';
+import { emptyLayoutPreferences } from '@/lib/layout-preferences';
 
 const STORAGE_KEY = 'yingmu:web-demo:v1';
 const LAYOUT_KEY = 'yingmu:layout-prefs:v2';
@@ -221,12 +222,9 @@ export class WebDemoBridge implements PlatformBridge {
 
   async layoutGet(scope: string): Promise<LayoutPreferences> {
     const found = this.layoutPrefs[scope];
-    return found ? { ...found, orderedMediaIds: [...found.orderedMediaIds] } : {
-      scope,
-      sortMode: 'recommended',
-      orderedMediaIds: [],
-      updatedAt: new Date(0).toISOString(),
-    };
+    if (found) return { ...found, orderedMediaIds: [...found.orderedMediaIds] };
+    // 新作用域的默认值必须与 SQLite / Store 一致（defaultSortFor 是唯一真源）
+    return emptyLayoutPreferences(scope);
   }
 
   async layoutSet(scope: string, preferences: LayoutPreferences): Promise<void> {
