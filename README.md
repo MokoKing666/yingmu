@@ -28,7 +28,7 @@
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.1.0-x64.exe`** | ✅ **CI 已真实构建**（4.42 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；SHA-256 `9f65f56894297c403813c4b708b71a878a1d9a00000b711ebacdf6be528fa4a9`；**本机未执行交互式安装测试** |
+| **NSIS 安装包 `YingMu-Setup-0.1.0-x64.exe`** | ✅ **CI 已真实构建**（4.42 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`；SHA-256 `272ec58f126b2c665734b530afec7ea247eb1a68f33d0372e4b072ff31b22e5e`（NSIS 打包含时间戳，重新构建哈希会变，以 Artifact 内 `SHA256SUMS.txt` 为准）；**本机未执行交互式安装测试** |
 | **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、`main` 分支、7 个提交，173/173 文件 blob SHA 一致；CI 结果见仓库 Actions 页面 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
@@ -254,7 +254,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.42 MiB** 的 NSIS 安装器（PE32 可执行、版本资源「影幕 YingMu 0.1.0」、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传（CI run [42474107703](https://github.com/MokoKing666/yingmu/actions/runs/42474107703)）。
+> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出 **4.42 MiB** 的 NSIS 安装器（PE32 可执行、版本资源「影幕 YingMu 0.1.0」、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传（CI run [42474963471](https://github.com/MokoKing666/yingmu/actions/runs/42474963471)）。
 > **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 
 ---

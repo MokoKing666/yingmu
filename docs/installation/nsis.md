@@ -72,7 +72,7 @@ Tauri 2 的 `installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`：
 |---|---|---|
 | `installMode: both` 配置生效 | ✅ 已写入 `tauri.conf.json` | 源码 |
 | 生成的 NSIS 脚本包含范围选择页与目录页 | ✅ **CI 实测通过** | `installer.nsi`：`MULTIUSER_PAGE_INSTALLMODE`(176)、`MUI_PAGE_DIRECTORY`(409)、`MULTIUSER_USE_PROGRAMFILES64`(113/115)、`MULTIUSER_EXECUTIONLEVEL Highest`(121)、`INSTALLMODE "both"` |
-| 安装包真实生成、>1MB、PE 头、SHA-256 | ✅ **CI 实测通过** | `YingMu-Setup-0.1.0-x64.exe`，4.42 MiB，PE32（NSIS stub 固定为 32 位，可安装在 64 位 Windows 上），版本资源「影幕 YingMu 0.1.0」，未签名；SHA-256 `9f65f56894297c403813c4b708b71a878a1d9a00000b711ebacdf6be528fa4a9`；Artifact `yingmu-nsis-installer`（CI run 42474107703） |
+| 安装包真实生成、>1MB、PE 头、SHA-256 | ✅ **CI 实测通过** | `YingMu-Setup-0.1.0-x64.exe`，4.42 MiB，PE32（NSIS stub 固定为 32 位，可安装在 64 位 Windows 上），版本资源「影幕 YingMu 0.1.0」，未签名；SHA-256 `272ec58f126b2c665734b530afec7ea247eb1a68f33d0372e4b072ff31b22e5e`；Artifact `yingmu-nsis-installer`（CI run 42474963471）；NSIS 打包含时间戳，**构建不可复现**，哈希以 Artifact 内 `SHA256SUMS.txt` 为准 |
 | **交互式安装：选「仅为我」→ LocalAppData** | ❌ **未执行** | 需要可交互 Windows 桌面/VM |
 | **交互式安装：选「所有人」→ Program Files + UAC** | ❌ **未执行** | 需要可交互 Windows 桌面/VM |
 | 多用户数据隔离实测 | ❌ **未执行** | 需要多用户 Windows 环境 |
