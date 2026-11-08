@@ -4,45 +4,64 @@
  * 所有数值以 rem/px 表达，动画参数统一由此导出，禁止在组件里散落魔法数字。
  */
 
+/**
+ * 影幕 v0.3 品牌色板 —— Cinematic Neutral（冷调电影感）
+ *
+ * 设计原则：
+ * - UI 退居第二层，让电影封面成为画面主体；强调色只在选中/焦点/主操作/关键进度出现。
+ * - 深色主题不是纯黑，靠 4 级中性面（bgBase → surface → surfaceHover → border）建立层次。
+ * - 浅色主题是银白，不是米黄/奶油色。
+ * - 语义色独立于品牌强调色，不再让所有状态都继承蓝色。
+ * - 禁止香槟金 / 玫瑰金 / 紫粉渐变 / 霓虹色。
+ *
+ * 可访问性：浅色主题下 `accent` 使用加深的 `accentDeep`，以保证白底上的
+ * 4.5:1 文字对比度；深色主题使用亮蓝 `accent`。对比度由
+ * `scripts/check-contrast.mjs` 实测，不是凭感觉判断。
+ */
 export const color = {
-  /** 品牌：银幕暖光（低饱和琥珀），刻意避开紫粉渐变 */
-  cinemaAmber: '#D9A55B',
-  cinemaAmberSoft: '#E8C58C',
-  silverScreen: '#F2EFE9',
-  /** 深色主题 */
+  /** 品牌强调：Glacier Blue */
+  accent: '#77B8D8',
+  accentSoft: '#A0D0E8',
+  accentDeep: '#3C6F8B',
+  accentWash: '#DDEFF7',
+  /** 银幕白：深色主题的文字/图标基色，中性色而非品牌色 */
+  silver: '#EEF3F7',
+
+  /** 深色主题：Cinematic Graphite */
   dark: {
-    bgBase: '#0B0D10',
-    bgElevated: '#12151A',
-    bgOverlay: '#191D23',
-    surface: '#1C2128',
-    surfaceHover: '#252B33',
-    border: '#2A3038',
-    borderStrong: '#3A424C',
-    textPrimary: '#F2EFE9',
-    textSecondary: '#A8B0BA',
-    textTertiary: '#6E7884',
-    scrim: 'rgba(6, 8, 10, 0.72)',
+    bgBase: '#0B0F14',
+    bgElevated: '#121922',
+    bgOverlay: '#141C26',
+    surface: '#18222D',
+    surfaceHover: '#202D39',
+    border: '#2B3947',
+    borderStrong: '#405365',
+    textPrimary: '#EEF3F7',
+    textSecondary: '#AAB7C3',
+    textTertiary: '#8294A2',
+    scrim: 'rgba(6, 11, 16, 0.72)',
   },
-  /** 浅色主题 */
+  /** 浅色主题：Silver Screen */
   light: {
-    bgBase: '#F7F6F3',
+    bgBase: '#F4F7FA',
     bgElevated: '#FFFFFF',
     bgOverlay: '#FFFFFF',
-    surface: '#FFFFFF',
-    surfaceHover: '#EFEDE8',
-    border: '#E2DFD8',
-    borderStrong: '#CFCAC0',
-    textPrimary: '#1A1D21',
-    textSecondary: '#5A6069',
-    textTertiary: '#8A9099',
-    scrim: 'rgba(247, 246, 243, 0.78)',
+    surface: '#EDF2F6',
+    surfaceHover: '#E4ECF2',
+    border: '#D7E0E8',
+    borderStrong: '#B6C4D0',
+    textPrimary: '#1B2732',
+    textSecondary: '#5D6B78',
+    textTertiary: '#5D6B78',
+    scrim: 'rgba(244, 247, 250, 0.82)',
   },
+  /** 语义色：与品牌强调色解耦 */
   semantic: {
-    success: '#6FB28C',
-    warning: '#D9A55B',
-    danger: '#D97A6C',
-    info: '#7C9BB5',
-    favorite: '#D9A55B',
+    success: '#5C9E78',
+    warning: '#C08A42',
+    danger: '#C4685C',
+    favorite: '#D06E67',
+    info: '#7BA3C0',
   },
 } as const;
 
@@ -87,16 +106,16 @@ export const spacing = {
 
 export const shadow = {
   dark: {
-    sm: '0 2px 8px rgba(0,0,0,0.28)',
-    md: '0 8px 24px rgba(0,0,0,0.36)',
-    lg: '0 24px 64px rgba(0,0,0,0.52)',
-    glow: '0 0 0 1px rgba(217,165,91,0.28), 0 16px 48px rgba(0,0,0,0.56)',
+    sm: '0 1px 2px rgba(0, 0, 0, 0.36), 0 2px 8px rgba(0, 0, 0, 0.24)',
+    md: '0 4px 16px rgba(0, 0, 0, 0.40), 0 12px 32px rgba(0, 0, 0, 0.28)',
+    lg: '0 12px 40px rgba(0, 0, 0, 0.52), 0 32px 80px rgba(0, 0, 0, 0.36)',
+    glow: '0 0 0 1px rgba(119, 184, 216, 0.32), 0 12px 32px rgba(0, 0, 0, 0.44)',
   },
   light: {
-    sm: '0 2px 8px rgba(26,29,33,0.06)',
-    md: '0 8px 24px rgba(26,29,33,0.10)',
-    lg: '0 24px 64px rgba(26,29,33,0.14)',
-    glow: '0 0 0 1px rgba(217,165,91,0.42), 0 16px 48px rgba(26,29,33,0.12)',
+    sm: '0 1px 2px rgba(27, 39, 50, 0.06), 0 2px 8px rgba(27, 39, 50, 0.05)',
+    md: '0 4px 16px rgba(27, 39, 50, 0.08), 0 12px 32px rgba(27, 39, 50, 0.06)',
+    lg: '0 12px 40px rgba(27, 39, 50, 0.12), 0 32px 80px rgba(27, 39, 50, 0.08)',
+    glow: '0 0 0 1px rgba(71, 127, 159, 0.36), 0 12px 32px rgba(27, 39, 50, 0.10)',
   },
 } as const;
 

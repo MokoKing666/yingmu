@@ -27,7 +27,7 @@ export function FavoritesPage() {
         <div className="panel" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 24, padding: '16px 20px' }}>
           {distribution.map(({ kind, count }) => (
             <Link key={kind} to={`/library/${kind}`} className="tag" style={{ padding: '7px 14px', fontSize: '0.8125rem' }}>
-              {KIND_LABEL[kind]} <strong style={{ marginLeft: 6, color: 'var(--brand-amber)' }}>{count}</strong>
+              {KIND_LABEL[kind]} <strong style={{ marginLeft: 6, color: 'var(--accent)' }}>{count}</strong>
             </Link>
           ))}
           <div style={{ flex: 1 }} />

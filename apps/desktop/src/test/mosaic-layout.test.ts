@@ -5,6 +5,7 @@ import {
   validateLayout,
   validateMosaic,
   toCustomOrder,
+  orderByRecommendation,
 } from '@/lib/wall-layout';
 import { buildDemoLibrary } from '@/lib/demo-data';
 import type { MediaItem } from '@yingmu/media-models';
@@ -161,5 +162,40 @@ describe('无级拼贴布局引擎', () => {
     // 记录真实耗时，性能报告以这里的数据为准；宽松上限只防回归到 O(n^3) 级别
     expect(elapsed).toBeLessThan(8000);
     console.warn(`[mosaic] 1000 条布局耗时 ${elapsed.toFixed(1)}ms，画布高 ${result.canvasHeight}px`);
+  });
+
+  it('默认严格保留调用方顺序：LibraryPage 的评分/年份排序不被 addedAt 覆盖', () => {
+    const byRating = [...items].sort((a, b) => (b.metadata.rating ?? 0) - (a.metadata.rating ?? 0));
+    const result = computeMosaicLayout(byRating, { canvasWidth: 1920 });
+    expect(result.tiles.map((t) => t.mediaId)).toEqual(byRating.map((i) => i.id));
+
+    const byTitle = [...items].sort((a, b) => a.metadata.title.localeCompare(b.metadata.title, 'zh-CN'));
+    const result2 = computeMosaicLayout(byTitle, { canvasWidth: 1280 });
+    expect(result2.tiles.map((t) => t.mediaId)).toEqual(byTitle.map((i) => i.id));
+  });
+
+  it('首页推荐顺序确定性，且首项不再是「最早加入」的那一部', () => {
+    const ordered = orderByRecommendation(items);
+    expect(ordered.map((i) => i.id)).toEqual(orderByRecommendation(items).map((i) => i.id));
+    const earliest = [...items].sort((a, b) => a.addedAt.localeCompare(b.addedAt))[0]!;
+    expect(ordered[0]!.id).not.toBe(earliest.id);
+    expect(ordered).toHaveLength(items.length);
+  });
+
+  it('同条件下收藏与续播在推荐中权重更高', () => {
+    const base = items[0]!;
+    const plain = { ...base, id: 'aaa-plain', favorite: false, resumeSeconds: undefined };
+    const featured = { ...base, id: 'zzz-featured', favorite: true, resumeSeconds: 120 };
+    const ordered = orderByRecommendation([plain, featured]);
+    expect(ordered[0]!.id).toBe('zzz-featured');
+  });
+
+  it('自定义排序优先于推荐顺序', () => {
+    const reversed = [...items].reverse();
+    const result = computeMosaicLayout(items, {
+      canvasWidth: 1920,
+      customOrder: toCustomOrder(reversed.map((i) => i.id)),
+    });
+    expect(result.tiles[0]!.mediaId).toBe(reversed[0]!.id);
   });
 });

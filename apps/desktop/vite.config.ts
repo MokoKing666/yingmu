@@ -26,10 +26,14 @@ export default defineConfig({
     sourcemap: true,
     rollupOptions: {
       output: {
-        manualChunks: {
-          // PixiJS 体积较大，独立分包避免拖慢首屏幕墙渲染
-          pixi: ['pixi.js'],
-          motion: ['motion/react'],
+        // Vite 8 使用 Rolldown，manualChunks 只接受函数形式（对象映射已移除）。
+        // PixiJS 体积较大，独立分包避免拖慢首屏幕墙渲染。
+        manualChunks(id) {
+          if (id.includes('node_modules/pixi.js')) return 'pixi';
+          if (id.includes('node_modules/motion') || id.includes('node_modules/framer-motion')) {
+            return 'motion';
+          }
+          return undefined;
         },
       },
     },

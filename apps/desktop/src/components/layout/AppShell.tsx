@@ -133,7 +133,7 @@ export function AppShell({ children }: { children: ReactNode }) {
         >
           <Menu size={18} />
         </button>
-        <span title="影幕 YingMu" style={{ display: 'grid', placeItems: 'center', color: 'var(--brand-amber)' }}>
+        <span title="影幕 YingMu" style={{ display: 'grid', placeItems: 'center', color: 'var(--accent)' }}>
           <LogoMark size={22} aria-hidden="true" />
         </span>
         <button className="nav-rail-btn" onClick={() => navigate('/')} title="首页" aria-label="首页">
@@ -184,7 +184,7 @@ export function AppShell({ children }: { children: ReactNode }) {
                       end={entry.end}
                       className="nav-item"
                       style={({ isActive }) => ({
-                        boxShadow: isActive ? 'inset 2px 0 0 var(--brand-amber)' : undefined,
+                        boxShadow: isActive ? 'inset 2px 0 0 var(--accent)' : undefined,
                         background: isActive ? 'var(--surface)' : undefined,
                       })}
                     >

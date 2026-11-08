@@ -1,32 +1,43 @@
-/* 影幕 Design Tokens — CSS 变量层。:root 为深色，[data-theme='light'] 覆盖为浅色。
-   与 tokens.ts 保持数值一致；改动需同步两处并更新 docs/design/design-system.md。 */
+/* 影幕 Design Tokens — CSS 变量层（v0.3 Cinematic Neutral）
+   :root 为深色 Cinematic Graphite，[data-theme='light'] 为 Silver Screen。
+   与 tokens.ts 保持数值一致；改动需同步两处并更新 docs/design/design-system.md。
+   所有组件只允许引用这里的变量，禁止散落硬编码颜色。 */
 
 :root {
-  --brand-amber: #d9a55b;
-  --brand-amber-soft: #e8c58c;
-  --brand-silver: #f2efe9;
+  /* 品牌强调：Glacier Blue（深色主题用亮蓝，保证深底对比度） */
+  --accent: #77b8d8;
+  --accent-soft: #a0d0e8;
+  --accent-deep: #477f9f;
+  --accent-wash: #16252f;
+  --accent-on: #08121a;
 
-  --bg-base: #0b0d10;
-  --bg-elevated: #12151a;
-  --bg-overlay: #191d23;
-  --surface: #1c2128;
-  --surface-hover: #252b33;
-  --border: #2a3038;
-  --border-strong: #3a424c;
-  --text-primary: #f2efe9;
-  --text-secondary: #a8b0ba;
-  --text-tertiary: #6e7884;
-  --scrim: rgba(6, 8, 10, 0.72);
+  /* 中性银幕白：文字与图标基色，不属于品牌色 */
+  --silver: #eef3f7;
 
-  --semantic-success: #6fb28c;
-  --semantic-warning: #d9a55b;
-  --semantic-danger: #d97a6c;
-  --semantic-info: #7c9bb5;
+  /* 深色主题：Cinematic Graphite */
+  --bg-base: #0b0f14;
+  --bg-elevated: #121922;
+  --bg-overlay: #141c26;
+  --surface: #18222d;
+  --surface-hover: #202d39;
+  --border: #2b3947;
+  --border-strong: #405365;
+  --text-primary: #eef3f7;
+  --text-secondary: #aab7c3;
+  --text-tertiary: #8294a2;
+  --scrim: rgba(6, 11, 16, 0.72);
 
-  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.28);
-  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.36);
-  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.52);
-  --shadow-glow: 0 0 0 1px rgba(217, 165, 91, 0.28), 0 16px 48px rgba(0, 0, 0, 0.56);
+  /* 语义色：与品牌强调色解耦 */
+  --semantic-success: #6fb994;
+  --semantic-warning: #d6a25c;
+  --semantic-danger: #d98478;
+  --semantic-favorite: #de8a82;
+  --semantic-info: #8fb4cf;
+
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.36), 0 2px 8px rgba(0, 0, 0, 0.24);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.28);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.52), 0 32px 80px rgba(0, 0, 0, 0.36);
+  --shadow-glow: 0 0 0 1px rgba(119, 184, 216, 0.32), 0 12px 32px rgba(0, 0, 0, 0.44);
 
   --font-family: 'MiSans', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Segoe UI', system-ui, -apple-system, sans-serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', 'Consolas', ui-monospace, monospace;
@@ -57,6 +68,8 @@
   /* 幕墙页使用 0 左右留白（见 .page-scroll.is-fullbleed），此处仅服务传统页面 */
   --page-x-fullbleed: 0px;
   --mosaic-gap: 12px;
+  /* 悬浮搜索胶囊的顶部安全区：幕墙顶部留出该高度，避免遮挡第一排磁贴 */
+  --header-safe: 76px;
 
   --z-bg: 0;
   --z-content: 10;
@@ -69,23 +82,42 @@
   --ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1);
   --duration-card: 420ms;
   --duration-page: 360ms;
+
+  color-scheme: dark;
 }
 
 [data-theme='light'] {
-  --bg-base: #f7f6f3;
+  /* 浅色主题：白底上用加深蓝，保证 4.5:1 文字对比度 */
+  --accent: #3c6f8b;
+  --accent-soft: #77b8d8;
+  --accent-deep: #2a566e;
+  --accent-wash: #ddeff7;
+  --accent-on: #ffffff;
+
+  --silver: #f4f7fa;
+
+  --bg-base: #f4f7fa;
   --bg-elevated: #ffffff;
   --bg-overlay: #ffffff;
-  --surface: #ffffff;
-  --surface-hover: #efede8;
-  --border: #e2dfd8;
-  --border-strong: #cfcac0;
-  --text-primary: #1a1d21;
-  --text-secondary: #5a6069;
-  --text-tertiary: #8a9099;
-  --scrim: rgba(247, 246, 243, 0.78);
+  --surface: #edf2f6;
+  --surface-hover: #e4ecf2;
+  --border: #d7e0e8;
+  --border-strong: #b6c4d0;
+  --text-primary: #1b2732;
+  --text-secondary: #5d6b78;
+  --text-tertiary: #5d6b78;
+  --scrim: rgba(244, 247, 250, 0.82);
 
-  --shadow-sm: 0 2px 8px rgba(26, 29, 33, 0.06);
-  --shadow-md: 0 8px 24px rgba(26, 29, 33, 0.1);
-  --shadow-lg: 0 24px 64px rgba(26, 29, 33, 0.14);
-  --shadow-glow: 0 0 0 1px rgba(217, 165, 91, 0.42), 0 16px 48px rgba(26, 29, 33, 0.12);
+  --semantic-success: #3f7d5c;
+  --semantic-warning: #8f6320;
+  --semantic-danger: #a4473c;
+  --semantic-favorite: #a84b44;
+  --semantic-info: #4a7391;
+
+  --shadow-sm: 0 1px 2px rgba(27, 39, 50, 0.06), 0 2px 8px rgba(27, 39, 50, 0.05);
+  --shadow-md: 0 4px 16px rgba(27, 39, 50, 0.08), 0 12px 32px rgba(27, 39, 50, 0.06);
+  --shadow-lg: 0 12px 40px rgba(27, 39, 50, 0.12), 0 32px 80px rgba(27, 39, 50, 0.08);
+  --shadow-glow: 0 0 0 1px rgba(71, 127, 159, 0.36), 0 12px 32px rgba(27, 39, 50, 0.1);
+
+  color-scheme: light;
 }

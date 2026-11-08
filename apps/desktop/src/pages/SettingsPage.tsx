@@ -12,7 +12,7 @@ import type { AppSettings, DiagnosticsReport, ThemeMode } from '@yingmu/media-mo
 function SectionTitle({ icon, title, description }: { icon: ReactNode; title: string; description: string }) {
   return (
     <div className="row" style={{ alignItems: 'flex-start', gap: 12, marginBottom: 18 }}>
-      <span style={{ color: 'var(--brand-amber)', marginTop: 2 }}>{icon}</span>
+      <span style={{ color: 'var(--accent)', marginTop: 2 }}>{icon}</span>
       <div>
         <h2 className="panel-title" style={{ margin: 0 }}>{title}</h2>
         <p className="tiny" style={{ margin: '2px 0 0' }}>{description}</p>

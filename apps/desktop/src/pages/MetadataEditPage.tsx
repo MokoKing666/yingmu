@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Save, ArrowLeft, Search, RotateCcw } from 'lucide-react';
 import { PageHeader } from '@/components/ui/PageHeader';
@@ -54,19 +54,20 @@ export function MetadataEditPage() {
   const getItem = useAppStore((s) => s.getItem);
   const updateMetadata = useAppStore((s) => s.updateMetadata);
   const item = getItem(id);
-  const [draft, setDraft] = useState<Draft>(EMPTY);
+  // 未编辑时草稿直接从当前媒体派生；编辑后写入 edits（带 mediaId 校验，
+  // 切换媒体会自动回到新媒体的原始元数据），避免在 effect 内同步 setState。
+  const [edits, setEdits] = useState<{ id: string; draft: Draft } | null>(null);
   const [matchQuery, setMatchQuery] = useState('');
   const [saving, setSaving] = useState(false);
-
-  useEffect(() => {
-    if (item) setDraft(fromMetadata(item.metadata));
-  }, [item]);
+  const draft: Draft =
+    edits?.id === id ? edits.draft : item ? fromMetadata(item.metadata) : EMPTY;
+  const setDraft = (next: Draft) => setEdits({ id, draft: next });
 
   if (!item) {
     return <EmptyState title="找不到这部作品" action={<Link to="/" className="btn"><ArrowLeft size={14} /> 回到首页</Link>} />;
   }
 
-  const set = (key: keyof Draft) => (value: string) => setDraft((d) => ({ ...d, [key]: value }));
+  const set = (key: keyof Draft) => (value: string) => setDraft({ ...draft, [key]: value });
 
   const save = async () => {
     setSaving(true);

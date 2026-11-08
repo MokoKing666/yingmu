@@ -4,7 +4,7 @@
   margin: calc(-1 * var(--page-y)) calc(-1 * var(--page-x)) -96px;
   min-height: calc(100vh - 68px);
   background: #05070a;
-  color: #f2efe9;
+  color: var(--silver);
   position: relative;
   overflow: hidden;
 }
@@ -85,14 +85,14 @@
   max-width: 620px;
   padding: 16px 20px;
   border-radius: 14px;
-  border: 1px solid rgba(217, 165, 91, 0.42);
-  background: rgba(217, 165, 91, 0.08);
+  border: 1px solid rgba(119, 184, 216, 0.42);
+  background: rgba(119, 184, 216, 0.08);
   font-size: 0.8125rem;
   line-height: 1.8;
   text-align: left;
 }
 .player-notice strong {
-  color: var(--brand-amber);
+  color: var(--accent);
 }
 
 .player-controls {
@@ -111,7 +111,7 @@
 .player-seek input[type='range'] {
   flex: 1;
   height: 4px;
-  accent-color: var(--brand-amber);
+  accent-color: var(--accent);
   cursor: pointer;
 }
 .player-time {
@@ -134,25 +134,25 @@
   display: grid;
   place-items: center;
   border-radius: 8px;
-  color: #f2efe9;
+  color: var(--silver);
   transition: background 160ms, color 160ms;
 }
 .player-pbutton:hover {
   background: rgba(255, 255, 255, 0.12);
 }
 .player-pbutton[data-active='true'] {
-  color: var(--brand-amber);
-  background: rgba(217, 165, 91, 0.14);
+  color: var(--accent);
+  background: rgba(119, 184, 216, 0.14);
 }
 .player-pbutton-primary {
   width: 46px;
   height: 46px;
   border-radius: 50%;
-  background: var(--brand-amber);
+  background: var(--accent);
   color: #16191d;
 }
 .player-pbutton-primary:hover {
-  background: var(--brand-amber-soft);
+  background: var(--accent-soft);
 }
 .player-volume {
   width: 96px;
@@ -162,7 +162,7 @@
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: transparent;
-  color: #f2efe9;
+  color: var(--silver);
   font-size: 0.75rem;
   font-family: var(--font-mono);
 }
@@ -197,13 +197,13 @@
   font-size: 0.8125rem;
   width: 100%;
   text-align: left;
-  color: #f2efe9;
+  color: var(--silver);
 }
 .player-panel-item:hover {
-  color: var(--brand-amber);
+  color: var(--accent);
 }
 .player-panel-item[data-active='true'] {
-  color: var(--brand-amber);
+  color: var(--accent);
 }
 .player-panel-close {
   position: absolute;

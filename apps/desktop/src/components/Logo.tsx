@@ -25,7 +25,7 @@ export function LogoMark({ size = 32, ...rest }: { size?: number } & SVGProps<SV
 export function BrandLockup({ size = 34 }: { size?: number }) {
   return (
     <div className="sidebar-brand">
-      <span style={{ color: 'var(--brand-amber)', flex: 'none' }}>
+      <span style={{ color: 'var(--accent)', flex: 'none' }}>
         <LogoMark size={size} />
       </span>
       <span>

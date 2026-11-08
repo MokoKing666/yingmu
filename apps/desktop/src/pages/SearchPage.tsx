@@ -16,7 +16,7 @@ function Highlight({ text, query }: { text: string; query: string }) {
   return (
     <>
       {text.slice(0, index)}
-      <mark style={{ background: 'rgba(217,165,91,0.28)', color: 'inherit', borderRadius: 3 }}>{text.slice(index, index + query.trim().length)}</mark>
+      <mark style={{ background: 'var(--accent-wash)', color: 'inherit', borderRadius: 3 }}>{text.slice(index, index + query.trim().length)}</mark>
       {text.slice(index + query.trim().length)}
     </>
   );
@@ -47,18 +47,23 @@ function ResultRow({ item, query, snippet }: { item: MediaItem; query: string; s
 export function SearchPage() {
   const [params, setParams] = useSearchParams();
   const query = params.get('q') ?? '';
-  const [draft, setDraft] = useState(query);
+  const [draftState, setDraftState] = useState({ forQuery: query, value: query });
   const [kind, setKind] = useState<MediaKind | 'all'>('all');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [yearFrom, setYearFrom] = useState('');
   const [result, setResult] = useState<SearchResult>({ items: [], total: 0 });
-  const [searching, setSearching] = useState(false);
+  const [settledKey, setSettledKey] = useState('');
 
-  useEffect(() => setDraft(query), [query]);
+  // URL 查询串变化时输入框自动跟随：用派生值而不是在 effect 里同步 setState
+  const draft = draftState.forQuery === query ? draftState.value : query;
+  const setDraft = (value: string) => setDraftState({ forQuery: query, value });
+
+  const queryKey = `${query}|${kind}|${favoritesOnly}|${yearFrom}`;
+  // 检索中同样是派生状态：结果尚未对应当前条件即为检索中
+  const searching = settledKey !== queryKey;
 
   useEffect(() => {
     let active = true;
-    setSearching(true);
     void getBridge()
       .search({
         text: query,
@@ -75,12 +80,12 @@ export function SearchPage() {
         if (active) setResult({ items: [], total: 0 });
       })
       .finally(() => {
-        if (active) setSearching(false);
+        if (active) setSettledKey(queryKey);
       });
     return () => {
       active = false;
     };
-  }, [query, kind, favoritesOnly, yearFrom]);
+  }, [queryKey, query, kind, favoritesOnly, yearFrom]);
 
   const suggestions = useMemo(
     () => ['雾港', '纪录片', '4K', '动画', '2026'],

@@ -45,6 +45,11 @@ export interface MediaMetadata {
   rating?: number;
   posterPath?: string;
   backdropPath?: string;
+  /**
+   * 真实海报的宽高比（width / height），由刮削结果或本地图片探测填充。
+   * 仅代表素材尺寸，不代表 HDR/Dolby 等播放能力。缺失时 UI 按媒体类型回退。
+   */
+  posterAspect?: number;
   seasonCount?: number;
   episodeCount?: number;
   origin: MetadataOrigin;

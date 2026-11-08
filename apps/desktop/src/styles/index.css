@@ -49,12 +49,12 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand-amber);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: rgba(217, 165, 91, 0.3);
+  background: rgba(119, 184, 216, 0.3);
 }
 
 /* 滚动条：克制、与背景融合 */
@@ -112,6 +112,13 @@ a {
   background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
   backdrop-filter: blur(18px);
   box-shadow: var(--shadow-md);
+  /* 默认降低视觉权重，hover/键盘聚焦时恢复，避免压住海报主体与文案 */
+  opacity: 0.72;
+  transition: opacity 220ms var(--ease-out-expo);
+}
+.nav-rail:hover,
+.nav-rail:focus-within {
+  opacity: 1;
 }
 .nav-rail-btn {
   width: 34px;
@@ -128,7 +135,7 @@ a {
   transform: translateY(-1px);
 }
 .nav-rail-btn[data-on='true'] {
-  color: var(--brand-amber);
+  color: var(--accent);
 }
 
 /* 展开后的完整导航：浮层覆盖在画布之上 */
@@ -203,7 +210,7 @@ a {
 .nav-item[data-active='true'] {
   background: var(--surface);
   color: var(--text-primary);
-  box-shadow: inset 2px 0 0 var(--brand-amber);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .nav-item svg {
   flex: none;
@@ -277,7 +284,7 @@ a {
   font-size: 0.6875rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--brand-amber);
+  color: var(--accent);
   font-weight: 600;
   margin-bottom: var(--space-2);
 }
@@ -304,14 +311,14 @@ a {
   transform: translateY(-1px);
 }
 .btn-primary {
-  background: var(--brand-amber);
-  border-color: var(--brand-amber);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #16191d;
   font-weight: 600;
 }
 .btn-primary:hover {
-  background: var(--brand-amber-soft);
-  border-color: var(--brand-amber-soft);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
 }
 .btn-ghost {
   background: transparent;
@@ -357,7 +364,7 @@ a {
   min-width: 0;
 }
 .search-input:focus-within {
-  border-color: var(--brand-amber);
+  border-color: var(--accent);
 }
 .search-input input {
   flex: 1;
@@ -397,7 +404,7 @@ a {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: var(--brand-amber);
+  border-color: var(--accent);
 }
 
 .segmented {
@@ -433,9 +440,9 @@ a {
   letter-spacing: 0.03em;
 }
 .tag-accent {
-  color: var(--brand-amber);
-  border-color: rgba(217, 165, 91, 0.38);
-  background: rgba(217, 165, 91, 0.08);
+  color: var(--accent);
+  border-color: rgba(119, 184, 216, 0.38);
+  background: rgba(119, 184, 216, 0.08);
 }
 
 .panel {
@@ -474,7 +481,7 @@ a {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: var(--brand-amber);
+  background: var(--accent);
 }
 
 .empty-state {
@@ -629,6 +636,17 @@ a {
   gap: var(--space-4);
 }
 
+/* 首页：悬浮搜索胶囊与轨道不遮挡第一排磁贴，画布从顶部安全区开始。
+   安全区由 design token 控制，小高度窗口下收敛，避免压缩可用画布。 */
+.wall-stage--overlay > .wall-stage {
+  padding-top: var(--header-safe);
+}
+@media (max-height: 700px) {
+  .wall-stage--overlay > .wall-stage {
+    padding-top: 62px;
+  }
+}
+
 /* 全幅画布上的轻量叠加层：不占布局高度，避免标题/工具栏挤压磁贴 */
 .wall-inset {
   padding-inline: var(--page-x);
@@ -642,7 +660,7 @@ a {
   display: flex;
   align-items: baseline;
   gap: 12px;
-  color: #f2efe9;
+  color: var(--silver);
   text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
 }
 .wall-overlay-title strong {

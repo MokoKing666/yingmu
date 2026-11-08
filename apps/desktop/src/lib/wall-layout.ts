@@ -289,12 +289,17 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
   const empty: MosaicResult = { tiles: [], canvasWidth, canvasHeight: 0 };
   if (items.length === 0) return empty;
 
-  const ordered = [...items].sort((a, b) => {
-    const oa = options.customOrder?.[a.id] ?? Number.MAX_SAFE_INTEGER;
-    const ob = options.customOrder?.[b.id] ?? Number.MAX_SAFE_INTEGER;
-    if (oa !== ob) return oa - ob;
-    return a.addedAt.localeCompare(b.addedAt) || a.id.localeCompare(b.id);
-  });
+  // 默认严格保留调用方传入的顺序：LibraryPage 可能已经按评分 / 年份 / 名称排好，
+  // 这里再按 addedAt 排序会覆盖用户选择的排序（v0.2 的真实缺陷）。
+  // 只有显式 customOrder 才重排；同序号时用 id 兜底保证确定性。
+  const ordered = options.customOrder
+    ? [...items].sort((a, b) => {
+        const oa = options.customOrder?.[a.id] ?? Number.MAX_SAFE_INTEGER;
+        const ob = options.customOrder?.[b.id] ?? Number.MAX_SAFE_INTEGER;
+        if (oa !== ob) return oa - ob;
+        return a.id.localeCompare(b.id);
+      })
+    : [...items];
 
   const refTime = referenceTime(ordered);
   const minW = clamp(canvasWidth * M.width.minRatio, M.width.minPx, M.width.maxClamp);
@@ -406,6 +411,29 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
  * 兼容旧 API：返回 TileLayout[] 语义（附 box），供既有测试与调用方使用。
  * 布局仍由同一引擎计算，不回退到固定档位。
  */
+/**
+ * 首页推荐顺序（确定性，不含随机）。
+ *
+ * 与尺寸权重分开：这里只决定「先看到谁」，hero 因此是推荐第一名，
+ * 而不是「数组里最早加入的那部片」。用户一旦拖拽排序，调用方应传 customOrder，
+ * 由 computeMosaicLayout 优先采用，不再走本函数。
+ */
+export function orderByRecommendation(items: MediaItem[]): MediaItem[] {
+  const ref = referenceTime(items);
+  const scored = items.map((item) => {
+    const t = Date.parse(item.addedAt);
+    const ageDays = Number.isFinite(t) ? Math.max(0, (ref - t) / 86400000) : 365;
+    const recency = clamp(1 - ageDays / 60, 0, 1);
+    const favorite = item.favorite ? 1 : 0;
+    const resume = (item.resumeSeconds ?? 0) > 0 ? 1 : 0;
+    const rating = clamp((item.metadata.rating ?? 6.5) / 10, 0, 1);
+    const score = 0.38 * recency + 0.24 * favorite + 0.2 * resume + 0.18 * rating;
+    return { item, score };
+  });
+  scored.sort((a, b) => b.score - a.score || a.item.id.localeCompare(b.item.id));
+  return scored.map((entry) => entry.item);
+}
+
 export function computeWallLayout(items: MediaItem[], options: WallLayoutOptions = {}): MosaicTile[] {
   return computeMosaicLayout(items, { ...options, canvasWidth: 1440 }).tiles;
 }

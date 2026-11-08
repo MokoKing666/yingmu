@@ -13,8 +13,8 @@ import type { MediaVersion } from '@yingmu/media-models';
 function VersionRow({ version, active, onSelect }: { version: MediaVersion; active: boolean; onSelect: () => void }) {
   const v = version.video;
   return (
-    <button className="list-row" onClick={onSelect} style={{ borderColor: active ? 'var(--brand-amber)' : 'transparent', background: active ? 'var(--surface)' : undefined, width: '100%', textAlign: 'left' }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--brand-amber)' : 'var(--border-strong)', flex: 'none' }} />
+    <button className="list-row" onClick={onSelect} style={{ borderColor: active ? 'var(--accent)' : 'transparent', background: active ? 'var(--surface)' : undefined, width: '100%', textAlign: 'left' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--accent)' : 'var(--border-strong)', flex: 'none' }} />
       <div className="list-main">
         <div className="list-title">{version.label}</div>
         <div className="list-meta">

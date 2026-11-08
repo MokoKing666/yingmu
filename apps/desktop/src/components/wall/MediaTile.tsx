@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+import { motion, useReducedMotion } from 'motion/react';
 import { Heart, Play, GripVertical } from 'lucide-react';
 import type { KeyboardEvent } from 'react';
 import type { ArtworkRequest, MediaId, MediaItem } from '@yingmu/media-models';
@@ -51,6 +51,7 @@ export const MediaTile = memo(function MediaTile({
   onToggleFavorite,
 }: MediaTileProps) {
   const navigate = useNavigate();
+  const reduceMotion = useReducedMotion();
   const box = layout.box;
   const src = useArtwork(item.id, artworkKind(box.aspect), artworkSize(box.width));
   const version = item.versions[0];
@@ -75,7 +76,8 @@ export const MediaTile = memo(function MediaTile({
 
   return (
     <motion.div
-      layoutId={`tile-${item.id}`}
+      layout={!reduceMotion}
+      layoutId={reduceMotion ? undefined : `tile-${item.id}`}
       className="tile"
       data-variant={layout.variant}
       data-scale={box.scale}
@@ -83,10 +85,10 @@ export const MediaTile = memo(function MediaTile({
       data-dragging={dragging}
       data-drop-target={dropTarget}
       data-testid={`tile-${item.id}`}
-      initial={{ opacity: 0, scale: 0.965 }}
-      animate={{ opacity: 1, scale: 1 }}
-      whileHover={{ scale: motionTokens.hoverScale }}
-      transition={{ ...motionTokens.spring, delay: enterDelay }}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.965 }}
+      animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
+      whileHover={reduceMotion ? undefined : { scale: motionTokens.hoverScale }}
+      transition={reduceMotion ? { duration: 0 } : { ...motionTokens.spring, delay: enterDelay }}
       draggable
       tabIndex={0}
       role="button"

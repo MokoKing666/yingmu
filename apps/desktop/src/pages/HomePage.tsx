@@ -1,4 +1,6 @@
+import { useMemo } from 'react';
 import { MasonryWall } from '@/components/wall/MasonryWall';
+import { orderByRecommendation } from '@/lib/wall-layout';
 import { DynamicBackdrop } from '@/components/wall/DynamicBackdrop';
 import { StatusNotice } from '@/components/ui/StatusNotice';
 import { useAppStore } from '@/stores/app-store';
@@ -11,10 +13,19 @@ import { DEMO_DATA_DISCLAIMER } from '@/lib/demo-data';
  */
 export function HomePage() {
   const items = useAppStore((s) => s.items);
+  const customOrder = useAppStore((s) => s.customOrder);
   const isDemo = useAppStore((s) => s.isDemo);
 
+  // 用户一旦拖拽排序，就完全尊重其顺序；否则用确定性的推荐权重决定「先看到谁」，
+  // hero 因此是推荐第一名，而不是最早入库的那部片。
+  const hasCustomOrder = Object.keys(customOrder).length > 0;
+  const wallItems = useMemo(
+    () => (hasCustomOrder ? items : orderByRecommendation(items)),
+    [items, hasCustomOrder],
+  );
+
   return (
-    <div className="wall-stage">
+    <div className="wall-stage wall-stage--overlay">
       <DynamicBackdrop />
 
       <div className="wall-overlay-title" aria-hidden="true">
@@ -23,7 +34,7 @@ export function HomePage() {
       </div>
 
       <MasonryWall
-        items={items}
+        items={wallItems}
         heroEnabled
         emptyTitle="媒体库为空"
         emptyDescription="在「媒体源管理」中添加一个来源后，扫描结果会出现在这里。"

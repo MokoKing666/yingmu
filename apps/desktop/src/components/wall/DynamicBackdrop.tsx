@@ -57,10 +57,10 @@ export function DynamicBackdrop() {
             const dy = Math.sin(elapsed * orb.speed * 0.8 + orb.phase) * 26;
             graphics
               .circle(orb.x * w + dx, orb.y * h + dy, orb.r)
-              .fill({ color: 0xd9a55b, alpha: orb.alpha });
+              .fill({ color: 0x77b8d8, alpha: orb.alpha });
             graphics
               .circle(orb.x * w + dx, orb.y * h + dy, orb.r * 0.62)
-              .stroke({ color: 0xf2efe9, alpha: 0.045, width: 1.5 });
+              .stroke({ color: 0xeef3f7, alpha: 0.045, width: 1.5 });
           }
         });
       } catch {

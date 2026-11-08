@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
   <title id="t">影幕 YingMu 应用图标源</title>
   <!-- Windows 应用图标 / NSIS 安装器图标源：深墨底 + 银幕白图形 + 琥珀幕杆 -->
-  <rect x="0" y="0" width="256" height="256" rx="56" fill="#10141A" />
+  <rect x="0" y="0" width="256" height="256" rx="56" fill="#0B0F14" />
   <g transform="translate(0 -4)">
-    <rect x="40" y="42" width="176" height="12" rx="6" fill="#D9A55B" />
-    <path fill="#F2EFE9" fill-rule="evenodd" d="
+    <rect x="40" y="42" width="176" height="12" rx="6" fill="#77B8D8" />
+    <path fill="#EEF3F7" fill-rule="evenodd" d="
       M 50 64 H 206 A 18 18 0 0 1 224 82
       V 158 A 18 18 0 0 1 206 176
       H 50 A 18 18 0 0 1 32 158
@@ -14,7 +14,7 @@
       M 140 100 H 206 V 108 H 140 Z
       M 132 116 H 206 V 124 H 132 Z
       M 124 132 H 206 V 140 H 124 Z" />
-    <g fill="#F2EFE9">
+    <g fill="#EEF3F7">
       <rect x="84" y="184" width="8" height="12" rx="4" />
       <rect x="124" y="184" width="8" height="18" rx="4" />
       <rect x="164" y="184" width="8" height="12" rx="4" />

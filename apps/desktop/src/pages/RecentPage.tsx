@@ -23,7 +23,7 @@ function TimelineRow({ item }: { item: MediaItem }) {
         <div style={{ opacity: 0.6 }}>{date.slice(11, 16)}</div>
       </div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%' }}>
-        <span style={{ width: 9, height: 9, marginTop: 22, borderRadius: '50%', background: 'var(--brand-amber)', flex: 'none' }} />
+        <span style={{ width: 9, height: 9, marginTop: 22, borderRadius: '50%', background: 'var(--accent)', flex: 'none' }} />
         <span style={{ width: 1, flex: 1, background: 'var(--border)', minHeight: 24 }} />
       </div>
       <Link to={`/detail/${item.id}`} className="panel" style={{ display: 'flex', gap: 18, padding: 14, marginBottom: 8 }}>

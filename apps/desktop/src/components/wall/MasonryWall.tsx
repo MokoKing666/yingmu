@@ -9,6 +9,7 @@ import { useAppStore } from '@/stores/app-store';
 import { computeMosaicLayout } from '@/lib/wall-layout';
 import type { MosaicTile } from '@/lib/wall-layout';
 import { demoArtworkAspect } from '@/lib/demo-artwork';
+import { mediaAspect } from '@/lib/media-aspect';
 
 interface MasonryWallProps {
   items: MediaItem[];
@@ -49,6 +50,7 @@ export function MasonryWall({
   const focalOverrides = useAppStore((s) => s.focalOverrides);
   const setWallOrder = useAppStore((s) => s.setWallOrder);
   const toggleFavorite = useAppStore((s) => s.toggleFavorite);
+  const isDemo = useAppStore((s) => s.isDemo);
 
   const [canvasWidth, setCanvasWidth] = useState(1440);
   const [viewRange, setViewRange] = useState<ViewRange>({ top: 0, bottom: 1800 });
@@ -63,10 +65,12 @@ export function MasonryWall({
         canvasWidth,
         customOrder,
         heroEnabled,
-        aspectResolver: (item) => demoArtworkAspect(item.id),
+        // 演示桥接用原创素材的真实比例；桌面模式用真实海报/视频元数据，
+        // 绝不再用 Media ID 哈希决定真实媒体的显示比例。
+        aspectResolver: (item) => (isDemo ? demoArtworkAspect(item.id) : mediaAspect(item)),
         focalResolver: (item) => focalOverrides[item.id],
       }),
-    [items, canvasWidth, customOrder, heroEnabled, focalOverrides],
+    [items, canvasWidth, customOrder, heroEnabled, focalOverrides, isDemo],
   );
 
   const itemById = useMemo(() => new Map(items.map((item) => [item.id, item])), [items]);
@@ -180,29 +184,50 @@ export function MasonryWall({
     [draggingId, orderedIds, setWallOrder],
   );
 
-  /** 键盘导航：在已挂载磁贴中按几何方向寻找最近邻；目标不可见时先滚动过去 */
-  const focusTile = useCallback((tile: MosaicTile | undefined) => {
-    if (!tile) return;
-    const scrollEl = document.getElementById('page-scroll');
-    if (scrollEl && containerRef.current) {
-      const offset =
-        containerRef.current.getBoundingClientRect().top -
-        scrollEl.getBoundingClientRect().top +
-        scrollEl.scrollTop;
-      const viewTop = scrollEl.scrollTop - offset;
-      const viewBottom = viewTop + scrollEl.clientHeight;
-      if (tile.box.y < viewTop || tile.box.y > viewBottom) {
-        scrollEl.scrollTo({ top: offset + tile.box.y - 120, behavior: 'smooth' });
-      }
+  /**
+   * 键盘焦点与虚拟化的竞态修复：
+   * 目标磁贴可能尚未挂载，不能「滚动后立刻查 DOM」；改为记下待聚焦 id，
+   * 由 visible 变化触发的 effect 在节点真正出现后再 focus（不在 effect 内 setState）。
+   */
+  const pendingFocusRef = useRef<MediaId | null>(null);
+
+  const focusPending = useCallback(() => {
+    const id = pendingFocusRef.current;
+    if (!id) return;
+    const node = containerRef.current?.querySelector<HTMLElement>(
+      `[data-media-id="${id}"] .tile`,
+    );
+    if (node) {
+      node.focus();
+      pendingFocusRef.current = null;
     }
-    setFocusedId(tile.mediaId);
-    requestAnimationFrame(() => {
-      const node = containerRef.current?.querySelector<HTMLElement>(
-        `[data-media-id="${tile.mediaId}"] .tile`,
-      );
-      node?.focus();
-    });
   }, []);
+
+  useEffect(() => {
+    focusPending();
+  }, [visible, focusPending]);
+
+  const focusTile = useCallback(
+    (tile: MosaicTile | undefined) => {
+      if (!tile) return;
+      const scrollEl = document.getElementById('page-scroll');
+      if (scrollEl && containerRef.current) {
+        const offset =
+          containerRef.current.getBoundingClientRect().top -
+          scrollEl.getBoundingClientRect().top +
+          scrollEl.scrollTop;
+        const viewTop = scrollEl.scrollTop - offset;
+        const viewBottom = viewTop + scrollEl.clientHeight;
+        if (tile.box.y < viewTop || tile.box.y > viewBottom) {
+          scrollEl.scrollTo({ top: offset + tile.box.y - 120, behavior: 'smooth' });
+        }
+      }
+      setFocusedId(tile.mediaId);
+      pendingFocusRef.current = tile.mediaId;
+      focusPending();
+    },
+    [focusPending],
+  );
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {

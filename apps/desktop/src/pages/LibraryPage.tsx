@@ -39,7 +39,7 @@ function ListRow({ item }: { item: MediaItem }) {
           {item.metadata.year} · {item.metadata.genres.join(' / ')} · {formatDuration(duration)} · {item.versions.length} 个版本
         </div>
       </div>
-      {item.favorite && <Star size={14} fill="currentColor" style={{ color: 'var(--brand-amber)' }} />}
+      {item.favorite && <Star size={14} fill="currentColor" style={{ color: 'var(--accent)' }} />}
       <span className="tag">{formatRating(item.metadata.rating)}</span>
       <button className="btn btn-ghost" onClick={() => navigate(`/player/${item.id}`)} aria-label={`播放 ${item.metadata.title}`}>
         <Play size={14} /> 播放
