@@ -32,6 +32,11 @@ apps/desktop/src-tauri/*.dll
 *.deb
 *.rpm
 
+# CI 构建/下载的安装包暂存目录（含 SHA256SUMS.txt，不得入库）
+installer-artifact/
+release-assets/
+nsis-staging/
+
 # 密钥、凭据、本地环境（最高优先级）
 .env
 .env.*
