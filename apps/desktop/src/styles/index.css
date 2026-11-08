@@ -740,6 +740,9 @@ a {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* 关键：把迭代次数压到 1，终止 infinite 循环——
+       只把时长压到 0.01ms 时，无限动画仍在以极高频率空转 */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

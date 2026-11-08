@@ -53,7 +53,7 @@ describe('无级拼贴布局引擎', () => {
     const result = computeMosaicLayout(items, {
       canvasWidth: 2560,
       heroEnabled: true,
-      aspectResolver: demoArtworkAspect,
+      aspectResolver: (it) => demoArtworkAspect(it.id),
       preserveAspect: (it) => it.kind === 'personal',
     });
     const scales = new Set(result.tiles.map((t) => t.box.scale));

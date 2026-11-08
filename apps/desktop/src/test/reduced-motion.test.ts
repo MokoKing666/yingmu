@@ -42,6 +42,40 @@ describe('动效开关的统一性', () => {
     expect(code).toMatch(/\[reduceMotion\]/);
     expect(code).toMatch(/if \(reduceMotion\) return;/);
   });
+
+  it('CSS 侧终止无限循环动画，而不是只压缩时长（任务书 8）', () => {
+    const indexCss = readFileSync(join(SRC, 'styles', 'index.css'), 'utf8');
+    const reducedBlock = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(indexCss);
+    expect(reducedBlock?.[1]).toBeTruthy();
+    // 迭代次数压到 1：0.01ms × infinite 仍然是无限循环
+    expect(reducedBlock?.[1]).toMatch(/animation-iteration-count:\s*1\s*!important/);
+
+    const wallCss = readFileSync(join(SRC, 'styles', 'wall.css'), 'utf8');
+    const wallReduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*?)\n\}/.exec(wallCss);
+    expect(wallReduced?.[1]).toBeTruthy();
+    // 骨架 shimmer 直接停止；悬停推近完全静止
+    expect(wallReduced?.[1]).toMatch(/animation:\s*none\s*!important/);
+    expect(wallReduced?.[1]).toMatch(/transform:\s*none\s*!important/);
+  });
+
+  it('全部 infinite 动画都有对应的停止规则（当前唯一：tile-shimmer）', () => {
+    const wallCss = readFileSync(join(SRC, 'styles', 'wall.css'), 'utf8');
+    // 已知唯一的装饰性无限动画是骨架 shimmer
+    expect(wallCss).toMatch(/animation:\s*tile-shimmer[^;]*infinite/);
+    // 它的选择器必须出现在 reduce 块里并被 animation: none 停止
+    const wallReduced = /@media \(prefers-reduced-motion: reduce\)\s*\{([\s\S]*)$/.exec(wallCss)?.[1] ?? '';
+    const reduceChunk = wallReduced.slice(0, wallReduced.indexOf('\n}\n') >= 0 ? wallReduced.length : 0);
+    expect(reduceChunk).toMatch(/\.tile-art-placeholder\s*\{[^}]*animation:\s*none\s*!important/);
+
+    // 其他样式表不允许新增 infinite 动画声明（新增时必须同步扩充本契约与 reduce 块）。
+    // 先剥离注释——注释里提到 infinite 不算声明。
+    for (const file of ['index.css', 'player.css']) {
+      const css = readFileSync(join(SRC, 'styles', file), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+      expect(css, `${file} 出现了未纳入减少动效契约的 infinite 动画`).not.toMatch(
+        /animation[^;{}]*:\s*[^;{}]*infinite/,
+      );
+    }
+  });
 });
 
 describe('useMotionPreference 行为', () => {

@@ -433,6 +433,17 @@
   .mosaic-slot,
   .tile-art,
   .tile {
+    /* 重排 / 入场 / 缩放过渡全部停止（Motion 侧由 useMotionPreference 同步关闭） */
     transition: none !important;
+  }
+  /* 装饰性无限动画直接停止：0.01ms × infinite 仍然是无限循环 */
+  .tile-art-placeholder {
+    animation: none !important;
+  }
+  /* 悬停推近属于纯装饰动效：减少动态效果时画面完全静止 */
+  .tile-art,
+  .tile:hover .tile-art,
+  .tile:hover .tile-art[data-fit='contain'] {
+    transform: none !important;
   }
 }
