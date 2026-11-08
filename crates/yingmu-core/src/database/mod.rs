@@ -1147,10 +1147,12 @@ mod tests {
 
     #[test]
     fn migrations_are_versioned_ordered_and_embed_expected_schema() {
-        assert_eq!(MIGRATIONS.len(), 2);
+        assert_eq!(MIGRATIONS.len(), 3);
         assert_eq!(MIGRATIONS[0].version, 1);
         assert_eq!(MIGRATIONS[1].version, 2);
+        assert_eq!(MIGRATIONS[2].version, 3);
         assert!(MIGRATIONS[0].version < MIGRATIONS[1].version);
+        assert!(MIGRATIONS[1].version < MIGRATIONS[2].version);
         let initial = MIGRATIONS[0].sql;
         for table in [
             "media",
@@ -1171,6 +1173,11 @@ mod tests {
         assert!(fts.contains("media_fts_ai"));
         assert!(fts.contains("media_fts_ad"));
         assert!(fts.contains("media_fts_au"));
+        // 003：布局偏好表，scope 主键保证同一视图只有一份排列
+        let layout = MIGRATIONS[2].sql;
+        assert!(layout.contains("layout_preferences"));
+        assert!(layout.contains("PRIMARY KEY (scope)"));
+        assert!(layout.contains("CHECK (sort_mode IN"));
     }
 
     #[test]

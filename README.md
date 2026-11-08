@@ -18,18 +18,20 @@
 
 | 交付项 | 状态 | 依据 |
 |---|---|---|
-| React 19 前端（16 个页面、磁贴幕墙、深浅主题、动画） | ✅ **已实现并真实运行** | 本页截图来自 `vite preview` 实际运行实例；`npm run build` 成功 |
-| 原创 SVG Logo、图标、Design Tokens | ✅ 已实现 | `assets/branding/`、`packages/design-tokens/` |
-| 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ 已实现 | `packages/media-models/`、`packages/player-api/` |
-| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **真实通过** | 8 个 Vitest 文件 / 71 个用例、TS 严格模式、ESLint 0 警告 |
+| React 19 前端（16 个页面、磁贴幕墙、深浅主题、动画） | ✅ **本机已运行** | 本页截图来自 `vite preview` 实际运行实例；`npm run build` 成功 |
+| 原创 SVG Logo、图标、Design Tokens | ✅ **已编写 + 本机已校验** | `assets/branding/`、`packages/design-tokens/`；`check-token-sync.mjs` 0 漂移 |
+| 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ **已编写** | `packages/media-models/`、`packages/player-api/` |
+| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **本机已运行** | 13 个 Vitest 文件 / 139 个用例、TS 严格模式、ESLint 0 警告 |
+| WCAG 对比度 / Token 同步 | ✅ **本机已运行 + CI 强制** | `check-contrast.mjs` 32 组/主题 0 不达标；`check-token-sync.mjs` 0 漂移 |
 | GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
-| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **云端 CI 已验证核心库**（fmt / clippy / 81 个测试）；桌面端构建见仓库 Actions | `crates/yingmu-core/`、`apps/desktop/src-tauri/` |
+| Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **CI 已构建并测试**（fmt / clippy / test / MSRV 1.85）；**本机未编译** | `crates/yingmu-core/`、`apps/desktop/src-tauri/`；本机 cargo 不在 PATH 且链接器被遮蔽，结论只来自 CI 日志 |
+| Tauri 桌面端布局持久化（SQLite） | ✅ **已编写 + CI 单测覆盖**；**真实桌面端重启恢复未人工执行** | 迁移 003 + `layout_get/set`；Rust 4 个用例、TS 7 个用例 |
 | libmpv 嵌入式播放 / 原生视频 Surface | ❌ **未集成、未验证** | 见 `docs/playback/windows-surface-validation.md` |
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名） | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`；**本机未执行交互式安装测试** |
-| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发并全绿；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`（相对 `main` ahead 10 个提交），238 个文件逐文件 blob SHA 一致；CI #31 / #32 四个 job 全部通过（前端 Node 24/26 双矩阵、Rust、Windows 安装包） |
+| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名）；❌ **Windows 交互式安装未测试** | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu` |
+| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`；文件数与提交数以仓库为准（逐文件 blob SHA 校验通过），CI 结果见 Actions 页面 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
 
@@ -37,7 +39,7 @@
 
 ## 界面截图
 
-以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。全部截图为 **v0.3 Cinematic Neutral** 版本（新色板 + 冷调重绘封面），已覆盖旧版本截图。
+以下截图均由本机 Edge 无头浏览器访问 `vite preview`（端口 4173）的**真实运行实例**截取，非概念图、非设计稿。全部截图为 **v0.3.1** 版本（Cinematic Neutral 色板 + 冷调封面 + 本轮交互/比例修复），已覆盖旧版本截图。共 16 张，目录见 [`docs/design/screenshots/`](docs/design/screenshots/)。
 
 ### 首页 · 深色主题（全幅无级大磁贴拼贴）
 
@@ -54,6 +56,22 @@
 ### 电视剧库
 
 ![影幕电视剧库](docs/design/screenshots/library-tv.png)
+
+### 动画库（不同媒体库的排序 / 排列作用域互不污染）
+
+![影幕动画库](docs/design/screenshots/library-anime.png)
+
+### 自定义排列（拖拽后该作用域切到 custom 模式）
+
+![影幕自定义排列](docs/design/screenshots/custom-sort.png)
+
+### 小窗口 960×600（连续尺寸与安全区收敛）
+
+![影幕小窗口](docs/design/screenshots/small-window.png)
+
+### 减少动态效果（prefers-reduced-motion：动效关闭后的静态状态）
+
+![影幕减少动态效果](docs/design/screenshots/reduced-motion.png)
 
 ### 导航折叠状态（默认悬浮轨道，不挤压画布）
 
@@ -188,9 +206,11 @@ npm run dev                # http://127.0.0.1:5173
 ```bash
 npm run typecheck          # TypeScript 严格类型检查
 npm run lint               # ESLint（0 警告）
-npm run test               # Vitest 8 个测试文件 / 71 个用例
+npm run test               # Vitest 13 个测试文件 / 139 个用例
 npm run build              # 生产构建到 apps/desktop/dist
 npm run preview            # 预览生产构建
+node scripts/check-token-sync.mjs     # Design Token TS↔CSS 一致性（已进 CI）
+node scripts/check-contrast.mjs       # WCAG 2.2 AA 对比度实测（已进 CI）
 npm run brand:icons        # 从 SVG 源重新生成 PNG / ICO
 node scripts/secret-scan.mjs          # 提交前凭据扫描
 node --test tests/repo-contract.test.mjs  # 仓库契约测试
@@ -206,7 +226,7 @@ node --test tests/repo-contract.test.mjs  # 仓库契约测试
 | --- | --- | --- |
 | 类型检查 | `npm run typecheck` | ✅ 通过（TypeScript 严格模式） |
 | Lint | `npm run lint` | ✅ 通过（ESLint 0 警告） |
-| 单元测试 | `npm run test` | ✅ 通过（8 个测试文件 / 71 个用例全部通过） |
+| 单元测试 | `npm run test` | ✅ 通过（13 个测试文件 / 139 个用例全部通过） |
 | 生产构建 | `npm run build` | ✅ 通过（Vite 产出 `apps/desktop/dist`） |
 | 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ 通过（扫描 168 个文件，未发现敏感信息） |
 | 仓库契约测试 | `node --test tests/repo-contract.test.mjs` | ✅ 通过（6/6） |
@@ -243,15 +263,21 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 安装包采用 Tauri 2 官方 NSIS Bundler，`installMode: "both"`，**同一个 exe 支持两种安装范围**：
 
-| 选项 | 默认目录 | 注册表 | 快捷方式 | 权限 |
-|---|---|---|---|---|
-| 仅为我安装（当前用户） | `%LOCALAPPDATA%\YingMu` | `HKCU` | 当前用户开始菜单 | 不需要管理员 |
-| 为这台电脑上的所有用户安装 | `%ProgramFiles%\YingMu`（x64 使用 64 位 Program Files） | `HKLM` | 所有用户开始菜单 | 需要管理员（UAC） |
+| 选项 | 默认目录 | 注册表 | 快捷方式 | 安装器权限 | 应用本体权限 |
+|---|---|---|---|---|---|
+| 仅为我安装（当前用户） | `%LOCALAPPDATA%` 下（Tauri 模板默认目录，向导里可改） | `HKCU` | 当前用户开始菜单 | **UAC 提权**（见下） | 普通用户 |
+| 为这台电脑上的所有用户安装 | `%ProgramFiles%\YingMu`（x64 使用 64 位 Program Files） | `HKLM` | 所有用户开始菜单 | **UAC 提权** | 普通用户 |
 
 安装向导包含**安装范围页**与**安装目录页**（`MULTIUSER_PAGE_INSTALLMODE` + `MUI_PAGE_DIRECTORY`），用户可以查看并修改最终安装路径；切换范围时默认路径随之调整。
 
-> **UAC 行为如实告知**：Tauri 2 的 `installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`，安装器**启动即请求管理员权限**，即使最终选择「仅为我安装」。这是官方标准模板的既定行为，本项目不通过修改执行级别去伪装「无需管理员」。
-> 应用安装完成后以**普通用户权限**运行。
+> **UAC 行为如实告知**：`installMode: "both"` 使用 `MULTIUSER_EXECUTIONLEVEL Highest`，
+> 因此**两种范围启动安装器时都会请求 UAC**（官方文档原文：「the installer will require
+> Administrator privileges to execute」），即使最终选择「仅为我安装」。
+> UAC 提权用于写 Program Files、写卸载信息与注册表；**安装完成后的影幕本体始终以普通用户权限运行**。
+> 本项目不通过修改执行级别去伪装「仅为我安装不需要管理员」。
+>
+> **必须区分两件事**：① 安装器启动时的提权（两种范围都要）；② 安装目标位置（`%LOCALAPPDATA%` vs `%ProgramFiles%`）。
+> 「仅为我安装」改变的是**装到哪里、写哪个注册表分支**，不是要不要 UAC。
 
 用户数据固定存放于 `%APPDATA%\YingMu`（配置与数据库）、`%LOCALAPPDATA%\YingMu\Cache`（缓存）、`%LOCALAPPDATA%\YingMu\Logs`（日志），**不写入安装目录**；因此即使选择「所有人安装」，每个 Windows 用户也有各自的收藏、历史与配置。升级保留媒体库与播放记录，卸载默认不删除用户数据，只清理对应范围的程序与快捷方式。
 
