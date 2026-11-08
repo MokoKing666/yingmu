@@ -6,7 +6,98 @@
 
 ---
 
-## [0.3.1] - 2026-11-08
+## [0.3.2] - 2026-11-08
+
+交互可靠性专项：**点击、拖拽、筛选、重启四条主链路的 UI 与保存数据始终一致**。
+不重设计、不换技术栈、不升级依赖。
+
+### 磁贴主体链接的命中层级（最高优先级）
+
+- **根因**：`.tile-link` 在 DOM 中位于 `.tile-art` 之前、双方 absolute 且均无
+  z-index——封面图片绘制在链接之上，点击封面区域的 hit test 命中的是 `<img>`，
+  主体导航整个失效。Testing Library 测不出来（jsdom 不做真实命中测试）。
+- **修复**：按「装饰 0 < 主体 Link 1 < 信息 2 < 按钮 3」重建层级；封面/骨架屏/
+  徽标/标题全部 `pointer-events: none`（信息层穿透，左上角和标题区也能进详情）。
+- **真实浏览器验证**：`scripts/browser-tile-clicks.mjs`（playwright-core 驱动
+  系统 Edge + vite preview 实例）**12/12 通过**——左上角/中心/标题/右下角/徽标
+  点击均进入真实 `#/detail/<id>`；收藏点击不导航且只切换一次；播放点击进入
+  `#/player/<id>`；Enter/Space/F 各触发一次；新增「自定义排序重启恢复」端到端
+  （localStorage → 强制真实 reload → DOM 顺序与存储一致，18 条按存储顺序渲染）。
+- 新增 `tile-layering.test.ts` 5 个静态契约用例防 CSS 回归。
+
+### 筛选后拖拽不再丢数据
+
+- **根因**：LibraryPage 把 Genre 筛选子集交给幕墙，拖拽后用子集 IDs 覆盖
+  持久化顺序——100 部电影筛 15 部拖两下，其余 85 部的自定义位置整体丢失。
+- **修复**：新纯函数 `mergeVisibleOrder(fullOrder, visibleBefore, visibleAfter)`，
+  以子集第一个成员在完整顺序中的位置为锚点插回拖拽后的子集；子集外成员
+  相对顺序不变、成员一个不丢。MasonryWall 新增 `fullScopeIds`，三个页面显式
+  传入完整作用域顺序；Store 持久化前过滤已删除媒体 ID（与 DB 层双保险）。
+- **测试 10 用例**覆盖全量拖拽 / 筛选拖拽 / 多次拖拽 / 切换 Genre / 清除筛选 /
+  新增 / 删除 / 部分排列 / 子集外顺序不变 / 陌生 ID 防御与幂等。
+
+### 默认排序全链路统一
+
+- **根因**：默认值五处各说各话（TS recommended / WebDemo recommended /
+  Rust recommended / SQLite 列默认 custom / LibraryPage 回退 recent）。
+- **规则**：`defaultSortFor(scope)` 唯一真源——home=recommended，其余一律 recent；
+  SQLite 迁移 003 列默认改 recent（0.3.x 无真实用户库，直接修正并注释）、
+  Rust `LayoutPreferences::default_for` 与前端逐字对齐、三个页面回退统一。
+- **测试 6 用例**：全新 localStorage 下 7 个作用域默认值一致、重启一致、
+  已保存用户偏好不被覆盖；Rust 侧序列化契约测试。
+
+### 个人视频最终几何 = 真实画幅
+
+- **根因（两层）**：① preserveSource 磁贴宽高仍被独立 clamp（16:9 压成 1.45:1）；
+  ② 输入层 `validRatio` 把 1:3.4（0.294）当垃圾静默回退 16:9——极端画幅进
+  引擎前就被篡改。
+- **修复**：`uniformScaleFactor()` 统一缩放因子（宽度试探同样等比）；个人视频
+  接受任意有限正比例，极端画幅交给布局层钳制 [0.4, 2.9] + contain 留边。
+- **测试 11 用例**直接断言最终 `tile.box.aspect` 与取整渲染几何，容差按像素
+  取整精度定义 `(0.5·(1+source))/height`，覆盖 8 种比例 × 1920/2560/3440 ×
+  高低 emphasis × 混合画布。
+
+### 零重叠与边界验证严格化
+
+- **根因**：Sweep Line 用 `>1px` 判定，≤1px 重叠漏检；边界留 1px 容差。
+- **修复**：检测器抽成产品代码 `lib/mosaic-validate.ts`，`OVERLAP_EPSILON=0.01px`，
+  重叠与越界同一精度约定；边缘接触不算重叠。
+- **测试 22 用例**：注入式验证 0.1/0.5/1px 重叠必检出、精确接触不误报、
+  0.5px/1px 越界必报告、NaN/Infinity/非正尺寸/重复 ID；40/200/500/1000 ×
+  四宽度全量 + 交叉验证。
+
+### Reduced Motion 真正停止装饰动画
+
+- **根因**：兜底规则只压时长到 0.01ms，`infinite` 迭代仍在——shimmer 以极高频
+  空转；hover 推近未停。
+- **修复**：`animation-iteration-count: 1 !important` 终止循环；shimmer
+  `animation: none`；hover transform 全静止。CSS 媒体查询原生即时响应，
+  Motion/PixiJS 侧沿用 `useMotionPreference`。
+- **测试 2 用例**：CSS 契约扫描（剥离注释防误报）。
+
+### 持久化失败的状态一致性
+
+- **根因**：乐观更新后写库失败只弹 Toast，界面保留未保存的新值；连续写入无序。
+- **修复**：按作用域串行化写入队列（同作用域按操作顺序落盘、跨作用域并行）；
+  写入前快照，失败且该操作仍是最新状态（对象引用同一性，规避同毫秒
+  updatedAt 碰撞）时回滚——旧请求失败绝不回滚新操作。
+- **测试 6 用例**（mock IPC）：成功一致 / 失败回滚 + 失败 Toast / 排序模式回滚 /
+  旧失败不回滚新操作 / 同作用域串行顺序 / 跨作用域并行。
+
+### NSIS 与文档
+
+- `installMode: both`、UAC 行为、用户数据目录保持不变；交互式安装仍未验证。
+- 截图扩到 **20 档**（新增筛选状态 / 筛选+自定义排列 / 1920×1080 / 1280×800），
+  reduced-motion 档改用 Playwright 真实等待补拍（Edge 虚拟时间预算耗尽导致
+  封面未解码的偶发丢图）。
+
+### 测试规模
+
+前端 18 文件 / **193 用例**（v0.3.1 为 139）；真实浏览器验收 **12/12**。
+
+---
+
+
 
 内部修复迭代：**不再重构视觉、不再换技术栈**，集中修复真实缺陷并统一工程一致性。
 本节只记录实际改掉的问题；未验证项集中在末尾。
