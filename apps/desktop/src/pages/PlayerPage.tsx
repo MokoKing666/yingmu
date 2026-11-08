@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useArtwork } from '@/hooks/use-artwork';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { useAppStore } from '@/stores/app-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { formatClock, formatDuration, formatBytes } from '@/lib/format';
@@ -24,6 +25,7 @@ export function PlayerPage() {
   const player = usePlayerStore();
   const backdrop = useArtwork(id, 'backdrop', 'xl');
   const poster = useArtwork(id, 'poster', 'md');
+  const reduceMotion = useMotionPreference();
   const version = item?.versions[0];
   const duration = version?.durationSeconds ?? 0;
 
@@ -139,10 +141,10 @@ export function PlayerPage() {
         {player.activePanel && (
           <motion.aside
             className="player-panel"
-            initial={{ x: 340, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 340, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduceMotion ? false : { x: 340, opacity: 0 }}
+            animate={reduceMotion ? undefined : { x: 0, opacity: 1 }}
+            exit={reduceMotion ? undefined : { x: 340, opacity: 0 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <button className="player-pbutton player-panel-close" onClick={() => player.togglePanel(player.activePanel!)} aria-label="关闭面板"><X size={17} /></button>
             <h3>{panels.find((p) => p.key === player.activePanel)?.label}</h3>

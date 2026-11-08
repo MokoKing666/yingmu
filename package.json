@@ -24,10 +24,9 @@
     "cargo:test": "cargo test --workspace"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "typescript": "~6.0.3"
+    "prettier": "^3.6.2"
   },
   "engines": {
-    "node": "^22.13.0 || ^24.0.0 || >=26.0.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   }
 }

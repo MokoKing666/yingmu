@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusNotice } from '@/components/ui/StatusNotice';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { useArtwork } from '@/hooks/use-artwork';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { useAppStore } from '@/stores/app-store';
 import { formatBytes, formatDuration, formatRating, KIND_LABEL } from '@/lib/format';
 import type { MediaVersion } from '@yingmu/media-models';
@@ -39,6 +40,7 @@ export function DetailPage() {
   const item = getItem(id);
   const backdrop = useArtwork(id, 'backdrop', 'xl');
   const poster = useArtwork(id, 'poster', 'lg');
+  const reduceMotion = useMotionPreference();
   const [versionIndex, setVersionIndex] = useState(0);
 
   if (!item) {
@@ -57,7 +59,8 @@ export function DetailPage() {
         {backdrop && <LazyImage src={backdrop} alt="" className="detail-hero-art" />}
         <div className="detail-hero-scrim" />
         <div className="detail-hero-content">
-          <motion.div layoutId={`tile-${item.id}`} style={{ flex: 'none' }}>
+          {/* 共享元素转场只在允许动效时开启；减少动效时保持静态，避免 layout 动画 */}
+          <motion.div layoutId={reduceMotion ? undefined : `tile-${item.id}`} style={{ flex: 'none' }}>
             {poster && <img className="detail-poster" src={poster} alt={`${item.metadata.title} 海报`} />}
           </motion.div>
           <div style={{ minWidth: 0 }}>

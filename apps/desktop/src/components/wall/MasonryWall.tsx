@@ -88,6 +88,8 @@ export function MasonryWall({
         // 演示桥接用原创素材的真实比例；桌面模式用真实海报/视频元数据，
         // 绝不再用 Media ID 哈希决定真实媒体的显示比例。
         aspectResolver: (item) => (isDemo ? demoArtworkAspect(item.id) : mediaAspect(item)),
+        // 个人视频必须保留真实画幅，不参与 Folia 的比例分档
+        preserveAspect: (item) => item.kind === 'personal',
         focalResolver: (item) => focalOverrides[item.id],
       }),
     [items, canvasWidth, customOrder, heroEnabled, focalOverrides, isDemo],

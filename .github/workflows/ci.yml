@@ -40,6 +40,13 @@ jobs:
       # （由 npm install 生成，应随骨架一并提交）。缺失时此步骤会明确失败并提示。
       - name: 安装依赖 (npm ci)
         run: npm ci
+      # 设计令牌一致性：tokens.ts 与 tokens.css 必须逐项相等，
+      # 且应用 CSS 里引用的 var(--x) 都要有定义。漂移即失败。
+      - name: Design Token 同步检查
+        run: node scripts/check-token-sync.mjs
+      # WCAG 2.2 AA 对比度实测（深浅两主题的真实组件配对，含遮罩合成）
+      - name: WCAG 对比度检查
+        run: node scripts/check-contrast.mjs
       - name: 类型检查 (typecheck)
         run: npm run typecheck
       - name: 静态检查 (lint)
@@ -93,6 +100,14 @@ jobs:
         run: cargo clippy -p yingmu-core --all-targets -- -D warnings
       - name: cargo test (yingmu-core)
         run: cargo test -p yingmu-core
+      # MSRV 真实验证：workspace 声明 rust-version = 1.85，
+      # 必须在 1.85.0 上真的编译并跑通测试，而不是只写在 Cargo.toml 里。
+      - name: 配置 Rust 1.85.0 (MSRV)
+        uses: dtolnay/rust-toolchain@1.85.0
+      - name: MSRV check (cargo +1.85.0 check --locked)
+        run: cargo +1.85.0 check --locked -p yingmu-core
+      - name: MSRV test (cargo +1.85.0 test --locked)
+        run: cargo +1.85.0 test --locked -p yingmu-core
 
   # ---------------------------------------------------------------------------
   # 3) Windows 安装包：真实构建 NSIS 安装包，校验后才允许上传。

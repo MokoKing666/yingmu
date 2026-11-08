@@ -1,18 +1,24 @@
 import { useEffect, useRef } from 'react';
 import type { Application } from 'pixi.js';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 
 /**
  * PixiJS 8 动态光影背景
  * 只在确需高性能 Canvas 动画的模块使用：缓慢漂移的光圈与光束，呼应品牌母题。
- * WebGL 不可用 / 测试环境 / 减少动态效果偏好时静默降级为 CSS 渐变，不抛错。
+ *
+ * 动效开关来自全局 `useMotionPreference()`（不是只在初始化时读一次）：
+ * 用户中途打开「减少动态效果」时立即销毁 PixiJS，退回到 `.wall-backdrop`
+ * 的 CSS 静态渐变；关闭该设置时再恢复。WebGL 不可用 / 测试环境也走同一降级路径。
  */
 export function DynamicBackdrop() {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const reduceMotion = useMotionPreference();
 
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    if (typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    // 减少动态效果：不启动 PixiJS，保留 CSS 静态渐变背景
+    if (reduceMotion) return;
 
     let disposed = false;
     let app: Application | undefined;
@@ -76,7 +82,7 @@ export function DynamicBackdrop() {
         // 销毁失败不阻断页面卸载
       }
     };
-  }, []);
+  }, [reduceMotion]);
 
   return <div className="wall-backdrop" ref={containerRef} aria-hidden="true" />;
 }

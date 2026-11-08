@@ -22,6 +22,8 @@
   --surface-hover: #202d39;
   --border: #2b3947;
   --border-strong: #405365;
+  /* 功能性控件边界（输入框 / 按钮 / 分段控件）：必须过 3:1 非文本对比 */
+  --border-control: #5a6978;
   --text-primary: #eef3f7;
   --text-secondary: #aab7c3;
   --text-tertiary: #8294a2;
@@ -103,6 +105,8 @@
   --surface-hover: #e4ecf2;
   --border: #d7e0e8;
   --border-strong: #b6c4d0;
+  /* 功能性控件边界：白底上必须过 3:1 */
+  --border-control: #788898;
   --text-primary: #1b2732;
   --text-secondary: #5d6b78;
   --text-tertiary: #5d6b78;

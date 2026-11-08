@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
+import { AnimatePresence, motion } from 'motion/react';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/stores/app-store';
 import { HomePage } from '@/pages/HomePage';
@@ -19,7 +20,7 @@ import { MetadataEditPage } from '@/pages/MetadataEditPage';
 function AnimatedRoutes() {
   const location = useLocation();
   // 减少动态效果时同时关闭 Motion 的页面转场，而不只是依赖 CSS 的 transition
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useMotionPreference();
   return (
     <AnimatePresence initial={false}>
       <motion.div

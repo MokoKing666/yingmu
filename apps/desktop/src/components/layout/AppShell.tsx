@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { motion as motionTokens } from '@yingmu/design-tokens';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { BrandLockup, LogoMark } from '@/components/Logo';
 import { ToastStack } from '@/components/ui/ToastStack';
 import { useAppStore } from '@/stores/app-store';
@@ -46,6 +47,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   );
   const searchRef = useRef<HTMLInputElement | null>(null);
   const firstRoute = useRef(true);
+  // 全项目统一的动效开关：导航抽屉与遮罩也必须遵守减少动态效果设置
+  const reduceMotion = useMotionPreference();
 
   const sections: NavSection[] = [
     {
@@ -153,20 +156,20 @@ export function AppShell({ children }: { children: ReactNode }) {
           <>
             <motion.div
               className="nav-scrim"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.22 }}
+              initial={reduceMotion ? false : { opacity: 0 }}
+              animate={reduceMotion ? undefined : { opacity: 1 }}
+              exit={reduceMotion ? undefined : { opacity: 0 }}
+              transition={reduceMotion ? { duration: 0 } : { duration: 0.22 }}
               onClick={() => setDrawerOpen(false)}
               aria-hidden="true"
             />
             <motion.aside
               className="nav-drawer"
               aria-label="主导航"
-              initial={{ x: -300 }}
-              animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={motionTokens.cardExpand}
+              initial={reduceMotion ? false : { x: -300 }}
+              animate={reduceMotion ? undefined : { x: 0 }}
+              exit={reduceMotion ? undefined : { x: -300 }}
+              transition={reduceMotion ? { duration: 0 } : motionTokens.cardExpand}
             >
               <div className="spread" style={{ padding: '0 var(--space-2) var(--space-4)' }}>
                 <BrandLockup size={30} />

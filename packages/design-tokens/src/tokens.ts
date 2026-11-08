@@ -37,6 +37,8 @@ export const color = {
     surfaceHover: '#202D39',
     border: '#2B3947',
     borderStrong: '#405365',
+    /** 功能性控件边界（输入框 / 按钮），必须过 WCAG 非文本 3:1 */
+    borderControl: '#5A6978',
     textPrimary: '#EEF3F7',
     textSecondary: '#AAB7C3',
     textTertiary: '#8294A2',
@@ -51,6 +53,8 @@ export const color = {
     surfaceHover: '#E4ECF2',
     border: '#D7E0E8',
     borderStrong: '#B6C4D0',
+    /** 功能性控件边界：白底上必须过 3:1 */
+    borderControl: '#788898',
     textPrimary: '#1B2732',
     textSecondary: '#5D6B78',
     textTertiary: '#5D6B78',

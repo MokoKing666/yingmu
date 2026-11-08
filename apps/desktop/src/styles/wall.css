@@ -108,6 +108,16 @@
   /* 轻微、细腻的推近，不产生模糊 */
   transform: scale(1.028);
 }
+/* 个人视频默认 contain：磁贴几何可能是 1.45:1 / 2:1，而视频是 16:9 / 4:3 / 21:9，
+   cover 会裁掉画面主体。contain 保留完整画幅，留边用磁贴底色填充。 */
+.tile-art[data-fit='contain'] {
+  object-fit: contain;
+  transform: none;
+  background: var(--bg-elevated);
+}
+.tile:hover .tile-art[data-fit='contain'] {
+  transform: none;
+}
 
 .tile-art-placeholder {
   position: absolute;

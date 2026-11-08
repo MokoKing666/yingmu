@@ -85,6 +85,11 @@ export interface MosaicOptions extends WallLayoutOptions {
   customWeights?: Record<MediaId, number>;
   /** 媒体原始素材宽高比；不传时按类型推断 */
   aspectResolver?: (item: MediaItem) => number;
+  /**
+   * 是否必须**保留真实画幅**（不参与目标比例映射）。
+   * 个人视频为 true：16:9 就是 16:9，不能被 Folia 的比例分档改成 1.45:1。
+   */
+  preserveAspect?: (item: MediaItem) => boolean;
   /** 用户调整的图片焦点（0..100）；返回 undefined 时由 id 稳定推导 */
   focalResolver?: (item: MediaItem) => { x: number; y: number } | undefined;
   /** 磁贴间距，默认取 design token */
@@ -186,7 +191,11 @@ function aspectOf(
   hero: boolean,
   r1: number,
   r2: number,
+  preserveSource = false,
 ): number {
+  // 必须保留真实画幅的素材（个人视频等）：直接用原始比例，
+  // 只在极端值上做安全钳制，不参与 Folia 的比例分档。
+  if (preserveSource) return clamp(sourceAspect, 0.4, 2.9);
   const A = M.aspect;
   if (hero) return lerp(A.ultraWide.min, A.ultraWide.max, r1);
   if (emphasis > 0.84 && r2 > 0.62) return lerp(A.ultraWide.min, 2.95, r1);
@@ -320,7 +329,8 @@ export function computeMosaicLayout(items: MediaItem[], options: MosaicOptions =
     const customWeight = clamp(options.customWeights?.[item.id] ?? 0, -1, 1);
     const emphasis = hero ? 1 : emphasisOf(item, index, refTime, seed, customWeight);
     const sourceAspect = options.aspectResolver?.(item) ?? (item.kind === 'movie' ? 0.667 : 1.2);
-    const targetAspect = aspectOf(sourceAspect, emphasis, hero, r1, r2);
+    const preserveSource = options.preserveAspect?.(item) ?? item.kind === 'personal';
+    const targetAspect = aspectOf(sourceAspect, emphasis, hero, r1, r2, preserveSource);
 
     // 连续尺寸：横幅按宽度驱动、竖版按高度驱动，幂次拉开大中小反差。
     // 宽度与高度都是画布宽度的连续比例函数，没有任何离散档位。
