@@ -132,7 +132,7 @@ flowchart LR
 | `npm run dev` | Vite 开发服务器（127.0.0.1:5173） | **可真实运行前端**（走 `WebDemoBridge`，不依赖 Tauri 桌面端编译） |
 | `npm run typecheck` | `tsc --noEmit` | ✅ 本机实测通过（2026-11-06） |
 | `npm run lint` | ESLint `--max-warnings 0` | ✅ 本机实测通过 |
-| `npm run test` / `test:watch` / `test:coverage` | Vitest 5.1（jsdom） | ✅ 本机实测通过（8 个测试文件 / 71 个用例全部通过） |
+| `npm run test` / `test:watch` / `test:coverage` | Vitest 5.1（jsdom） | ✅ 本机实测通过（13 个测试文件 / 139 个用例全部通过） |
 | `npm run build` | `typecheck && vite build`，产物 `dist/` | ✅ 本机实测通过（Vite 产出 `dist/`） |
 | `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（168 文件零命中 / 6-6 通过） |
 | `npm run cargo:fmt` / `cargo:clippy` / `cargo:test` | Rust 检查与测试 | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制，见 `docs/testing/strategy.md` |

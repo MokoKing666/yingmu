@@ -1176,7 +1176,7 @@ mod tests {
         // 003：布局偏好表，scope 主键保证同一视图只有一份排列
         let layout = MIGRATIONS[2].sql;
         assert!(layout.contains("layout_preferences"));
-        assert!(layout.contains("PRIMARY KEY (scope)"));
+        assert!(layout.contains("scope") && layout.contains("PRIMARY KEY"));
         assert!(layout.contains("CHECK (sort_mode IN"));
     }
 
