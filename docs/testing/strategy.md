@@ -39,13 +39,19 @@ flowchart TD
 
 测试基础设施（真实存在于仓库）：`apps/desktop/src/test/setup.ts` 为 jsdom 补齐 `ResizeObserver` / `IntersectionObserver` / `matchMedia` 的可控替身，供磁贴幕墙可见区域渲染与懒加载相关测试使用。
 
-### 本机实测结果（2026-11-06，真实执行）
+拼贴布局专项测试：`apps/desktop/src/test/mosaic-layout.test.ts`（12 个用例）验证
+零重叠、右边界不溢出、尺寸连续（非固定档位）、超大横幅/超大竖版/方形/不规则并存、
+纯函数确定性、自定义排序稳定、自定义权重改变面积、焦点覆盖、四分辨率重排，
+以及 40/200/500/1000 条的布局耗时与首屏挂载量基线。
+实测数字见 [`performance-report.md`](performance-report.md)。
+
+### 本机实测结果（2026-11-08，真实执行）
 
 | 检查 | 命令 | 实测结果 |
 | --- | --- | --- |
 | 类型检查 | `npm run typecheck` | ✅ **通过**（TypeScript 严格模式） |
 | Lint | `npm run lint` | ✅ **通过**（ESLint 0 警告） |
-| 单元测试 | `npm run test` | ✅ **通过**（6 个测试文件 / 50 个用例全部通过） |
+| 单元测试 | `npm run test` | ✅ **通过**（7 个测试文件 / 62 个用例全部通过） |
 | 生产构建 | `npm run build` | ✅ **通过**（Vite 产出 `dist/`） |
 | 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ **通过**（扫描 168 个文件，未发现敏感信息） |
 | 仓库契约测试 | `node --test tests/repo-contract.test.mjs` | ✅ **通过**（6/6） |

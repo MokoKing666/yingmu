@@ -96,8 +96,9 @@
 
 ### 已可用（浏览器 / Vite 实例）
 
-- **首页幕墙**：12 列 dense 不规则网格，6 种磁贴形态（大主视觉 / 大中小竖版海报 / 宽幅 / 续播 / 动态），悬停反馈、卡片缩放、拖拽排序、键盘导航（方向键 / Enter / Space / F）、共享元素 `layoutId` 声明、页面转场。
-- **性能策略**：分批增量渲染（每批 24）、IntersectionObserver 封面懒加载、`content-visibility: auto` 浏览器级离屏跳过、Artwork 内存缓存（按 `mediaId:kind:size` 键，可重建）。
+- **首页幕墙**：确定性 Skyline 二维装箱的无级全幅拼贴——连续像素尺寸（超大横幅 / 超大竖版 / 宽幅 / 方形 / 不规则比例并存）、左右零边距铺满内容区、零重叠、可复现；悬停反馈、拖拽排序、键盘方向导航（方向键 / Enter / Space / F）、共享元素 `layoutId`、页面转场。
+- **导航**：默认折叠的悬浮轨道 + 浮层抽屉（`[` / `Ctrl+B` 呼出，`Esc` 收起），不占画布宽度；右上角悬浮搜索胶囊。
+- **性能策略**：按可见区域虚拟化（1000 条时首屏仅挂载 16–22 个磁贴）、IntersectionObserver 封面懒加载、ResizeObserver 合帧、滚动区间量化、`MediaTile` memo、Artwork 内存缓存（按 `mediaId:kind:size` 键，可重建）。实测数据见 [`docs/testing/performance-report.md`](docs/testing/performance-report.md)。
 - **动态背景**：PixiJS 8 渲染缓慢漂移的光圈 / 光束；WebGL 不可用或「减少动态效果」时自动降级为 CSS 渐变。
 - **16 个页面**：首页、电影库、电视剧库、动画库、纪录片库、个人视频库、最近播放、收藏、播放列表、搜索、媒体详情、媒体源管理、播放器、播放历史、设置、媒体信息编辑。各页信息结构不同，不是同一卡片模板套用。
 - **深浅双主题**：完整 CSS 变量体系，跟随系统偏好，支持 `?theme=light` URL 覆盖。
