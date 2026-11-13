@@ -19,7 +19,7 @@
     "@yingmu/media-models": "0.1.0",
     "@yingmu/player-api": "0.1.0",
     "lucide-react": "^1.70.0",
-    "motion": "^14.10.1",
+    "motion": "^14.12.0",
     "pixi.js": "^8.22.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
