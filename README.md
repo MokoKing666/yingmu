@@ -14,7 +14,7 @@
 
 ## ⚠️ 当前交付状态（务必先读）
 
-这份仓库是**按正式软件工程方式搭建的可审查工程**，但本阶段**没有交付可安装的 Windows 桌面应用**。请勿把下列「已实现」误读为完整产品。
+这份仓库是**按正式软件工程方式搭建的可审查工程**。v0.3.2 已通过 CI 构建并发布 **Windows x64 NSIS 安装包**（见 [Release v0.3.2](https://github.com/MokoKing666/yingmu/releases/tag/v0.3.2)），但**安装器从未做过交互式安装测试**，且核心播放能力（libmpv / HDR / Dolby）仍未集成。请勿把下列「已实现」误读为完整产品。
 
 | 交付项 | 状态 | 依据 |
 |---|---|---|
@@ -31,7 +31,7 @@
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
 | **NSIS 安装包 `YingMu-Setup-0.3.2-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名）；❌ **Windows 交互式安装未测试** | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.2`、`ProductName = 影幕 YingMu` |
-| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`；文件数与提交数以仓库为准（逐文件 blob SHA 校验通过），CI 结果见 Actions 页面 |
+| **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已合入 `main`**；CI 已由推送触发；✅ **Release 已创建** | 公开仓库 `MokoKing666/yingmu`，默认分支 `main`；PR #13 已合并，CI #50 四个 job 全部通过；[Release v0.3.2](https://github.com/MokoKing666/yingmu/releases/tag/v0.3.2) 由 `release.yml` 构建并上传安装包 + `SHA256SUMS.txt`，asset 已下载并逐字节校验一致 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
 
@@ -185,7 +185,7 @@ yingmu/
 | Edge（用于真实截图） | 已安装 ✅ |
 | Rust stable | ✅ **已安装**：`cargo 1.99.1` / `rustc 1.99.1`（含 `rustfmt`、`clippy`），工具链 `stable-x86_64-pc-windows-msvc`；位于 `%USERPROFILE%\.cargo\bin`，**不在自动化 shell 的默认 PATH 中** |
 | **MSVC / Windows SDK（便携工具链）** | ✅ **已就位**：Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`） |
-| GitHub 认证与推送通道 | ✅ 已打通：`api.github.com` 直连 + `Basic 用户名:token`；本机 `git push` 通道仍不可用（代理 502） |
+| GitHub 认证与推送通道 | ✅ 可用：`git push`（HTTPS）与 `api.github.com` 直连均可（早期代理 502 的问题已不再出现；classic PAT 只接受 `Basic 用户名:token`） |
 | C: 可用空间 | 约 15 GB |
 
 前端要求 Node `^22.13 || ^24 || >=26`（`package.json` 的 `engines` 与 `.nvmrc` 一致，CI 用 Node 26 为主、Node 24 做兼容矩阵）。Tauri 桌面端要求 `x86_64-pc-windows-msvc`、MSVC 编译器、Windows SDK、WebView2 与 NSIS（由 Tauri 下载）。
@@ -283,7 +283,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出约 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.2-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.2`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
+> **CI 与 Release 均已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出约 **4.49 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.2-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.2`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）。CI 将它作为 Artifact `yingmu-nsis-installer` 上传；[Release v0.3.2](https://github.com/MokoKing666/yingmu/releases/tag/v0.3.2) 则附带安装包与 `SHA256SUMS.txt`。本次 Release 资产已下载并独立复核：体积 4,704,812 bytes、PE 头有效、SHA-256 与 `SHA256SUMS.txt` **逐字节一致**。
 > **哈希如何取**：**以当次 Artifact 内的 `SHA256SUMS.txt` 为准**。NSIS 打包含时间戳，**构建不可复现**——同一份源码只改文档重跑，安装包的字节数与 SHA-256 就会变（实测两轮相差 1,382 字节）。因此文档不固定记录某一次构建的哈希，避免后来的读者拿旧哈希去校验新构建而误判。
 > **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 
@@ -292,7 +292,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 ## 已知问题与未完成事项
 
 1. **本机无法编译 Tauri/NSIS，CI 已构建成功**：本机受构建环境限制（Git Bash 的 `/usr/bin/link.exe` 遮蔽 MSVC 链接器、safe-delete 拦截 cargo 临时目录删除），`cargo check` / `cargo build` 无法完成，因此本机只能验证 `cargo fmt`；`cargo clippy` / `cargo test -p yingmu-core` 与桌面端编译、NSIS 打包均由 GitHub Actions 完成，三个 job **均已通过**（Rust 核心库、前端、Windows NSIS）。
-2. **GitHub 已推送，但本机 `git push` 通道仍不可用**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。GitHub Actions 由本次推送自动触发（`ci.yml` 的 `frontend` / `rust` / `windows-installer` 三个 job），实际结果以仓库 Actions 页面为准；`release.yml` 需推送 `v*` Tag 才触发，本阶段**未创建 Release**。`gh` CLI / GCM 仍缺失；桌面凭据文件为明文 PAT，建议用后轮换并删除。
+2. **GitHub 已推送并已发布 Release**：仓库 `https://github.com/MokoKing666/yingmu` 为公开仓库，默认分支 `main`。历史上本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），早期因此改用 `api.github.com` 直连推送；**该通道现已被验证可用**，本次 v0.3.2 收尾的两个提交与 `v0.3.2` tag 均由普通 `git push` 推送成功。早期一次性推送经 GitHub REST / Git Data API 完成（classic PAT 只接受 `Basic 用户名:token` 认证，`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异而非凭据失效），凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志。Release 由 [`release.yml`](.github/workflows/release.yml) 在推送 `v*` Tag 时触发，`windows-latest` 上构建、校验并上传安装包与 `SHA256SUMS.txt`。`gh` CLI / GCM 仍缺失；桌面凭据文件为明文 PAT，建议用后轮换并删除。
 3. **播放器后端未集成**：libmpv DLL、D3D11 + HWND 原生视频 Surface 与 WebView2 组合、4K HEVC / HDR 输出均**未完成实机验证**。播放器页面只提供控制界面预览。
 4. **Dolby / HDR 状态**：仅实现「文件标识识别」；元数据解析、解码、正确渲染、原生信号输出四层均未验证。未获得 Dolby 官方认证，未使用 Dolby 官方 Logo。详见 [`docs/dolby-compatibility/compatibility-matrix.md`](docs/dolby-compatibility/compatibility-matrix.md)。
 5. **媒体库为演示数据**：扫描、刮削、网络媒体源连接、真实播放记录均需 Tauri + Rust 核心在桌面端运行。

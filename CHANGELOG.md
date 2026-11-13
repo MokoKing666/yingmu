@@ -109,6 +109,17 @@
   **18 文件 / 193 用例**；凭据扫描条目不再固定记录扫描文件数（它随版本增长）。
 - 本机复跑并通过：`tsc --noEmit`（0 错）、ESLint（0 警告）、Vitest（18 文件 / 193 用例）、
   `vite build`（产出 `dist/`）。
+- **已合并并发布**：PR #13 合并入 `main`（CI #50 四个 job 全部通过），推送 `v0.3.2`
+  tag 触发 `release.yml`，Release 工作流 12 步全部成功，产出
+  [Release v0.3.2](https://github.com/MokoKing666/yingmu/releases/tag/v0.3.2)：
+  安装包 `YingMu-Setup-0.3.2-x64.exe`（4,704,812 bytes，PE32，版本资源
+  `FileVersion/ProductVersion = 0.3.2`，未签名）与 `SHA256SUMS.txt`，
+  SHA-256 `91f591d153e6e639e416a4ea81c6ead0468c212fcaf082b34c6b55ea0b6e9a5e`。
+  该 Release 资产已下载并独立复核，哈希与 `SHA256SUMS.txt` 逐字节一致。
+  **注意：NSIS 构建不可复现（含时间戳），此哈希仅对应当次 Release 资产。**
+- 修正仓库契约测试中写死的 `actions/upload-artifact@v4`：Dependabot 已把工作流
+  升到 `@v7`，锁死主版本会让契约测试在正确的升级上误报失败，现改为匹配任意主版本。
+- **仍未执行**：NSIS 交互式安装测试（范围选择 / UAC / 多用户隔离 / 覆盖升级 / 卸载）。
 
 ## [0.3.1] - 2026-11-08
 
