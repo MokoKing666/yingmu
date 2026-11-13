@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { HashRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'motion/react';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { AppShell } from '@/components/layout/AppShell';
 import { useAppStore } from '@/stores/app-store';
 import { HomePage } from '@/pages/HomePage';
@@ -18,14 +19,16 @@ import { MetadataEditPage } from '@/pages/MetadataEditPage';
 
 function AnimatedRoutes() {
   const location = useLocation();
+  // 减少动态效果时同时关闭 Motion 的页面转场，而不只是依赖 CSS 的 transition
+  const reduceMotion = useMotionPreference();
   return (
     <AnimatePresence initial={false}>
       <motion.div
         key={location.pathname}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -8 }}
-        transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
+        initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+        animate={reduceMotion ? undefined : { opacity: 1, y: 0 }}
+        exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+        transition={reduceMotion ? { duration: 0 } : { duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
       >
         <Routes location={location}>
           <Route index element={<HomePage />} />

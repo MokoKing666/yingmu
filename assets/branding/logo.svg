@@ -20,7 +20,7 @@
     </g>
   </defs>
 
-  <g fill="#F2EFE9">
+  <g fill="#EEF3F7">
     <use href="#ym-mark" transform="translate(72 34)" />
     <text x="200" y="348" text-anchor="middle" font-family="MiSans, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="54" font-weight="600" letter-spacing="10">影幕</text>
     <text x="200" y="382" text-anchor="middle" font-family="'Segoe UI', MiSans, sans-serif" font-size="15" font-weight="500" letter-spacing="13">YINGMU</text>

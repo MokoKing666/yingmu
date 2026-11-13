@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600" role="img" aria-label="海岸航拍">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d2635"/><stop offset="1" stop-color="#194b5f"/></linearGradient>
+<radialGradient id="sun" cx="0.5" cy="0.2" r="0.66"><stop offset="0" stop-color="#3a94af" stop-opacity="0.88"/><stop offset="0.34" stop-color="#3a94af" stop-opacity="0.3"/><stop offset="1" stop-color="#3a94af" stop-opacity="0"/></radialGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#194b5f"/><stop offset="1" stop-color="#081d2c"/></linearGradient>
+<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0.58" stop-color="#071924" stop-opacity="0"/><stop offset="1" stop-color="#071924" stop-opacity="0.34"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.44" r="0.8"><stop offset="0.55" stop-color="#071924" stop-opacity="0"/><stop offset="1" stop-color="#071924" stop-opacity="0.2"/></radialGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="7.2"/></filter>
+<filter id="softLg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="27"/></filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.68" numOctaves="1" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="saturate" values="0"/></filter>
+</defs>
+<rect width="900" height="600" fill="url(#sky)"/>
+<rect width="900" height="600" fill="url(#sun)"/>
+<rect x="0" y="0" width="900" height="330" fill="#081d2c" opacity="0.8"/><path d="M0,330 L270,252 L540,360 L900,288 Z" fill="#194b5f" opacity="0.9"/><path d="M0,330 L270,252 L540,360 L900,288 L900,600 L0,600 Z" fill="#3a94af" opacity="0.3"/><path d="M0,300 Q270,276 495,300 T900,288" fill="none" stroke="#a1cfd8" stroke-width="2.9" opacity="0.35"/><path d="M0,360 Q270,336 495,360 T900,348" fill="none" stroke="#a1cfd8" stroke-width="2.5" opacity="0.35"/><path d="M0,420 Q270,396 495,420 T900,408" fill="none" stroke="#a1cfd8" stroke-width="2.2" opacity="0.35"/><path d="M0,480 Q270,456 495,480 T900,468" fill="none" stroke="#a1cfd8" stroke-width="2.2" opacity="0.35"/><path d="M0,540 Q270,516 495,540 T900,528" fill="none" stroke="#a1cfd8" stroke-width="2.8" opacity="0.35"/><ellipse cx="797.7" cy="549.2" rx="23.1" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="846.2" cy="500.2" rx="13.8" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="314.1" cy="488.1" rx="16" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="433.8" cy="420.2" rx="10.4" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="567.9" cy="566.4" rx="22.8" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="249.1" cy="544" rx="28.1" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="427.3" cy="390.5" rx="29.5" ry="7.2" fill="#081d2c" opacity="0.7"/><ellipse cx="838.9" cy="440.2" rx="34.4" ry="7.2" fill="#081d2c" opacity="0.7"/>
+<rect width="900" height="600" fill="url(#scrim)"/>
+<rect width="900" height="600" fill="url(#vig)"/>
+<rect width="900" height="600" fill="#000000" opacity="0.05" filter="url(#grain)"/>
+</svg>

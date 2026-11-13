@@ -1,6 +1,6 @@
 {
   "name": "yingmu",
-  "version": "0.1.0",
+  "version": "0.3.2",
   "private": true,
   "type": "module",
   "description": "影幕 YingMu — Folia 式磁贴幕墙与 Infuse 级媒体管理体验的跨平台个人媒体中心",
@@ -24,10 +24,9 @@
     "cargo:test": "cargo test --workspace"
   },
   "devDependencies": {
-    "prettier": "^3.6.2",
-    "typescript": "^5.9.2"
+    "prettier": "^3.6.2"
   },
   "engines": {
-    "node": ">=20.19.0"
+    "node": "^22.22.2 || ^24.15.0 || >=26.0.0"
   }
 }

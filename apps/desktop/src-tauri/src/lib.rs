@@ -256,6 +256,8 @@ pub fn run() {
             commands::player::yingmu_player_attach_surface,
             commands::settings::yingmu_settings_get,
             commands::settings::yingmu_settings_set,
+            commands::layout::yingmu_layout_get,
+            commands::layout::yingmu_layout_set,
             commands::diagnostics::yingmu_diagnostics_report,
         ])
         .run(tauri::generate_context!())

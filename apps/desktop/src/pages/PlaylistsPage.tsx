@@ -73,7 +73,7 @@ export function PlaylistsPage() {
               style={{
                 textAlign: 'left',
                 padding: 18,
-                borderColor: selected?.id === playlist.id ? 'var(--brand-amber)' : undefined,
+                borderColor: selected?.id === playlist.id ? 'var(--accent)' : undefined,
                 boxShadow: selected?.id === playlist.id ? 'var(--shadow-glow)' : undefined,
               }}
             >

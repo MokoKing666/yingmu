@@ -1,16 +1,20 @@
-import { Link, useNavigate } from 'react-router-dom';
+import { memo } from 'react';
+import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { Heart, Play, GripVertical } from 'lucide-react';
-import type { CSSProperties, KeyboardEvent } from 'react';
-import type { ArtworkRequest, MediaId, MediaItem, TileLayout } from '@yingmu/media-models';
+import type { KeyboardEvent, MouseEvent } from 'react';
+import type { ArtworkRequest, MediaId, MediaItem } from '@yingmu/media-models';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { useArtwork } from '@/hooks/use-artwork';
 import { formatClock, formatDuration, KIND_LABEL, truncate } from '@/lib/format';
+import { artworkFit } from '@/lib/media-aspect';
 import { motion as motionTokens } from '@yingmu/design-tokens';
+import type { MosaicTile } from '@/lib/wall-layout';
 
 interface MediaTileProps {
   item: MediaItem;
-  layout: TileLayout;
+  layout: MosaicTile;
   focused?: boolean;
   dragging?: boolean;
   dropTarget?: boolean;
@@ -19,19 +23,30 @@ interface MediaTileProps {
   onToggleFavorite?: (id: MediaId) => void;
 }
 
-function artworkKind(variant: TileLayout['variant']): ArtworkRequest['kind'] {
-  return variant === 'hero' || variant === 'wide' || variant === 'resume' ? 'backdrop' : 'poster';
+/**
+ * 图片类型：个人视频永远用缩略图（真实画面）；
+ * 其余按磁贴几何比例选海报 / 背景图——超大横幅优先 backdrop，竖版优先 poster。
+ */
+function artworkKind(item: MediaItem, aspect: number): ArtworkRequest['kind'] {
+  if (item.kind === 'personal') return 'thumbnail';
+  if (aspect >= 1.35) return 'backdrop';
+  if (aspect <= 0.85) return 'poster';
+  return 'thumbnail';
 }
 
-function artworkSize(variant: TileLayout['variant']): ArtworkRequest['size'] {
-  return variant === 'hero' ? 'xl' : variant === 'wide' ? 'lg' : 'md';
+/** 按渲染面积选择缓存档位：大磁贴请求大图，小磁贴只用缩略图 */
+function artworkSize(width: number): ArtworkRequest['size'] {
+  if (width > 900) return 'xl';
+  if (width > 520) return 'lg';
+  if (width > 260) return 'md';
+  return 'sm';
 }
 
 /**
- * 单个磁贴。拖拽事件由 MasonryWall 在容器上委托处理，
- * 这样 Motion 的布局动画与 HTML5 drag 不会互相干扰。
+ * 单个磁贴。外层 `.mosaic-slot` 负责绝对定位与重排过渡，
+ * 本层只负责入场 / 悬停 / 共享元素转场，避免 Motion 的 scale 与定位 transform 冲突。
  */
-export function MediaTile({
+export const MediaTile = memo(function MediaTile({
   item,
   layout,
   focused = false,
@@ -41,57 +56,89 @@ export function MediaTile({
   onPlay,
   onToggleFavorite,
 }: MediaTileProps) {
-  const navigate = useNavigate();
-  const src = useArtwork(item.id, artworkKind(layout.variant), artworkSize(layout.variant));
+  const reduceMotion = useMotionPreference();
+  const box = layout.box;
+  const src = useArtwork(item.id, artworkKind(item, box.aspect), artworkSize(box.width));
+  const fit = artworkFit(item);
   const version = item.versions[0];
   const hdr = version?.video?.hdrFormat;
   const isDv = hdr === 'dolby-vision';
   const duration = version?.durationSeconds ?? 0;
   const progress = item.resumeSeconds && duration ? (item.resumeSeconds / duration) * 100 : 0;
+  // 层次化入场延迟：同一屏内按排序位置错开，但封顶避免长列表末尾迟滞
+  const enterDelay = Math.min(0.32, (layout.order % 14) * 0.022);
 
-  const style = {
-    '--col-span': layout.colSpan,
-    '--row-span': layout.rowSpan,
-  } as CSSProperties;
-
-  const onKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (event.key === 'Enter') {
-      event.preventDefault();
-      navigate(`/detail/${item.id}`);
-    } else if (event.key === ' ') {
+  /**
+   * 磁贴主体的键盘操作挂在真正的 <Link> 上（不是 role=button 的容器）：
+   *  - Enter：由 <a> 原生行为打开详情，只导航一次；
+   *  - Space：播放；
+   *  - F：收藏。
+   * 内部按钮有自己的 Enter/Space 处理（stopPropagation），不会冒泡到主体。
+   */
+  const onLinkKeyDown = (event: KeyboardEvent<HTMLAnchorElement>) => {
+    if (event.key === ' ') {
       event.preventDefault();
       onPlay?.(item);
     } else if (event.key === 'f' || event.key === 'F') {
+      event.preventDefault();
       onToggleFavorite?.(item.id);
     }
   };
 
+  /** 按钮上按 Enter/Space 只做按钮自己的事，不再触发磁贴主体的导航/播放 */
+  const stopInnerKey = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (event.key === ' ' || event.key === 'Enter') {
+      event.stopPropagation();
+    }
+  };
+
+  const onFavoriteClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onToggleFavorite?.(item.id);
+  };
+
+  const onPlayClick = (event: MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    onPlay?.(item);
+  };
+
   return (
-    <motion.div
-      layout
-      layoutId={`tile-${item.id}`}
+    <motion.article
+      layout={!reduceMotion}
+      layoutId={reduceMotion ? undefined : `tile-${item.id}`}
       className="tile"
       data-variant={layout.variant}
-      data-media-id={item.id}
+      data-scale={box.scale}
       data-focused={focused}
       data-dragging={dragging}
       data-drop-target={dropTarget}
       data-testid={`tile-${item.id}`}
-      style={style}
-      initial={{ opacity: 0, y: 18 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: motionTokens.hoverScale, y: motionTokens.hoverLift }}
-      transition={motionTokens.spring}
+      initial={reduceMotion ? false : { opacity: 0, scale: 0.965 }}
+      animate={reduceMotion ? undefined : { opacity: 1, scale: 1 }}
+      whileHover={reduceMotion ? undefined : { scale: motionTokens.hoverScale }}
+      transition={reduceMotion ? { duration: 0 } : { ...motionTokens.spring, delay: enterDelay }}
       draggable
-      tabIndex={0}
-      role="button"
       aria-label={`${item.metadata.title}，${KIND_LABEL[item.kind]}，${item.metadata.year ?? '年份未知'}`}
       onFocus={onFocus}
-      onKeyDown={onKeyDown}
     >
-      <Link className="tile-link" to={`/detail/${item.id}`} tabIndex={-1} aria-hidden="true" />
+      {/* 主体导航是真正的 <Link>：覆盖整块磁贴，可聚焦、可见焦点环；
+          内部按钮叠在它上面，因此点收藏 / 播放不会触发详情导航。 */}
+      <Link
+        className="tile-link"
+        to={`/detail/${item.id}`}
+        aria-label={`打开《${item.metadata.title}》详情（Enter 详情，Space 播放，F 收藏）`}
+        onKeyDown={onLinkKeyDown}
+      />
       {src ? (
-        <LazyImage className="tile-art" src={src} alt={`${item.metadata.title} 封面`} />
+        <LazyImage
+          className="tile-art"
+          src={src}
+          alt={`${item.metadata.title} 封面`}
+          style={{ objectPosition: fit === 'cover' ? box.objectPosition : '50% 50%' }}
+          data-fit={fit}
+        />
       ) : (
         <span className="tile-art-placeholder" aria-hidden="true" />
       )}
@@ -107,29 +154,28 @@ export function MediaTile({
 
       <div className="tile-actions">
         <button
+          type="button"
           className="tile-action"
           data-on={item.favorite}
           title={item.favorite ? '取消收藏' : '加入收藏'}
-          aria-label={item.favorite ? '取消收藏' : '加入收藏'}
-          onClick={(event) => {
-            event.preventDefault();
-            onToggleFavorite?.(item.id);
-          }}
+          aria-label={item.favorite ? `取消收藏 ${item.metadata.title}` : `收藏 ${item.metadata.title}`}
+          onClick={onFavoriteClick}
+          onKeyDown={stopInnerKey}
         >
           <Heart size={14} fill={item.favorite ? 'currentColor' : 'none'} />
         </button>
         <button
+          type="button"
           className="tile-action"
           title="播放"
           aria-label={`播放 ${item.metadata.title}`}
-          onClick={(event) => {
-            event.preventDefault();
-            onPlay?.(item);
-          }}
+          onClick={onPlayClick}
+          onKeyDown={stopInnerKey}
         >
           <Play size={14} fill="currentColor" />
         </button>
-        <span className="tile-action" title="拖动以排序" style={{ cursor: 'grab' }}>
+        {/* 拖拽手柄是装饰性提示：整块磁贴都可拖，手柄不单独接收交互 */}
+        <span className="tile-action" title="拖动以排序" aria-hidden="true" style={{ cursor: 'grab' }}>
           <GripVertical size={14} />
         </span>
       </div>
@@ -148,11 +194,11 @@ export function MediaTile({
       <div className="tile-content">
         <h3 className="tile-title">{item.metadata.title}</h3>
         <p className="tile-sub">
-          {layout.variant === 'hero'
-            ? truncate(item.metadata.synopsis || '', 76)
+          {box.scale === 'ultra-wide' || box.emphasis > 0.82
+            ? truncate(item.metadata.synopsis || '', 88)
             : `${item.metadata.year ?? '—'} · ${KIND_LABEL[item.kind]} · ${formatDuration(duration)}`}
         </p>
       </div>
-    </motion.div>
+    </motion.article>
   );
-}
+});

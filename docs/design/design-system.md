@@ -36,54 +36,127 @@ flowchart LR
 
 ## 2. 色彩
 
-### 2.1 品牌色（不随主题变化）
+v0.3 起品牌色系为 **Cinematic Neutral**（冷调电影感）：深色 Cinematic Graphite、浅色 Silver Screen、
+强调色 Glacier Blue。v0.2 的琥珀金 `#D9A55B` 与米黄底 `#F7F6F3` 已**全部移除**，仓库里不再有
+`cinemaAmber` 这个 token，也没有任何 `--brand-amber` 残留。
+
+> **单一真源与漂移防护**：`tokens.ts` 与 `tokens.css` 是同一套数值的两种形态
+> （TS 给 Pixi/布局/动画用，CSS 给 DOM 用）。二者必须逐项相等，
+> 由 `node scripts/check-token-sync.mjs` 强制校验（已进 CI）：
+> 任何一处改了另一处没改都会失败，同时检查应用 CSS 里 `var(--x)` 的每个引用都有定义。
+
+### 2.1 品牌强调色（Glacier Blue）
+
+| Token | 深色（`--accent`） | 浅色覆盖 | 用途 |
+| --- | --- | --- | --- |
+| `accent` | `#77B8D8` | `#3C6F8B` | 主强调：选中态、焦点环、关键数字 |
+| `accentSoft` | `#A0D0E8` | `#77B8D8` | 柔和变体（大字号、图标底色） |
+| `accentDeep` | `#477F9F` | `#2A566E` | 按下态 / 深一层的描边 |
+| `accentWash` | `#16252F` | `#DDEFF7` | 极浅底纹（选中行背景） |
+| `accentOn` | `#08121A` | `#FFFFFF` | 压在强调色上的文字/图标 |
+
+> **为什么浅色主题要换一支蓝**：`#77B8D8` 在 `#F4F7FA` 上只有 **2.2:1**，做正文或图标都不达标。
+> 浅色主题改用 `#3C6F8B`，实测 **5.09:1**（见 2.5）。这是同一支色相的可访问性映射，
+> 不是两套品牌色——组件永远只写 `var(--accent)`，由主题层决定具体值。
+
+### 2.2 中性银幕白
 
 | Token | 值 | 用途 |
 | --- | --- | --- |
-| `cinemaAmber` | `#D9A55B` | 银幕暖光，主品牌 / 强调 / 收藏，刻意避开紫粉渐变 |
-| `cinemaAmberSoft` | `#E8C58C` | 暖光柔和变体 |
-| `silverScreen` | `#F2EFE9` | 银幕白，深色主题主文本 |
+| `silver` | `#EEF3F7`（深色）/ `#F4F7FA`（浅色） | 压在封面、视频、深色玻璃上的文字基色 |
 
-### 2.2 深色主题（默认，`:root`）
+`silver` **不是品牌色**，它是「永远压在图像上的白」。凡是在封面上排版的文字（磁贴标题、徽标、
+播放器控制条）都用它；凡是排在页面背景上的文字必须用 `--text-primary`，否则浅色主题会白底白字
+——这正是 v0.3 修掉的一个真实缺陷（`docs/CHANGELOG` 0.3.0 条目）。
 
-| Token | 值 | Token | 值 |
-| --- | --- | --- | --- |
-| `bgBase` | `#0B0D10` | `bgElevated` | `#12151A` |
-| `bgOverlay` | `#191D23` | `surface` | `#1C2128` |
-| `surfaceHover` | `#252B33` | `border` | `#2A3038` |
-| `borderStrong` | `#3A424C` | `textPrimary` | `#F2EFE9` |
-| `textSecondary` | `#A8B0BA` | `textTertiary` | `#6E7884` |
-| `scrim` | `rgba(6, 8, 10, 0.72)` | | |
-
-### 2.3 浅色主题（`[data-theme='light']` 覆盖）
+### 2.3 深色主题（默认，`:root`）— Cinematic Graphite
 
 | Token | 值 | Token | 值 |
 | --- | --- | --- | --- |
-| `bgBase` | `#F7F6F3` | `bgElevated` | `#FFFFFF` |
-| `bgOverlay` | `#FFFFFF` | `surface` | `#FFFFFF` |
-| `surfaceHover` | `#EFEDE8` | `border` | `#E2DFD8` |
-| `borderStrong` | `#CFCAC0` | `textPrimary` | `#1A1D21` |
-| `textSecondary` | `#5A6069` | `textTertiary` | `#8A9099` |
-| `scrim` | `rgba(247, 246, 243, 0.78)` | | |
+| `bgBase` | `#0B0F14` | `bgElevated` | `#121922` |
+| `bgOverlay` | `#141C26` | `surface` | `#18222D` |
+| `surfaceHover` | `#202D39` | `border` | `#2B3947` |
+| `borderStrong` | `#405365` | `textPrimary` | `#EEF3F7` |
+| `textSecondary` | `#AAB7C3` | `textTertiary` | `#8294A2` |
+| `scrim` | `rgba(6, 11, 16, 0.72)` | | |
 
-### 2.4 语义色（不随主题变化）
+### 2.4 浅色主题（`[data-theme='light']` 覆盖）— Silver Screen
 
-| Token | 值 | 语义 |
-| --- | --- | --- |
-| `success` | `#6FB28C` | 成功 |
-| `warning` | `#D9A55B` | 警告 |
-| `danger` | `#D97A6C` | 危险 / 错误 |
-| `info` | `#7C9BB5` | 信息 |
-| `favorite` | `#D9A55B` | 收藏 |
+| Token | 值 | Token | 值 |
+| --- | --- | --- | --- |
+| `bgBase` | `#F4F7FA` | `bgElevated` | `#FFFFFF` |
+| `bgOverlay` | `#FFFFFF` | `surface` | `#EDF2F6` |
+| `surfaceHover` | `#E4ECF2` | `border` | `#D7E0E8` |
+| `borderStrong` | `#B6C4D0` | `textPrimary` | `#1B2732` |
+| `textSecondary` | `#5D6B78` | `textTertiary` | `#5D6B78` |
+| `scrim` | `rgba(244, 247, 250, 0.82)` | | |
 
-### 2.5 阴影
+浅色主题的次/三级文字同为 `#5D6B78`：在这一档亮度上再分三级只会掉到 4.5:1 以下，
+因此用**字重与字号**区分层级，而不是继续压暗颜色。
+
+### 2.5 边框：功能性与装饰性分开
+
+| Token | 深色 | 浅色 | 用途 | 对比度要求 |
+| --- | --- | --- | --- | --- |
+| `borderControl` | `#5A6978` | `#788898` | **功能性控件边界**：输入框、按钮、分段控件 | 3:1（WCAG 非文本 1.4.11） |
+| `borderStrong` | `#405365` | `#B6C4D0` | 强调边框：弹层、Toast 外框 | 1.5:1（可见性） |
+| `border` | `#2B3947` | `#D7E0E8` | 装饰性分隔线、面板外框 | 1.2:1（仅需可见） |
+
+为什么分三档：功能控件的边界是**识别控件的视觉信息**，必须过 3:1；
+弹层/Toast 的外框只是层次提示（控件本身由文字标签与焦点环识别）；
+分隔线是纯装饰。三者混用同一支颜色，要么让分隔线喧宾夺主，要么让输入框边界不可见。
+
+### 2.6 语义色（按主题分别给值）
+
+| Token | 深色 | 浅色 | 语义 |
+| --- | --- | --- | --- |
+| `success` | `#6FB994` | `#3F7D5C` | 成功 |
+| `warning` | `#D6A25C` | `#8F6320` | 警告 |
+| `danger` | `#D98478` | `#A4473C` | 危险 / 错误 |
+| `favorite` | `#DE8A82` | `#A84B44` | 收藏 |
+| `info` | `#8FB4CF` | `#4A7391` | 信息 |
+
+语义色与强调色**完全解耦**：v0.2 用琥珀金同时表示"品牌"和"收藏"，导致用户无法从颜色判断
+这是品牌态还是状态。收藏用独立的珊瑚红，警告用暖褐——两者都不与 Glacier Blue 抢语义。
+
+### 2.7 阴影
 
 | 档位 | 深色 | 浅色 |
 | --- | --- | --- |
-| `sm` | `0 2px 8px rgba(0,0,0,0.28)` | `0 2px 8px rgba(26,29,33,0.06)` |
-| `md` | `0 8px 24px rgba(0,0,0,0.36)` | `0 8px 24px rgba(26,29,33,0.10)` |
-| `lg` | `0 24px 64px rgba(0,0,0,0.52)` | `0 24px 64px rgba(26,29,33,0.14)` |
-| `glow` | `0 0 0 1px rgba(217,165,91,0.28), 0 16px 48px rgba(0,0,0,0.56)` | `0 0 0 1px rgba(217,165,91,0.42), 0 16px 48px rgba(26,29,33,0.12)` |
+| `sm` | `0 1px 2px rgba(0,0,0,.36), 0 2px 8px rgba(0,0,0,.24)` | `0 1px 2px rgba(27,39,50,.06), 0 2px 8px rgba(27,39,50,.05)` |
+| `md` | `0 4px 16px rgba(0,0,0,.40), 0 12px 32px rgba(0,0,0,.28)` | `0 4px 16px rgba(27,39,50,.08), 0 12px 32px rgba(27,39,50,.06)` |
+| `lg` | `0 12px 40px rgba(0,0,0,.52), 0 32px 80px rgba(0,0,0,.36)` | `0 12px 40px rgba(27,39,50,.12), 0 32px 80px rgba(27,39,50,.08)` |
+| `glow` | `0 0 0 1px rgba(119,184,216,.32), 0 12px 32px rgba(0,0,0,.44)` | `0 0 0 1px rgba(71,127,159,.36), 0 12px 32px rgba(27,39,50,.10)` |
+
+`glow` 从 v0.2 的「金色光晕」改为 Glacier Blue 冷光：光晕只由强调色派生，不再引入第四种颜色。
+深色主题的阴影用双层（近距实影 + 远距扩散），单一 `0 8px 24px` 在 4K 全屏下会显得脏。
+
+### 2.8 对比度实测（WCAG 2.2 AA）
+
+`scripts/check-contrast.mjs` 直接解析 `tokens.css` 计算，不依赖肉眼判断，也不另抄一份色值：
+
+```bash
+node scripts/check-contrast.mjs   # 退出码非 0 表示有不达标项
+```
+
+判定阈值（任务书 9.1）：正文/图标文字 **4.5:1**；功能性控件边界、图标、焦点指示 **3:1**（非文本 1.4.11）；
+装饰性边框只要求可见（1.2:1），但**明确标注为装饰**，不与功能边界混为一谈。
+
+透明遮罩与渐变的处理假设（任务书 9.2）：压在图片/视频上的文字不拿不透明色的对比度冒充，
+而是按「最不利画面 + 最强遮罩」合成后再算——画面高光区取 `#8A9299`（深色）/`#FFFFFF`（浅色），
+遮罩取 `styles/wall.css` 的 scrim 最强端（深 0.9 / 浅 0.88）与 `styles/player.css` 的玻璃遮罩 0.72。
+
+| 主题 | 配对数 | 文字最低值 | 非文本最低值 | 结论 |
+| --- | --- | --- | --- | --- |
+| 深色 Cinematic Graphite | 32 | 5.14:1（搜索 placeholder / 普通表面） | 3.41:1（功能性控件边界） | 全部通过 |
+| 浅色 Silver Screen | 32 | 4.54:1（成功色文字 / 页面背景） | 3.38:1（功能性控件边界） | 全部通过 |
+
+覆盖的真实组件配对包括：页面/面板文字、搜索输入框与 placeholder、主要/次级/禁用按钮、
+选中与悬停状态、焦点环、收藏图标、成功/警告/危险/信息徽标、导航选中态、进度条、
+磁贴文字与徽标压在封面 scrim 上、播放器控制文字压在玻璃遮罩上。
+
+**当前不达标项：0。** 该脚本是唯一判定依据；任何"看起来还行"的结论都不作数。
+
 
 ## 3. 字体排印
 
@@ -106,7 +179,7 @@ flowchart LR
 | `xs` | `4px` | 小控件 |
 | `sm` | `8px` | — |
 | `md` | `12px` | — |
-| `tile` | `18%` | **磁贴采用相对圆角（短边 18%）**，保持不同尺寸下的一致观感 |
+| `tile` | `20px` | **磁贴统一圆角**：固定像素而非百分比——高跨度宽高比下百分比圆角会被拉成椭圆，破坏 Folia 拼贴的轮廓一致性 |
 | `lg` | `20px` | — |
 | `xl` | `28px` | — |
 | `pill` | `999px` | 胶囊 |
@@ -140,20 +213,50 @@ flowchart LR
 
 约束：尊重系统「减少动效」偏好，命中时回退到 `reducedMotionFallback`；缓动统一使用 `--ease-out-expo: cubic-bezier(0.22, 1, 0.36, 1)`，CSS 侧时长 `--duration-card: 420ms`、`--duration-page: 360ms` 与 TS 侧 `0.42` / `0.36` 对应。
 
-## 7. 磁贴尺寸体系
+## 7. 全幅无级拼贴体系（v0.2）
 
-网格基准（`tile`）：`gridColumns: 12`、`rowHeight: 32`、`gap: 16`、`posterAspect: '2 / 3'`、`minColumns: 4`。磁贴跨度以「8px 基准行高 + 16px 间距」的网格定义，与 `TileLayout` 的 `colSpan` / `rowSpan` / `variant` 对应。
+自 v0.2 起，幕墙尺寸不再由 `tile.variants` 决定。`tile` 只作为**向后兼容的视觉语义标签**
+保留（决定字号与信息密度），实际宽高与位置由 `wall-layout.ts` 的 Skyline 装箱引擎连续计算。
+设计与算法决策见 `docs/adr/0007-folia-mosaic-engine.md`。
 
-| variant | colSpan | rowSpan | aspect | 用途 |
-| --- | --- | --- | --- | --- |
-| `hero` | 6 | 12 | `21 / 9` | 主视觉横幅 |
-| `portrait-lg` | 3 | 12 | `2 / 3` | 大竖版海报 |
-| `portrait-sm` | 2 | 8 | `2 / 3` | 小竖版海报 |
-| `wide` | 6 | 8 | `16 / 7` | 横版 |
-| `resume` | 4 | 6 | `16 / 9` | 续播 |
-| `dynamic` | 3 | 6 | `4 / 3` | 动态/方形 |
+### 7.1 `mosaic` 令牌（`packages/design-tokens/src/tokens.ts`）
 
-`TileLayout.order` 与 `MediaItem.wallWeight` 共同决定幕墙排序，用户拖拽排序可覆盖权重。
+| 令牌 | 值 | 含义 |
+| --- | --- | --- |
+| `gap` | `12` | 磁贴间距（px） |
+| `sizeExponent` | `1.5` | 权重 → 尺寸的幂次，用于拉开大小反差 |
+| `width.minRatio` / `minPx` / `maxClamp` / `maxRatio` | `0.085` / `96` / `220` / `0.78` | 宽度驱动型磁贴（横幅）的连续范围 |
+| `height.minRatio` / `minPx` / `maxClamp` / `maxRatio` / `maxLowerPx` / `maxPx` | `0.14` / `140` / `320` / `0.42` / `360` / `760` | 高度驱动型磁贴（竖版）的连续范围 |
+| `aspect.ultraWide` | `2.35 – 3.3` | 超大横幅 |
+| `aspect.wide` | `1.45 – 2.4` | 宽幅剧照 |
+| `aspect.square` | `0.92 – 1.14` | 方形 |
+| `aspect.portrait` | `0.6 – 0.8` | 竖版海报 |
+| `aspect.ultraTall` | `0.46 – 0.6` | 超大竖版 |
+| `aspect.irregular` | `0.82 – 1.45` | 不规则比例 |
+| `widthProbe` | `[1, 0.94, 1.06, 0.88, 1.12]` | 填洞时的宽度试探系数 |
+| `overscan` | `700` | 虚拟滚动预渲染距离（px） |
+| `weights` | hash/kind/recency/rating/favorite/resume/position/rhythm 合计 1.0 | 权重构成 |
+
+### 7.2 视觉分类（`MosaicScale`）
+
+`ultra-wide` / `ultra-tall` / `wide` / `square` / `portrait` / `compact` / `irregular`。
+**只影响字号、信息密度与遮罩方向**（见 `wall.css` 的 `[data-scale]`），
+不参与尺寸计算——尺寸已是连续值，不存在「第几档」。
+
+### 7.3 全幅与导航
+
+- 幕墙页由 `AppShell` 判定为 `is-fullbleed`，`.page-scroll` 左右 padding 为 `0`，
+  磁贴直接铺到应用内容区边缘；非幕墙页仍使用 `--page-x: 40px`。
+- 导航默认是**悬浮折叠轨道**（`.nav-rail`，`position: fixed`），不占画布宽度；
+  展开为浮层抽屉（`.nav-drawer`）叠加在画布上，`[` 或 `Ctrl+B` 呼出，`Esc` 收起。
+- 顶栏搜索为右上角悬浮胶囊（`.floating-topbar`），不占画布高度。
+
+### 7.4 兼容字段
+
+`TileLayout.colSpan` / `rowSpan` / `variant` 仍会输出，但：
+
+- `colSpan` / `rowSpan` 由实际像素尺寸反推，仅用于兼容旧测试与 CSS 变量；
+- `variant` 是视觉语义标签，不再决定尺寸。
 
 ## 8. 层级（z-index）
 

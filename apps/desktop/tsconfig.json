@@ -17,8 +17,7 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
-    "types": ["node", "vitest/globals", "@testing-library/jest-dom"],
-    "baseUrl": ".",
+    "types": ["node", "vite/client", "vitest/globals", "@testing-library/jest-dom"],
     "paths": {
       "@/*": ["./src/*"],
       "@yingmu/media-models": ["../../packages/media-models/src/index.ts"],

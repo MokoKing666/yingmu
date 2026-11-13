@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 750 600" width="750" height="600" role="img" aria-label="静物·咖啡馆窗景">
+<defs>
+<linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#162028"/><stop offset="1" stop-color="#324a51"/></linearGradient>
+<radialGradient id="sun" cx="0.5" cy="0.2" r="0.66"><stop offset="0" stop-color="#578f98" stop-opacity="0.88"/><stop offset="0.34" stop-color="#578f98" stop-opacity="0.3"/><stop offset="1" stop-color="#578f98" stop-opacity="0"/></radialGradient>
+<linearGradient id="ground" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#324a51"/><stop offset="1" stop-color="#0b161a"/></linearGradient>
+<linearGradient id="scrim" x1="0" y1="0" x2="0" y2="1"><stop offset="0.58" stop-color="#081312" stop-opacity="0"/><stop offset="1" stop-color="#081312" stop-opacity="0.34"/></linearGradient>
+<radialGradient id="vig" cx="0.5" cy="0.44" r="0.8"><stop offset="0.55" stop-color="#081312" stop-opacity="0"/><stop offset="1" stop-color="#081312" stop-opacity="0.2"/></radialGradient>
+<filter id="soft" x="-60%" y="-60%" width="220%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
+<filter id="softLg" x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="22.5"/></filter>
+<filter id="grain" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="0.68" numOctaves="1" stitchTiles="stitch" result="n"/><feColorMatrix in="n" type="saturate" values="0"/></filter>
+</defs>
+<rect width="750" height="600" fill="url(#sky)"/>
+<rect width="750" height="600" fill="url(#sun)"/>
+<rect x="0" y="0" width="750" height="600" fill="#324a51" opacity="0.6"/><rect x="0" y="456" width="750" height="240" fill="#0b161a" opacity="0.9"/><rect x="60" y="48" width="630" height="360" fill="#578f98" opacity="0.4"/><rect x="60" y="48" width="630" height="360" fill="none" stroke="#0b161a" stroke-width="9"/><line x1="375" y1="48" x2="375" y2="408" stroke="#0b161a" stroke-width="6" opacity="0.7"/><ellipse cx="521.1" cy="59.6" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><ellipse cx="658.7" cy="109.1" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><ellipse cx="16.7" cy="15" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><ellipse cx="723.8" cy="157.2" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><ellipse cx="41.9" cy="174.8" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><ellipse cx="98.6" cy="158.2" rx="60" ry="18" fill="#c1dedf" opacity="0.3"/><rect x="150" y="372" width="450" height="96" fill="#0b161a" opacity="0.8"/><ellipse cx="300" cy="444" rx="67.5" ry="18" fill="#c1dedf" opacity="0.9"/><rect x="255" y="372" width="90" height="78" fill="#ccc5b0" opacity="0.9"/><ellipse cx="300" cy="372" rx="45" ry="12" fill="#0b161a" opacity="0.8"/>
+<rect width="750" height="600" fill="url(#scrim)"/>
+<rect width="750" height="600" fill="url(#vig)"/>
+<rect width="750" height="600" fill="#000000" opacity="0.05" filter="url(#grain)"/>
+</svg>

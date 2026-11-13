@@ -16,23 +16,23 @@ members = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.3.2"
 edition = "2021"
-rust-version = "1.77.2"
+rust-version = "1.89"
 
 [workspace.dependencies]
 # 所有版本选取 crates.io 上真实存在的稳定版。
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-thiserror = "1.0"
+thiserror = "2.0"
 # UUID v5 用于「由内容指纹派生稳定 MediaId」，serde 便于跨语言序列化。
 uuid = { version = "1", features = ["v5", "serde"] }
 # SHA-256 用于部分内容指纹（fingerprint）。
-sha2 = "0.10"
+sha2 = "0.11"
 # 只读 XML 解析，用于 NFO；API 稳定、无宏展开、依赖少。
-roxmltree = "0.20"
+roxmltree = "0.21"
 # 选择 rusqlite 而非 sqlx，理由见 crates/yingmu-core/src/database/mod.rs 顶部注释：
 # bundled 特性随 crate 编译 SQLite amalgamation 并启用 FTS5，同步 API，
 # 无需额外 async runtime，迁移与全文检索可自洽实现，便于 Windows MSVC 交付。
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.41", features = ["bundled"] }
 chrono = { version = "0.4", features = ["serde"] }

@@ -49,12 +49,12 @@ a {
 }
 
 :focus-visible {
-  outline: 2px solid var(--brand-amber);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
 ::selection {
-  background: rgba(217, 165, 91, 0.3);
+  background: rgba(119, 184, 216, 0.3);
 }
 
 /* 滚动条：克制、与背景融合 */
@@ -77,22 +77,90 @@ a {
 }
 
 /* --------------------------- 应用外壳 --------------------------- */
+/* 单列画布：导航改为悬浮轨道 + 浮层抽屉，不再预留 232px 固定列 */
 .app-shell {
-  display: grid;
-  grid-template-columns: 232px minmax(0, 1fr);
+  position: relative;
+  display: block;
   height: 100vh;
   background: var(--bg-base);
 }
 
-.sidebar {
+.main-area {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* 默认折叠的精简导航轨道：悬浮覆盖，绝不挤压幕墙宽度 */
+.nav-rail {
+  position: fixed;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: var(--z-sticky);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
+  backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-md);
+  /* 默认降低视觉权重，hover/键盘聚焦时恢复，避免压住海报主体与文案 */
+  opacity: 0.72;
+  transition: opacity 220ms var(--ease-out-expo);
+}
+.nav-rail:hover,
+.nav-rail:focus-within {
+  opacity: 1;
+}
+.nav-rail-btn {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-pill);
+  color: var(--text-secondary);
+  transition: background 180ms, color 180ms, transform 180ms;
+}
+.nav-rail-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text-primary);
+  transform: translateY(-1px);
+}
+.nav-rail-btn[data-on='true'] {
+  color: var(--accent);
+}
+
+/* 展开后的完整导航：浮层覆盖在画布之上 */
+.nav-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-overlay);
+  background: rgba(4, 6, 9, 0.56);
+  backdrop-filter: blur(2px);
+}
+.nav-drawer {
+  position: fixed;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 288px;
+  z-index: calc(var(--z-overlay) + 1);
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-6) var(--space-4);
   border-right: 1px solid var(--border);
   background: var(--bg-elevated);
+  box-shadow: var(--shadow-lg);
   overflow-y: auto;
-  z-index: var(--z-sticky);
 }
 
 .sidebar-brand {
@@ -142,7 +210,7 @@ a {
 .nav-item[data-active='true'] {
   background: var(--surface);
   color: var(--text-primary);
-  box-shadow: inset 2px 0 0 var(--brand-amber);
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 .nav-item svg {
   flex: none;
@@ -164,25 +232,21 @@ a {
   line-height: 1.7;
 }
 
-.main-area {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.topbar {
+/* 悬浮式顶栏：右上角胶囊，不占画布高度、不遮挡全幅拼贴 */
+.floating-topbar {
+  position: fixed;
+  top: 14px;
+  right: 18px;
+  z-index: var(--z-sticky);
   display: flex;
   align-items: center;
-  gap: var(--space-4);
-  height: 68px;
-  flex: none;
-  padding: 0 var(--page-x);
-  border-bottom: 1px solid var(--border);
-  background: color-mix(in srgb, var(--bg-base) 82%, transparent);
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-elevated) 80%, transparent);
   backdrop-filter: blur(18px);
-  z-index: var(--z-sticky);
+  box-shadow: var(--shadow-md);
 }
 
 .page-scroll {
@@ -191,6 +255,10 @@ a {
   overflow-x: hidden;
   padding: var(--page-y) var(--page-x) 96px;
   scroll-behavior: smooth;
+}
+/* 幕墙页：取消左右 40px 固定留白，磁贴延伸到窗口内容区边缘 */
+.page-scroll.is-fullbleed {
+  padding: 0 0 96px;
 }
 
 .page-head {
@@ -216,7 +284,7 @@ a {
   font-size: 0.6875rem;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--brand-amber);
+  color: var(--accent);
   font-weight: 600;
   margin-bottom: var(--space-2);
 }
@@ -230,7 +298,7 @@ a {
   padding: 9px 16px;
   border-radius: var(--radius-sm);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   color: var(--text-primary);
   font-size: 0.8125rem;
   font-weight: 500;
@@ -243,14 +311,14 @@ a {
   transform: translateY(-1px);
 }
 .btn-primary {
-  background: var(--brand-amber);
-  border-color: var(--brand-amber);
+  background: var(--accent);
+  border-color: var(--accent);
   color: #16191d;
   font-weight: 600;
 }
 .btn-primary:hover {
-  background: var(--brand-amber-soft);
-  border-color: var(--brand-amber-soft);
+  background: var(--accent-soft);
+  border-color: var(--accent-soft);
 }
 .btn-ghost {
   background: transparent;
@@ -291,12 +359,12 @@ a {
   padding: 0 var(--space-4);
   border-radius: var(--radius-pill);
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   color: var(--text-secondary);
   min-width: 0;
 }
 .search-input:focus-within {
-  border-color: var(--brand-amber);
+  border-color: var(--accent);
 }
 .search-input input {
   flex: 1;
@@ -328,7 +396,7 @@ a {
   width: 100%;
   padding: 10px 12px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   background: var(--bg-elevated);
   color: var(--text-primary);
   outline: 0;
@@ -336,7 +404,7 @@ a {
 .field input:focus,
 .field textarea:focus,
 .field select:focus {
-  border-color: var(--brand-amber);
+  border-color: var(--accent);
 }
 
 .segmented {
@@ -344,7 +412,7 @@ a {
   gap: 2px;
   padding: 3px;
   background: var(--surface);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-control);
   border-radius: var(--radius-sm);
 }
 .segmented button {
@@ -372,9 +440,9 @@ a {
   letter-spacing: 0.03em;
 }
 .tag-accent {
-  color: var(--brand-amber);
-  border-color: rgba(217, 165, 91, 0.38);
-  background: rgba(217, 165, 91, 0.08);
+  color: var(--accent);
+  border-color: rgba(119, 184, 216, 0.38);
+  background: rgba(119, 184, 216, 0.08);
 }
 
 .panel {
@@ -413,7 +481,7 @@ a {
   position: absolute;
   inset: 0 auto 0 0;
   border-radius: inherit;
-  background: var(--brand-amber);
+  background: var(--accent);
 }
 
 .empty-state {
@@ -568,20 +636,80 @@ a {
   gap: var(--space-4);
 }
 
+/* 首页：悬浮搜索胶囊与轨道不遮挡第一排磁贴，画布从顶部安全区开始。
+   安全区由 design token 控制，小高度窗口下收敛，避免压缩可用画布。 */
+.wall-stage--overlay > .wall-stage {
+  padding-top: var(--header-safe);
+}
+@media (max-height: 700px) {
+  .wall-stage--overlay > .wall-stage {
+    padding-top: 62px;
+  }
+}
+
+/* 全幅画布上的轻量叠加层：不占布局高度，避免标题/工具栏挤压磁贴 */
+.wall-inset {
+  padding-inline: var(--page-x);
+}
+.wall-overlay-title {
+  position: absolute;
+  top: 18px;
+  left: 76px;
+  z-index: calc(var(--z-content) + 1);
+  pointer-events: none;
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  /* 标题叠在画布留白处而不是封面上，必须跟随主题正文色；
+     浅色主题下用硬编码银白会得到白底白字（对比度 1.06:1） */
+  color: var(--text-primary);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.72);
+}
+[data-theme='light'] .wall-overlay-title {
+  /* 浅色画布上不需要暗色描边，阴影只会让字发脏 */
+  text-shadow: none;
+}
+.wall-overlay-title strong {
+  font-size: 1.0625rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.wall-overlay-title span {
+  font-size: 0.6875rem;
+  letter-spacing: 0.16em;
+  opacity: 0.72;
+  text-transform: uppercase;
+}
+.wall-note {
+  margin: var(--space-6) var(--page-x) 0;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+.wall-note summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.wall-note .panel {
+  margin-top: var(--space-4);
+}
+.library-head,
+.favorites-head {
+  padding-top: 22px;
+}
+.library-head .page-head,
+.favorites-head .page-head {
+  margin-bottom: 16px;
+}
+.library-tools {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  margin-bottom: 18px;
+}
+
 @media (max-width: 1100px) {
-  .app-shell {
-    grid-template-columns: 76px minmax(0, 1fr);
-  }
-  .sidebar-brand span,
-  .nav-item span:not(.nav-count),
-  .nav-group-label,
-  .sidebar-footer,
-  .nav-item .nav-count {
-    display: none;
-  }
-  .nav-item {
-    justify-content: center;
-  }
   .grid-3 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -596,6 +724,15 @@ a {
   .grid-3 {
     grid-template-columns: minmax(0, 1fr);
   }
+  .nav-rail {
+    left: 8px;
+  }
+  .nav-drawer {
+    width: min(288px, 86vw);
+  }
+  .wall-overlay-title {
+    left: 62px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -603,6 +740,9 @@ a {
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    /* 关键：把迭代次数压到 1，终止 infinite 循环——
+       只把时长压到 0.01ms 时，无限动画仍在以极高频率空转 */
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }

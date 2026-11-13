@@ -7,6 +7,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useArtwork } from '@/hooks/use-artwork';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { useAppStore } from '@/stores/app-store';
 import { usePlayerStore } from '@/stores/player-store';
 import { formatClock, formatDuration, formatBytes } from '@/lib/format';
@@ -24,6 +25,7 @@ export function PlayerPage() {
   const player = usePlayerStore();
   const backdrop = useArtwork(id, 'backdrop', 'xl');
   const poster = useArtwork(id, 'poster', 'md');
+  const reduceMotion = useMotionPreference();
   const version = item?.versions[0];
   const duration = version?.durationSeconds ?? 0;
 
@@ -65,7 +67,7 @@ export function PlayerPage() {
       <div className="player-topbar">
         <Link to={`/detail/${item.id}`} className="player-back"><ArrowLeft size={15} /> 返回详情</Link>
         <div style={{ flex: 1 }} />
-        <span className="tag" style={{ background: 'rgba(217,165,91,0.12)', borderColor: 'rgba(217,165,91,0.4)', color: 'var(--brand-amber)' }}>
+        <span className="tag" style={{ background: 'rgba(119,184,216,0.12)', borderColor: 'rgba(119,184,216,0.4)', color: 'var(--accent)' }}>
           PlayerBackend · 未集成
         </span>
       </div>
@@ -139,10 +141,10 @@ export function PlayerPage() {
         {player.activePanel && (
           <motion.aside
             className="player-panel"
-            initial={{ x: 340, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 340, opacity: 0 }}
-            transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+            initial={reduceMotion ? false : { x: 340, opacity: 0 }}
+            animate={reduceMotion ? undefined : { x: 0, opacity: 1 }}
+            exit={reduceMotion ? undefined : { x: 340, opacity: 0 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
           >
             <button className="player-pbutton player-panel-close" onClick={() => player.togglePanel(player.activePanel!)} aria-label="关闭面板"><X size={17} /></button>
             <h3>{panels.find((p) => p.key === player.activePanel)?.label}</h3>
@@ -177,7 +179,7 @@ export function PlayerPage() {
                 <button className="player-panel-item" onClick={() => player.setSubtitleTrack(null)}><span>关闭字幕</span><span className="mono tiny">OFF</span></button>
                 <div className="divider" />
                 <div className="player-panel-item"><span>字幕延迟</span><span className="mono">{player.subtitleDelayMs} ms</span></div>
-                <input type="range" min={-5000} max={5000} step={100} value={player.subtitleDelayMs} onChange={(e) => player.setSubtitleDelay(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--brand-amber)' }} aria-label="字幕延迟" />
+                <input type="range" min={-5000} max={5000} step={100} value={player.subtitleDelayMs} onChange={(e) => player.setSubtitleDelay(Number(e.target.value))} style={{ width: '100%', accentColor: 'var(--accent)' }} aria-label="字幕延迟" />
                 <p className="tiny" style={{ marginTop: 12, lineHeight: 1.7 }}>ASS 特效与 PGS 图片字幕保留原生渲染路径，不降级为纯文本。</p>
               </>
             )}

@@ -33,7 +33,7 @@ export interface ArtworkSpec {
 /** 低饱和电影感色板，刻意避开紫粉渐变 */
 const PALETTES: Array<{ base: string; deep: string; glow: string; accent: string }> = [
   { base: '#10232B', deep: '#07151B', glow: '#2E6A70', accent: '#8FC3C6' },
-  { base: '#2B1B14', deep: '#170D09', glow: '#7A4B25', accent: '#D9A55B' },
+  { base: '#2B1B14', deep: '#170D09', glow: '#7A4B25', accent: '#C9A063' },
   { base: '#141C2B', deep: '#0A0F18', glow: '#345581', accent: '#8FAFCF' },
   { base: '#14211C', deep: '#0A120E', glow: '#3B6249', accent: '#93BE9F' },
   { base: '#16181C', deep: '#0C0D10', glow: '#454C56', accent: '#B3BAC2' },
@@ -117,8 +117,8 @@ export function artworkSvg(spec: ArtworkSpec): string {
   ${motif(hash >> 3, w, h, palette.accent, palette.glow)}
   <rect width="${w}" height="${h}" fill="url(#scrim)"/>
   <rect x="${x}" y="${titleY - fontSize - Math.round(h * 0.02)}" width="${Math.round(w * 0.14)}" height="3" rx="1.5" fill="${palette.accent}" opacity="0.9"/>
-  ${spec.showTitle ? `<text x="${x}" y="${titleY}" fill="#F2EFE9" font-family="MiSans, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="${fontSize}" font-weight="600" letter-spacing="2">${title}</text>` : ''}
-  ${spec.showTitle && sub ? `<text x="${x}" y="${titleY + Math.round(fontSize * 0.7)}" fill="#F2EFE9" opacity="0.62" font-family="'Segoe UI', MiSans, sans-serif" font-size="${Math.round(fontSize * 0.36)}" letter-spacing="4">${sub}</text>` : ''}
+  ${spec.showTitle ? `<text x="${x}" y="${titleY}" fill="#EEF3F7" font-family="MiSans, 'PingFang SC', 'Microsoft YaHei', sans-serif" font-size="${fontSize}" font-weight="600" letter-spacing="2">${title}</text>` : ''}
+  ${spec.showTitle && sub ? `<text x="${x}" y="${titleY + Math.round(fontSize * 0.7)}" fill="#EEF3F7" opacity="0.62" font-family="'Segoe UI', MiSans, sans-serif" font-size="${Math.round(fontSize * 0.36)}" letter-spacing="4">${sub}</text>` : ''}
 </svg>`;
 }
 

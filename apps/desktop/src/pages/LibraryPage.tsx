@@ -9,9 +9,11 @@ import { LazyImage } from '@/components/ui/LazyImage';
 import { useAppStore } from '@/stores/app-store';
 import { useArtwork } from '@/hooks/use-artwork';
 import { KIND_LABEL, formatDuration, formatRating } from '@/lib/format';
+import { applySortMode, isSortMode } from '@/lib/sort-modes';
+import { defaultSortFor, libraryScope, toOrderMap } from '@/lib/layout-preferences';
+import type { SortMode } from '@/lib/layout-preferences';
 import type { MediaItem, MediaKind } from '@yingmu/media-models';
 
-type SortKey = 'recent' | 'year' | 'rating' | 'title';
 type ViewMode = 'wall' | 'list';
 
 const KIND_INTRO: Record<MediaKind, string> = {
@@ -39,7 +41,7 @@ function ListRow({ item }: { item: MediaItem }) {
           {item.metadata.year} · {item.metadata.genres.join(' / ')} · {formatDuration(duration)} · {item.versions.length} 个版本
         </div>
       </div>
-      {item.favorite && <Star size={14} fill="currentColor" style={{ color: 'var(--brand-amber)' }} />}
+      {item.favorite && <Star size={14} fill="currentColor" style={{ color: 'var(--accent)' }} />}
       <span className="tag">{formatRating(item.metadata.rating)}</span>
       <button className="btn btn-ghost" onClick={() => navigate(`/player/${item.id}`)} aria-label={`播放 ${item.metadata.title}`}>
         <Play size={14} /> 播放
@@ -52,9 +54,24 @@ export function LibraryPage() {
   const { kind = 'movie' } = useParams<{ kind: string }>();
   const mediaKind = (Object.keys(KIND_INTRO).includes(kind) ? kind : 'movie') as MediaKind;
   const items = useAppStore((s) => s.items);
-  const [sort, setSort] = useState<SortKey>('recent');
+  const layoutPref = useAppStore((s) => s.layoutPrefs[libraryScope(mediaKind)]);
+  const setLayoutSortMode = useAppStore((s) => s.setLayoutSortMode);
   const [view, setView] = useState<ViewMode>('wall');
-  const [genre, setGenre] = useState<string | 'all'>('all');
+
+  const scope = libraryScope(mediaKind);
+  // 排序模式持久化在该作用域：切换媒体库互不影响；用户拖拽后会切到 custom。
+  // 默认值走 defaultSortFor（媒体库一律 recent），与 SQLite / Store 一致。
+  // 支持 ?sort= 强制指定（演示 / 截图用），不写入用户偏好。
+  const hashQuery = typeof window !== 'undefined' ? window.location.hash.split('?')[1] ?? '' : '';
+  const params = new URLSearchParams(hashQuery);
+  const forcedSort = params.get('sort');
+  const sort: SortMode = isSortMode(forcedSort) ? forcedSort : (layoutPref?.sortMode ?? defaultSortFor(scope));
+  // ?genre= 强制筛选（演示 / 截图用）；不合法的值自然退化为 all
+  const forcedGenre = params.get('genre');
+  const [genre, setGenre] = useState<string | 'all'>(forcedGenre ?? 'all');
+  const onSortChange = (mode: SortMode) => {
+    void setLayoutSortMode(scope, mode);
+  };
 
   const genres = useMemo(
     () => Array.from(new Set(items.filter((i) => i.kind === mediaKind).flatMap((i) => i.metadata.genres))).sort(),
@@ -63,75 +80,80 @@ export function LibraryPage() {
 
   const filtered = useMemo(() => {
     const list = items.filter((i) => i.kind === mediaKind && (genre === 'all' || i.metadata.genres.includes(genre)));
-    const sorted = [...list];
-    switch (sort) {
-      case 'year':
-        sorted.sort((a, b) => (b.metadata.year ?? 0) - (a.metadata.year ?? 0));
-        break;
-      case 'rating':
-        sorted.sort((a, b) => (b.metadata.rating ?? 0) - (a.metadata.rating ?? 0));
-        break;
-      case 'title':
-        sorted.sort((a, b) => a.metadata.title.localeCompare(b.metadata.title, 'zh-CN'));
-        break;
-      default:
-        sorted.sort((a, b) => b.addedAt.localeCompare(a.addedAt));
-    }
-    return sorted;
-  }, [items, mediaKind, genre, sort]);
+    // 排序只由 sortMode 决定：recent/year/rating/title 各自的结果不会被全局
+    // customOrder 覆盖；只有用户显式选 custom 才应用该作用域的自定义排列。
+    return applySortMode(list, sort, toOrderMap(layoutPref?.orderedMediaIds ?? []));
+  }, [items, mediaKind, genre, sort, layoutPref]);
+
+  // 完整作用域顺序（未按 Genre 筛选）：拖拽可见子集时必须以它为底合并，
+  // 否则保存的顺序只包含筛选出的媒体，其余媒体的自定义位置会整体丢失。
+  const fullScopeIds = useMemo(() => {
+    const kindItems = items.filter((i) => i.kind === mediaKind);
+    return applySortMode(kindItems, sort, toOrderMap(layoutPref?.orderedMediaIds ?? [])).map((i) => i.id);
+  }, [items, mediaKind, sort, layoutPref]);
 
   return (
     <>
-      <PageHeader
-        eyebrow="LIBRARY · 媒体库"
-        title={`${KIND_LABEL[mediaKind]}库`}
-        subtitle={`${KIND_INTRO[mediaKind]} 当前 ${filtered.length} 部作品`}
-        actions={
-          <div className="row">
-            <Segmented
-              value={view}
-              ariaLabel="视图切换"
-              options={[
-                { value: 'wall', label: '幕墙' },
-                { value: 'list', label: '列表' },
-              ]}
-              onChange={setView}
-            />
-          </div>
-        }
-      />
-
-      <div className="panel" style={{ padding: '14px 20px', marginBottom: 24, display: 'flex', gap: 20, alignItems: 'center', flexWrap: 'wrap' }}>
-        <span className="row tiny"><SlidersHorizontal size={14} /> 筛选</span>
-        <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
-          <button className={`tag ${genre === 'all' ? 'tag-accent' : ''}`} onClick={() => setGenre('all')}>全部</button>
-          {genres.map((g) => (
-            <button key={g} className={`tag ${genre === g ? 'tag-accent' : ''}`} onClick={() => setGenre(g)}>{g}</button>
-          ))}
-        </div>
-        <div style={{ flex: 1 }} />
-        <Segmented
-          value={sort}
-          ariaLabel="排序"
-          options={[
-            { value: 'recent', label: '最近加入' },
-            { value: 'year', label: '年份' },
-            { value: 'rating', label: '评分' },
-            { value: 'title', label: '名称' },
-          ]}
-          onChange={setSort}
+      {/* 头部与筛选工具内缩；下方幕墙本身保持左右全幅延展 */}
+      <div className="wall-inset library-head">
+        <PageHeader
+          eyebrow="LIBRARY · 媒体库"
+          title={`${KIND_LABEL[mediaKind]}库`}
+          subtitle={`${KIND_INTRO[mediaKind]} 当前 ${filtered.length} 部作品`}
         />
-        <span className="tiny mono" style={{ whiteSpace: 'nowrap' }}>{filtered.length} 项</span>
+
+        <div className="panel library-tools">
+          <span className="row tiny"><SlidersHorizontal size={14} /> 筛选</span>
+          <div className="row" style={{ gap: 6, flexWrap: 'wrap' }}>
+            <button className={`tag ${genre === 'all' ? 'tag-accent' : ''}`} onClick={() => setGenre('all')}>全部</button>
+            {genres.map((g) => (
+              <button key={g} className={`tag ${genre === g ? 'tag-accent' : ''}`} onClick={() => setGenre(g)}>{g}</button>
+            ))}
+          </div>
+          <div style={{ flex: 1 }} />
+          <Segmented
+            value={sort}
+            ariaLabel="排序"
+            options={[
+              { value: 'recent', label: '最近加入' },
+              { value: 'year', label: '年份' },
+              { value: 'rating', label: '评分' },
+              { value: 'title', label: '名称' },
+              { value: 'custom', label: '自定义排列' },
+            ]}
+            onChange={(v) => onSortChange(v as SortMode)}
+          />
+          <Segmented
+            value={view}
+            ariaLabel="视图切换"
+            options={[
+              { value: 'wall', label: '幕墙' },
+              { value: 'list', label: '列表' },
+            ]}
+            onChange={setView}
+          />
+          <span className="tiny mono" style={{ whiteSpace: 'nowrap' }}>{filtered.length} 项</span>
+        </div>
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
-      ) : view === 'wall' ? (
-        <MasonryWall items={filtered} heroEnabled={false} showToolbar emptyTitle="没有匹配的作品" />
-      ) : (
-        <div className="panel" style={{ padding: 8 }}>
-          {filtered.map((item) => <ListRow key={item.id} item={item} />)}
+        <div className="wall-inset">
+          <EmptyState title="没有匹配的作品" description="试试清除类型筛选，或到媒体源管理中添加更多来源。" icon={view === 'wall' ? <LayoutGrid size={38} /> : <List size={38} />} />
         </div>
+      ) : view === 'wall' ? (
+        <MasonryWall
+          items={filtered}
+          scope={scope}
+          sortMode={sort}
+          fullScopeIds={fullScopeIds}
+          heroEnabled={false}
+          showToolbar
+          emptyTitle="没有匹配的作品"
+        />
+      ) : (
+        <div className="wall-inset"><div className="panel" style={{ padding: 8 }}>
+          {filtered.map((item) => <ListRow key={item.id} item={item} />)}
+        </div></div>
       )}
     </>
   );

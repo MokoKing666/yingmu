@@ -17,6 +17,8 @@ class MockResizeObserver implements ResizeObserver {
 class MockIntersectionObserver implements IntersectionObserver {
   readonly root = null;
   readonly rootMargin = '';
+  // TS 6 / lib.dom 的 IntersectionObserver 新增 scrollMargin 只读属性
+  readonly scrollMargin = '';
   readonly thresholds: ReadonlyArray<number> = [];
   observe(): void {}
   unobserve(): void {}

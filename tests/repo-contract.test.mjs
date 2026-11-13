@@ -260,7 +260,9 @@ test('ci.yml 包含 typecheck/lint/test/build、cargo fmt|clippy|test 与 NSIS �
     ['找不到产物即失败', /未找到/],
     ['产物校验脚本', /verify-release\.mjs/],
     ['SHA-256 校验和', /--sums|SHA256SUMS\.txt/],
-    ['上传产物', /actions\/upload-artifact@v4/],
+    // 只约束「使用官方 upload-artifact 动作」，不锁死主版本号：
+    // Dependabot 会把 v4 升级到 v7，锁死版本会让契约测试在依赖升级时误报失败。
+    ['上传产物', /actions\/upload-artifact@v\d+/],
     ['tauri-action @v1', /tauri-apps\/tauri-action@v1/],
   ];
   for (const [label, re] of required) {

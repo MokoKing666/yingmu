@@ -96,7 +96,7 @@ export function SourcesPage() {
       <div className="grid-3" style={{ marginTop: 24 }}>
         {(['local', 'unc', 'smb', 'webdav'] as SourceProtocol[]).map((p) => (
           <div className="panel" key={p} style={{ padding: 18 }}>
-            <div className="tiny" style={{ color: 'var(--brand-amber)', letterSpacing: '0.1em' }}>PROVIDER</div>
+            <div className="tiny" style={{ color: 'var(--accent)', letterSpacing: '0.1em' }}>PROVIDER</div>
             <h3 className="panel-title" style={{ margin: '6px 0' }}>{PROTOCOL_LABEL[p]}</h3>
             <p className="tiny" style={{ lineHeight: 1.7, margin: 0 }}>
               {p === 'local' && '递归扫描本地与外接硬盘，检测新增、删除与移动，支持断点恢复。'}

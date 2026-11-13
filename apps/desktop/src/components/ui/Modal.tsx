@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { motion } from 'motion/react';
 import { X } from 'lucide-react';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 
 interface ModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, description, onClose, children, footer }: ModalProps) {
+  const reduceMotion = useMotionPreference();
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
@@ -31,9 +33,9 @@ export function Modal({ open, title, description, onClose, children, footer }: M
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+        initial={reduceMotion ? false : { opacity: 0, scale: 0.96, y: 12 }}
+        animate={reduceMotion ? undefined : { opacity: 1, scale: 1, y: 0 }}
+        transition={reduceMotion ? { duration: 0 } : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
       >
         <div className="spread" style={{ marginBottom: 20 }}>
           <div>

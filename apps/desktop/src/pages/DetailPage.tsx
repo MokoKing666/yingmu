@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusNotice } from '@/components/ui/StatusNotice';
 import { LazyImage } from '@/components/ui/LazyImage';
 import { useArtwork } from '@/hooks/use-artwork';
+import { useMotionPreference } from '@/hooks/use-motion-preference';
 import { useAppStore } from '@/stores/app-store';
 import { formatBytes, formatDuration, formatRating, KIND_LABEL } from '@/lib/format';
 import type { MediaVersion } from '@yingmu/media-models';
@@ -13,8 +14,8 @@ import type { MediaVersion } from '@yingmu/media-models';
 function VersionRow({ version, active, onSelect }: { version: MediaVersion; active: boolean; onSelect: () => void }) {
   const v = version.video;
   return (
-    <button className="list-row" onClick={onSelect} style={{ borderColor: active ? 'var(--brand-amber)' : 'transparent', background: active ? 'var(--surface)' : undefined, width: '100%', textAlign: 'left' }}>
-      <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--brand-amber)' : 'var(--border-strong)', flex: 'none' }} />
+    <button className="list-row" onClick={onSelect} style={{ borderColor: active ? 'var(--accent)' : 'transparent', background: active ? 'var(--surface)' : undefined, width: '100%', textAlign: 'left' }}>
+      <span style={{ width: 8, height: 8, borderRadius: '50%', background: active ? 'var(--accent)' : 'var(--border-strong)', flex: 'none' }} />
       <div className="list-main">
         <div className="list-title">{version.label}</div>
         <div className="list-meta">
@@ -33,9 +34,13 @@ export function DetailPage() {
   const getItem = useAppStore((s) => s.getItem);
   const items = useAppStore((s) => s.items);
   const toggleFavorite = useAppStore((s) => s.toggleFavorite);
+  const focalOverrides = useAppStore((s) => s.focalOverrides);
+  const setArtworkFocal = useAppStore((s) => s.setArtworkFocal);
+  const focal = focalOverrides[id];
   const item = getItem(id);
   const backdrop = useArtwork(id, 'backdrop', 'xl');
   const poster = useArtwork(id, 'poster', 'lg');
+  const reduceMotion = useMotionPreference();
   const [versionIndex, setVersionIndex] = useState(0);
 
   if (!item) {
@@ -54,7 +59,8 @@ export function DetailPage() {
         {backdrop && <LazyImage src={backdrop} alt="" className="detail-hero-art" />}
         <div className="detail-hero-scrim" />
         <div className="detail-hero-content">
-          <motion.div layoutId={`tile-${item.id}`} style={{ flex: 'none' }}>
+          {/* 共享元素转场只在允许动效时开启；减少动效时保持静态，避免 layout 动画 */}
+          <motion.div layoutId={reduceMotion ? undefined : `tile-${item.id}`} style={{ flex: 'none' }}>
             {poster && <img className="detail-poster" src={poster} alt={`${item.metadata.title} 海报`} />}
           </motion.div>
           <div style={{ minWidth: 0 }}>
@@ -147,6 +153,39 @@ export function DetailPage() {
               <div className="spread"><span className="muted tiny">元数据来源</span><span className="tag">{item.metadata.origin}</span></div>
               <div className="spread"><span className="muted tiny">Media ID</span><span className="tiny mono" style={{ fontSize: '0.65rem' }}>{item.id.slice(0, 13)}…</span></div>
               <div className="spread"><span className="muted tiny">播放次数</span><span className="tiny mono">{item.playCount}</span></div>
+            </div>
+          </section>
+
+          <section className="panel">
+            <h2 className="panel-title">封面焦点</h2>
+            <p className="panel-desc">选择磁贴裁剪时保留的画面区域；不同宽高比的磁贴都会按此焦点裁切，不会拉伸变形。</p>
+            <div className="row" style={{ gap: 16, marginTop: 12, alignItems: 'center' }}>
+              <div className="focal-grid" role="group" aria-label="封面焦点九宫格">
+                {[20, 50, 80].flatMap((y) =>
+                  [20, 50, 80].map((x) => (
+                    <button
+                      key={`${x}-${y}`}
+                      className="focal-cell"
+                      data-on={focal?.x === x && focal?.y === y}
+                      onClick={() => setArtworkFocal(id, { x, y })}
+                      aria-label={`焦点 ${x}% ${y}%`}
+                      title={`${x}% / ${y}%`}
+                    >
+                      ·
+                    </button>
+                  )),
+                )}
+              </div>
+              <div className="stack" style={{ gap: 6 }}>
+                <span className="tiny muted">
+                  {focal ? `当前 ${focal.x}% / ${focal.y}%` : '当前：自动（由内容稳定推导）'}
+                </span>
+                {focal && (
+                  <button className="btn btn-ghost" onClick={() => setArtworkFocal(id, undefined)}>
+                    恢复默认
+                  </button>
+                )}
+              </div>
             </div>
           </section>
 

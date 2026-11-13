@@ -17,7 +17,7 @@
 | `bundle.targets` | `["nsis"]` | 首发 Windows x64 |
 | `bundle.windows.nsis.languages` | `["SimpChinese"]` | NSIS 简体中文 |
 | `displayLanguageSelector` | `false` | 不弹语言选择 |
-| `installMode` | `currentUser` | 当前用户安装，不写 `Program Files` |
+| `installMode` | `both` | 同一安装器支持「仅为我安装」（`%LOCALAPPDATA%\YingMu`，HKCU）与「为所有人安装」（`%ProgramFiles%\YingMu`，HKLM，64 位）；含安装范围页与目录页 |
 | `webviewInstallMode.type` | `downloadBootstrapper` | WebView2 引导下载安装 |
 
 ### WebView2 依赖提示
@@ -32,7 +32,10 @@
 - `%LOCALAPPDATA%\YingMu\Cache` — 封面缓存
 - `%LOCALAPPDATA%\YingMu\Logs` — 日志
 
-`installMode: currentUser` 下安装目录通常不可写，任何用户数据都不应落到安装目录。
+无论选择「仅为我安装」还是「为所有人安装」，安装目录都可能不可写（`Program Files`
+对普通用户只读），因此任何用户数据都不应落到安装目录。`installMode: both` 下安装器
+启动即请求管理员权限（`MULTIUSER_EXECUTIONLEVEL Highest`），但**应用本身以普通用户
+权限运行**。详见 `docs/installation/nsis.md`。
 
 > **数据目录命名**：按用户数据目录规范固定为 `YingMu`，ADR 0005 已同步为一致
 > 表述；`com.moko.yingmu` 仅为应用标识符（Bundle ID），不用作目录名。目录名已

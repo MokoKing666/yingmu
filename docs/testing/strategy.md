@@ -27,7 +27,7 @@ flowchart TD
 
 ## 2. 前端测试栈（已真实运行并通过）
 
-前置条件（实测）：Node 22.22.2（要求 `>=20.19.0`）、npm 10.9.7、`node_modules` 已安装、npm registry 可达。**这一层不依赖 Tauri 桌面端编译产物**，因为前端走 `WebDemoBridge` 与 Vite（见 `docs/adr/0002-platform-bridge.md`）；本机工具链已就位但桌面端构建产物尚未产出，前端仍可独立运行。
+前置条件（实测）：Node 22.22.2（要求 `^22.13 \|\| ^24 \|\| >=26`，CI 主线为 Node 26）、npm 10.9.7、`node_modules` 已安装、npm registry 可达。**这一层不依赖 Tauri 桌面端编译产物**，因为前端走 `WebDemoBridge` 与 Vite（见 `docs/adr/0002-platform-bridge.md`）；本机工具链已就位但桌面端构建产物尚未产出，前端仍可独立运行。
 
 | 类型 | 命令 | 配置来源 | 说明 |
 | --- | --- | --- | --- |
@@ -39,15 +39,21 @@ flowchart TD
 
 测试基础设施（真实存在于仓库）：`apps/desktop/src/test/setup.ts` 为 jsdom 补齐 `ResizeObserver` / `IntersectionObserver` / `matchMedia` 的可控替身，供磁贴幕墙可见区域渲染与懒加载相关测试使用。
 
-### 本机实测结果（2026-11-06，真实执行）
+拼贴布局专项测试：`apps/desktop/src/test/mosaic-layout.test.ts`（12 个用例）验证
+零重叠、右边界不溢出、尺寸连续（非固定档位）、超大横幅/超大竖版/方形/不规则并存、
+纯函数确定性、自定义排序稳定、自定义权重改变面积、焦点覆盖、四分辨率重排，
+以及 40/200/500/1000 条的布局耗时与首屏挂载量基线。
+实测数字见 [`performance-report.md`](performance-report.md)。
+
+### 本机实测结果（2026-11-08，真实执行）
 
 | 检查 | 命令 | 实测结果 |
 | --- | --- | --- |
 | 类型检查 | `npm run typecheck` | ✅ **通过**（TypeScript 严格模式） |
 | Lint | `npm run lint` | ✅ **通过**（ESLint 0 警告） |
-| 单元测试 | `npm run test` | ✅ **通过**（6 个测试文件 / 50 个用例全部通过） |
+| 单元测试 | `npm run test` | ✅ **通过**（18 个测试文件 / 193 个用例全部通过） |
 | 生产构建 | `npm run build` | ✅ **通过**（Vite 产出 `dist/`） |
-| 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ **通过**（扫描 168 个文件，未发现敏感信息） |
+| 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ **通过**（未发现敏感信息；扫描文件数随版本增长） |
 | 仓库契约测试 | `node --test tests/repo-contract.test.mjs` | ✅ **通过**（6/6） |
 
 > 以上结果为 2026-11-06 本机实际执行日志所记录的真实结论，不是计划或预设。`npm run format:check` 本次未纳入上述实测清单，其结果以实际执行日志为准，不预置结论。禁止把「配置存在」写成「测试已通过」，也禁止把 `WebDemoBridge` 演示数据下的前端通过，当作 Rust 平台层或播放能力已通过。
@@ -118,9 +124,9 @@ flowchart TD
 
 | 类别 | 状态 |
 | --- | --- |
-| Vitest / 类型检查 / 构建 / Lint（前端） | ✅ **2026-11-06 本机实测通过**（50 用例 / 0 警告 / `dist/` 产出） |
-| 凭据扫描 / 仓库契约测试 | ✅ **本机实测通过**（168 文件零命中 / 6-6） |
-| Rust `cargo:fmt` / `cargo:clippy` / `cargo:test` | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制（GNU `link.exe` 遮蔽、safe-delete 拦截临时目录删除），单元测试未运行 |
+| Vitest / 类型检查 / 构建 / Lint（前端） | ✅ **本机实测通过**（v0.3.2：18 文件 / 193 用例 / 0 警告 / `dist/` 产出） |
+| 凭据扫描 / 仓库契约测试 | ✅ **本机实测通过**（零命中 / 6-6） |
+| Rust `cargo:fmt` / `cargo:clippy` / `cargo:test` | **云端 CI 全部通过**（`fmt --check` ✓、`clippy -D warnings` ✓、`test` 81/81 ✓）；本机未成功完成，受构建环境限制（GNU `link.exe` 遮蔽、safe-delete 拦截临时目录删除） |
 | 全新 / 覆盖 / 卸载 / 升级 / 数据保留安装测试 | **未执行**（安装包本阶段未生成） |
 | 播放 / HDR / 音频 / 字幕实机验证 | **未验证、未实测** |
 | 任何 Dolby / DTS 认证与官方 Logo | **未获得 / 未使用** |

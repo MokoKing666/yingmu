@@ -12,11 +12,11 @@
 
 | 层次 | 技术 |
 | --- | --- |
-| 前端 | React 19、TypeScript、Vite 6、Tailwind CSS 4、Motion、Zustand、PixiJS 8、react-router 7、lucide-react |
-| 桌面外壳 | Tauri 2、Rust、WebView2（Windows） |
-| 数据 | SQLite、FTS5、版本化迁移 |
+| 前端 | React 19.3、TypeScript 6.0、Vite 8（Rolldown）、Tailwind CSS 4.3、Motion 14、Zustand 5.1、PixiJS 8.22、react-router 7.18、lucide-react 1.70 |
+| 桌面外壳 | Tauri 2、Rust（MSRV 1.89）、WebView2（Windows） |
+| 数据 | SQLite + FTS5（`rusqlite` 0.41，bundled）、版本化迁移 |
 | 播放器目标后端 | libmpv（**本阶段未集成、未验证**） |
-| 包管理 | npm workspaces（`apps/*`、`packages/*`），Node `>=20.19.0` |
+| 包管理 | npm workspaces（`apps/*`、`packages/*`），Node `^22.13 \|\| ^24 \|\| >=26` |
 
 本机实测环境（如实记录，仅用于说明可运行性边界）：Node 22.22.2 / npm 10.9.7、`node_modules` 已安装、Git 2.55、WebView2 156.0.4314.58 可用，网络可达 api.github.com / npm registry；**Rust 1.99.1 已安装；本地已具备 MSVC 编译器/链接器与 Windows SDK 导入库/头文件（便携工具链，非系统级 Visual Studio 安装，需显式配置 `PATH` / `LIB` / `INCLUDE`）**；GitHub 通过已认证的连接器可用。由此得出结论：**Tauri / NSIS 安装包本阶段未生成，由 CI / Release 在 `windows-latest` 构建；`cargo fmt --all -- --check` 已通过（exit 0，格式已归一化）；`cargo check` / `cargo test` / `cargo clippy` 受构建环境限制未成功完成，仓库 Rust 代码仍未经完整编译与测试验证，所有 `#[cfg(test)]` 单元测试未运行。实际阻断有两类：默认 shell 中 Git Bash 的 `/usr/bin/link.exe`（GNU coreutils 硬链接命令）遮蔽 MSVC 链接器，报 `link: extra operand`；部分执行通道存在 safe-delete 删除拦截，cargo 清理 rlib 临时目录时返回 `拒绝访问 (os error 5)`。二者均发生在第三方依赖编译阶段，未到达 `yingmu-core` 自身源码类型检查完成；libmpv 嵌入式播放未完成技术验证**。Rust 源码（`crates/yingmu-core/**`、`apps/desktop/src-tauri/**`，含 `Cargo.toml` 与 SQL 迁移）**已落地**。
 
@@ -132,9 +132,9 @@ flowchart LR
 | `npm run dev` | Vite 开发服务器（127.0.0.1:5173） | **可真实运行前端**（走 `WebDemoBridge`，不依赖 Tauri 桌面端编译） |
 | `npm run typecheck` | `tsc --noEmit` | ✅ 本机实测通过（2026-11-06） |
 | `npm run lint` | ESLint `--max-warnings 0` | ✅ 本机实测通过 |
-| `npm run test` / `test:watch` / `test:coverage` | Vitest（jsdom） | ✅ 本机实测通过（6 个测试文件 / 50 个用例全部通过） |
+| `npm run test` / `test:watch` / `test:coverage` | Vitest 5.1（jsdom） | ✅ 本机实测通过（18 个测试文件 / 193 个用例全部通过） |
 | `npm run build` | `typecheck && vite build`，产物 `dist/` | ✅ 本机实测通过（Vite 产出 `dist/`） |
-| `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（168 文件零命中 / 6-6 通过） |
+| `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（零命中 / 6-6 通过；扫描文件数随版本增长） |
 | `npm run cargo:fmt` / `cargo:clippy` / `cargo:test` | Rust 检查与测试 | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制，见 `docs/testing/strategy.md` |
 | Tauri 桌面构建 / NSIS 安装包 | 生成 `.exe` 安装器 | **本阶段未生成**，由 CI / Release 在 `windows-latest` 构建 |
 | 推送至 `github.com/MokoKing666/yingmu` | 代码托管 | ✅ **已完成**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志 |

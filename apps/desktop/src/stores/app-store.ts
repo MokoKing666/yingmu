@@ -11,7 +11,27 @@ import type {
   SourceId,
   ThemeMode,
 } from '@yingmu/media-models';
-import { getBridge, getCustomOrder, setCustomOrder } from '@/lib/bridge';
+import { getBridge, getFocalOverrides, setFocalOverrides } from '@/lib/bridge';
+import type { FocalPoint } from '@/lib/bridge';
+import {
+  SCOPE_FAVORITES,
+  SCOPE_HOME,
+  emptyLayoutPreferences,
+  libraryScope,
+  normalizeScope,
+} from '@/lib/layout-preferences';
+import type { LayoutPreferences, SortMode } from '@yingmu/media-models';
+
+/** 首次进入应用时预加载布局偏好的作用域集合（页面再按需补齐） */
+const PREFETCH_SCOPES: string[] = [
+  SCOPE_HOME,
+  SCOPE_FAVORITES,
+  libraryScope('movie'),
+  libraryScope('tv'),
+  libraryScope('anime'),
+  libraryScope('documentary'),
+  libraryScope('personal'),
+];
 
 export interface Toast {
   id: number;
@@ -25,7 +45,10 @@ interface AppState {
   playlists: Playlist[];
   history: PlaybackProgress[];
   settings: AppSettings;
-  customOrder: Record<MediaId, number>;
+  /** 按作用域保存的布局偏好（排序模式 + 自定义排列），互不污染 */
+  layoutPrefs: Record<string, LayoutPreferences>;
+  /** 用户为媒体手动调整的图片焦点（0..100），undefined 时使用引擎默认 */
+  focalOverrides: Record<MediaId, FocalPoint>;
   isDemo: boolean;
   ready: boolean;
   error?: string;
@@ -44,7 +67,14 @@ interface AppState {
   savePlaylist: (playlist: Playlist) => Promise<void>;
   removePlaylist: (id: PlaylistId) => Promise<void>;
   setSettings: (patch: Partial<AppSettings>) => Promise<void>;
-  setWallOrder: (orderedIds: MediaId[]) => void;
+  /** 把某个作用域的排序模式写入偏好（并持久化） */
+  setLayoutSortMode: (scope: string, mode: SortMode) => Promise<void>;
+  /** 拖拽结束后把当前顺序写入该作用域；会把该作用域切到 custom 模式 */
+  setWallOrder: (scope: string, orderedIds: MediaId[]) => Promise<void>;
+  /** 读取某个作用域的布局偏好（无记录时给默认值） */
+  getLayoutPref: (scope: string) => LayoutPreferences;
+  /** undefined 表示恢复该媒体的默认焦点 */
+  setArtworkFocal: (id: MediaId, focal: FocalPoint | undefined) => void;
   pushToast: (message: string, tone?: Toast['tone']) => void;
   dismissToast: (id: number) => void;
 }
@@ -71,6 +101,25 @@ function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+/**
+ * 布局偏好的按作用域串行化写入队列（任务书 10）。
+ *
+ * 为什么不用全局锁：不同作用域（首页 / 电影库 / 收藏）互不相关，
+ * 可以并行保存；同一作用域必须串行，否则连续拖拽会产生
+ * 「旧请求后返回覆盖新请求」的竞态。
+ * 前一个写入失败不阻塞后续写入（每个操作独立提交自己的快照）。
+ */
+const layoutWriteQueues = new Map<string, Promise<void>>();
+
+function enqueueLayoutWrite(scope: string, task: () => Promise<void>): Promise<void> {
+  const previous = layoutWriteQueues.get(scope) ?? Promise.resolve();
+  // 前一个任务无论成败都不影响本任务执行
+  const run = previous.then(task, task);
+  // 队列本身吞掉 rejection：失败由调用方（catch）处理，不能让链断裂
+  layoutWriteQueues.set(scope, run.catch(() => undefined));
+  return run;
+}
+
 export const useAppStore = create<AppState>((set, get) => ({
   items: [],
   sources: [],
@@ -90,7 +139,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     resumeBehaviour: 'ask',
     tmdbConfigured: false,
   },
-  customOrder: {},
+  layoutPrefs: {},
+  focalOverrides: getFocalOverrides(),
   isDemo: true,
   ready: false,
   toasts: [],
@@ -99,13 +149,19 @@ export const useAppStore = create<AppState>((set, get) => ({
     const bridge = getBridge();
     applyTheme('dark');
     try {
-      const [items, sources, playlists, history, settings] = await Promise.all([
+      const [items, sources, playlists, history, settings, ...layoutResults] = await Promise.all([
         bridge.libraryList(),
         bridge.sourceList(),
         bridge.playlistList(),
         bridge.historyList(),
         bridge.settingsGet(),
+        ...PREFETCH_SCOPES.map((scope) => bridge.layoutGet(scope)),
       ]);
+      const layoutPrefs: Record<string, LayoutPreferences> = {};
+      PREFETCH_SCOPES.forEach((scope, i) => {
+        const pref = layoutResults[i] as LayoutPreferences | undefined;
+        if (pref) layoutPrefs[scope] = pref;
+      });
       // 支持通过 URL 参数强制指定主题，便于演示、截图与分享（不写入用户偏好）
       const hashQuery = typeof window !== 'undefined' ? window.location.hash.split('?')[1] ?? '' : '';
       const forcedTheme = new URLSearchParams(hashQuery).get('theme');
@@ -116,7 +172,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         playlists,
         history,
         settings,
-        customOrder: getCustomOrder(),
+        layoutPrefs,
+        focalOverrides: getFocalOverrides(),
         isDemo: bridge.kind === 'web-demo',
         ready: true,
         error: undefined,
@@ -201,10 +258,66 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ settings });
   },
 
-  setWallOrder: (orderedIds) => {
-    const order = Object.fromEntries(orderedIds.map((id, index) => [id, index]));
-    setCustomOrder(order);
-    set({ customOrder: order });
+  setLayoutSortMode: async (scope, mode) => {
+    const key = normalizeScope(scope);
+    // 保存前快照：持久化失败时回滚到这个状态（任务书 10.1/10.2）
+    const before = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    const next: LayoutPreferences = {
+      ...before,
+      scope: key,
+      sortMode: mode,
+      updatedAt: new Date().toISOString(),
+    };
+    set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
+    try {
+      await enqueueLayoutWrite(key, () => getBridge().layoutSet(key, next));
+    } catch (error) {
+      // 只有当这次写入仍是最新状态时才回滚；期间用户又操作过则保留最新值。
+      // 用对象引用同一性而不是 updatedAt：同一毫秒内两次操作的 ISO 字符串可能相同。
+      if (get().layoutPrefs[key] === next) {
+        set({ layoutPrefs: { ...get().layoutPrefs, [key]: before } });
+      }
+      get().pushToast(`排序偏好保存失败：${errorMessage(error)}`, 'error');
+    }
+  },
+
+  setWallOrder: async (scope, orderedIds) => {
+    const key = normalizeScope(scope);
+    const before = get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+    // 已删除的媒体不允许残留在持久化顺序里（数据库层也会再过滤一次，双保险）
+    const known = new Set(get().items.map((item) => item.id));
+    const next: LayoutPreferences = {
+      ...before,
+      scope: key,
+      // 拖拽是用户对「这一屏」的明确意图，因此该作用域切到自定义模式
+      sortMode: 'custom',
+      orderedMediaIds: orderedIds.filter((id) => known.has(id)),
+      updatedAt: new Date().toISOString(),
+    };
+    set({ layoutPrefs: { ...get().layoutPrefs, [key]: next } });
+    try {
+      await enqueueLayoutWrite(key, () => getBridge().layoutSet(key, next));
+    } catch (error) {
+      // 快速连续拖拽：若期间已有更新的操作替换了状态对象（引用变了），
+      // 绝不能回滚用户的最新操作；只有本操作仍是最新状态时才回滚。
+      if (get().layoutPrefs[key] === next) {
+        set({ layoutPrefs: { ...get().layoutPrefs, [key]: before } });
+      }
+      get().pushToast(`排列保存失败：${errorMessage(error)}`, 'error');
+    }
+  },
+
+  getLayoutPref: (scope) => {
+    const key = normalizeScope(scope);
+    return get().layoutPrefs[key] ?? emptyLayoutPreferences(key);
+  },
+
+  setArtworkFocal: (id, focal) => {
+    const next = { ...get().focalOverrides };
+    if (focal) next[id] = focal;
+    else delete next[id];
+    setFocalOverrides(next);
+    set({ focalOverrides: next });
   },
 
   pushToast: (message, tone = 'info') => {
