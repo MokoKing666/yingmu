@@ -5,7 +5,7 @@
 影幕是一款面向个人媒体库的桌面媒体中心：以 Folia 式不规则磁贴幕墙组织内容，以 Infuse 式的电影 / 剧集 / 个人视频管理方式组织数据，并以专业播放器为长期目标。
 
 - **应用标识符 / Bundle ID**：`com.moko.yingmu`（所有配置一致；仅作标识符，**不是用户数据目录名**，数据目录为 `%APPDATA%\YingMu` 体系，见「构建 Windows 安装包」）
-- **版本**：`0.3.0`
+- **版本**：`0.3.2`
 - **首发平台**：Windows 10 22H2 x64 / Windows 11 x64
 - **仓库**：`https://github.com/MokoKing666/yingmu`（目标仓库，默认分支 `main`）
 - **许可证**：**尚未确定**，见下方「许可证说明」
@@ -21,7 +21,7 @@
 | React 19 前端（16 个页面、磁贴幕墙、深浅主题、动画） | ✅ **本机已运行** | 本页截图来自 `vite preview` 实际运行实例；`npm run build` 成功 |
 | 原创 SVG Logo、图标、Design Tokens | ✅ **已编写 + 本机已校验** | `assets/branding/`、`packages/design-tokens/`；`check-token-sync.mjs` 0 漂移 |
 | 统一接口契约（数据模型 / PlatformBridge / PlayerBackend） | ✅ **已编写** | `packages/media-models/`、`packages/player-api/` |
-| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **本机已运行** | 13 个 Vitest 文件 / 139 个用例、TS 严格模式、ESLint 0 警告 |
+| 前端自动化测试 / 类型检查 / Lint / 生产构建 | ✅ **本机已运行** | 18 个 Vitest 文件 / 193 个用例、TS 严格模式、ESLint 0 警告 |
 | WCAG 对比度 / Token 同步 | ✅ **本机已运行 + CI 强制** | `check-contrast.mjs` 32 组/主题 0 不达标；`check-token-sync.mjs` 0 漂移 |
 | GitHub Actions CI / Release 工作流 | ✅ 工作流已编写并随推送触发 | `.github/workflows/`；本机从未执行 GitHub Actions，云端结果见仓库 Actions 页面 |
 | Rust 媒体核心 / Tauri 2 配置 / NSIS 配置 | ✅ **CI 已构建并测试**（fmt / clippy / test / MSRV 1.89）；**本机未编译** | `crates/yingmu-core/`、`apps/desktop/src-tauri/`；本机 cargo 不在 PATH 且链接器被遮蔽，结论只来自 CI 日志 |
@@ -30,7 +30,7 @@
 | HDR10 / HDR10+ / HLG / Dolby Vision 原生输出 | ❌ **未验证**；仅做到「文件标识识别」 | 见 `docs/dolby-compatibility/` |
 | Dolby Audio / Atmos 音频直通 | ❌ **未验证**；未获得 Dolby 官方认证 | 见 `docs/dolby-compatibility/audio-matrix.md` |
 | TMDB / NFO 刮削、SMB / WebDAV 实际连接 | ❌ 未在本机验证 | 演示桥接不发起网络请求 |
-| **NSIS 安装包 `YingMu-Setup-0.3.0-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名）；❌ **Windows 交互式安装未测试** | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu` |
+| **NSIS 安装包 `YingMu-Setup-0.3.2-x64.exe`** | ✅ **CI 已真实构建**（约 4.48 MiB，未签名）；❌ **Windows 交互式安装未测试** | `windows-latest` 上 `tauri-action` 产出，Artifact `yingmu-nsis-installer`，见 [Actions 运行列表](https://github.com/MokoKing666/yingmu/actions/workflows/ci.yml) 的最近一次 Windows NSIS job；**SHA-256 以当次 Artifact 内的 `SHA256SUMS.txt` 为准，文档不固定记录某一次构建的哈希**（NSIS 含时间戳，构建不可复现，详见下方说明）；PE 版本资源 `FileVersion/ProductVersion = 0.3.2`、`ProductName = 影幕 YingMu` |
 | **GitHub 源码推送 / CI 执行 / Release** | ✅ **源码已推送**；CI 已由推送触发；Release ❌ **未创建** | 公开仓库 `MokoKing666/yingmu`、功能分支 `feat/folia-fullbleed-mosaic-nsis-both`；文件数与提交数以仓库为准（逐文件 blob SHA 校验通过），CI 结果见 Actions 页面 |
 
 **重要**：本仓库中的媒体条目、海报、进度均为**原创虚构演示数据**（UI 中有「演示数据」角标），不是真实影片刮削结果，也不是任何用户的私人媒体库。
@@ -206,7 +206,7 @@ npm run dev                # http://127.0.0.1:5173
 ```bash
 npm run typecheck          # TypeScript 严格类型检查
 npm run lint               # ESLint（0 警告）
-npm run test               # Vitest 13 个测试文件 / 139 个用例
+npm run test               # Vitest 18 个测试文件 / 193 个用例
 npm run build              # 生产构建到 apps/desktop/dist
 npm run preview            # 预览生产构建
 node scripts/check-token-sync.mjs     # Design Token TS↔CSS 一致性（已进 CI）
@@ -226,9 +226,9 @@ node --test tests/repo-contract.test.mjs  # 仓库契约测试
 | --- | --- | --- |
 | 类型检查 | `npm run typecheck` | ✅ 通过（TypeScript 严格模式） |
 | Lint | `npm run lint` | ✅ 通过（ESLint 0 警告） |
-| 单元测试 | `npm run test` | ✅ 通过（13 个测试文件 / 139 个用例全部通过） |
+| 单元测试 | `npm run test` | ✅ 通过（18 个测试文件 / 193 个用例全部通过） |
 | 生产构建 | `npm run build` | ✅ 通过（Vite 产出 `apps/desktop/dist`） |
-| 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ 通过（扫描 168 个文件，未发现敏感信息） |
+| 凭据扫描 | `node scripts/secret-scan.mjs` | ✅ 通过（未发现敏感信息；扫描文件数随版本增长） |
 | 仓库契约测试 | `node --test tests/repo-contract.test.mjs` | ✅ 通过（6/6） |
 
 Rust 侧检查：**本机未完成、云端 CI 已完成**，两者都如实记录：
@@ -249,7 +249,7 @@ Rust 侧检查：**本机未完成、云端 CI 已完成**，两者都如实记�
 **预期生成路径**（在具备完整 MSVC 工具链的机器上）：
 
 ```text
-apps/desktop/src-tauri/target/release/bundle/nsis/YingMu-Setup-0.3.0-x64.exe
+apps/desktop/src-tauri/target/release/bundle/nsis/YingMu-Setup-0.3.2-x64.exe
 ```
 
 标准步骤：
@@ -283,7 +283,7 @@ npx tauri build --target x86_64-pc-windows-msvc --bundles nsis
 
 完整说明与验证状态见 [`docs/installation/nsis.md`](docs/installation/nsis.md)。
 
-> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出约 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.0-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.0`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
+> **CI 已真实构建出该安装包**：`windows-latest` 上 `tauri-action` 产出约 **4.48 MiB** 的 NSIS 安装器 `YingMu-Setup-0.3.2-x64.exe`（PE32 可执行、版本资源 `FileVersion/ProductVersion = 0.3.2`、`ProductName = 影幕 YingMu`、未签名），经 `scripts/verify-release.mjs` 校验（存在 / >1MB / MZ 头 / SHA-256）后作为 Artifact `yingmu-nsis-installer` 上传。
 > **哈希如何取**：**以当次 Artifact 内的 `SHA256SUMS.txt` 为准**。NSIS 打包含时间戳，**构建不可复现**——同一份源码只改文档重跑，安装包的字节数与 SHA-256 就会变（实测两轮相差 1,382 字节）。因此文档不固定记录某一次构建的哈希，避免后来的读者拿旧哈希去校验新构建而误判。
 > **本机未执行交互式安装测试**：点击向导、观察 UAC、多用户数据隔离、覆盖升级与卸载都需要可交互 Windows 桌面或独立 VM，本机与 CI runner 都不具备，因此这些项保持「未执行」，不以构建成功冒充安装测试成功。
 

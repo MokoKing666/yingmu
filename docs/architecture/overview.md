@@ -132,9 +132,9 @@ flowchart LR
 | `npm run dev` | Vite 开发服务器（127.0.0.1:5173） | **可真实运行前端**（走 `WebDemoBridge`，不依赖 Tauri 桌面端编译） |
 | `npm run typecheck` | `tsc --noEmit` | ✅ 本机实测通过（2026-11-06） |
 | `npm run lint` | ESLint `--max-warnings 0` | ✅ 本机实测通过 |
-| `npm run test` / `test:watch` / `test:coverage` | Vitest 5.1（jsdom） | ✅ 本机实测通过（13 个测试文件 / 139 个用例全部通过） |
+| `npm run test` / `test:watch` / `test:coverage` | Vitest 5.1（jsdom） | ✅ 本机实测通过（18 个测试文件 / 193 个用例全部通过） |
 | `npm run build` | `typecheck && vite build`，产物 `dist/` | ✅ 本机实测通过（Vite 产出 `dist/`） |
-| `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（168 文件零命中 / 6-6 通过） |
+| `node scripts/secret-scan.mjs` / `node --test tests/repo-contract.test.mjs` | 凭据扫描 / 仓库契约测试 | ✅ 本机实测通过（零命中 / 6-6 通过；扫描文件数随版本增长） |
 | `npm run cargo:fmt` / `cargo:clippy` / `cargo:test` | Rust 检查与测试 | **`fmt` 已通过（exit 0）；`clippy` / `test` 未成功完成**：受构建环境限制，见 `docs/testing/strategy.md` |
 | Tauri 桌面构建 / NSIS 安装包 | 生成 `.exe` 安装器 | **本阶段未生成**，由 CI / Release 在 `windows-latest` 构建 |
 | 推送至 `github.com/MokoKing666/yingmu` | 代码托管 | ✅ **已完成**：仓库 `https://github.com/MokoKing666/yingmu` 已于 2026-11-08 创建为公开仓库并完成源码推送。本机 `git push` 通道不可达（`github.com:443` 直连超时、代理返回 502），故改用 `api.github.com` 直连：该 classic PAT 只接受 `Basic 用户名:token` 认证（`Bearer` / `token` 写法返回 401 `Bad credentials`，属鉴权写法差异，并非凭据失效），经 GitHub REST / Git Data API 分 7 个提交推送全部 173 个文件（含 24 个 PNG/ICO 二进制），**逐文件 blob SHA 校验 173/173 完全一致**；凭据仅从本地文件读入内存用于鉴权，未写入代码、提交、remote URL 或日志 |
