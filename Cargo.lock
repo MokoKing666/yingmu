@@ -4374,7 +4374,7 @@ dependencies = [
 
 [[package]]
 name = "yingmu-core"
-version = "0.3.0"
+version = "0.3.2"
 dependencies = [
  "chrono",
  "roxmltree",
@@ -4388,7 +4388,7 @@ dependencies = [
 
 [[package]]
 name = "yingmu-desktop"
-version = "0.3.0"
+version = "0.3.2"
 dependencies = [
  "chrono",
  "serde",

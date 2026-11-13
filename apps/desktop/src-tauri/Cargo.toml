@@ -1,6 +1,6 @@
 [package]
 name = "yingmu-desktop"
-version = "0.3.0"
+version = "0.3.2"
 description = "影幕 YingMu — Tauri 2 桌面端壳（Windows x64 首发）"
 edition = "2021"
 rust-version = "1.89"
