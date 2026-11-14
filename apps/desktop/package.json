@@ -18,7 +18,7 @@
     "@yingmu/design-tokens": "0.1.0",
     "@yingmu/media-models": "0.1.0",
     "@yingmu/player-api": "0.1.0",
-    "lucide-react": "^1.70.0",
+    "lucide-react": "^1.71.0",
     "motion": "^14.10.1",
     "pixi.js": "^8.22.0",
     "react": "^19.3.1",
